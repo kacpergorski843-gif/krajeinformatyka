@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPanstwoRouteImport } from './routes/_authenticated/panstwo'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
 import { Route as AuthenticatedRegionyRouteImport } from './routes/_authenticated/regiony'
@@ -32,6 +33,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPanstwoRoute = AuthenticatedPanstwoRouteImport.update({
   id: '/panstwo',
@@ -67,6 +73,7 @@ const AuthenticatedSwiatIdRoute = AuthenticatedSwiatIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/regiony': typeof AuthenticatedRegionyRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/regiony': typeof AuthenticatedRegionyRoute
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/panstwo': typeof AuthenticatedPanstwoRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/regiony': typeof AuthenticatedRegionyRoute
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/panstwo'
     | '/ranking'
     | '/regiony'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/panstwo'
     | '/ranking'
     | '/regiony'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/panstwo'
     | '/_authenticated/ranking'
     | '/_authenticated/regiony'
@@ -158,6 +170,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/panstwo': {
       id: '/_authenticated/panstwo'
@@ -216,6 +235,7 @@ const AuthenticatedSwiatRouteWithChildren =
   AuthenticatedSwiatRoute._addFileChildren(AuthenticatedSwiatRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedPanstwoRoute: typeof AuthenticatedPanstwoRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedRegionyRoute: typeof AuthenticatedRegionyRoute
@@ -224,6 +244,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedPanstwoRoute: AuthenticatedPanstwoRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedRegionyRoute: AuthenticatedRegionyRoute,
