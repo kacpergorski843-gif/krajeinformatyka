@@ -72,13 +72,16 @@ export const meQuery = queryOptions({
     const { data: auth } = await supabase.auth.getUser();
     const user = auth.user;
     if (!user) return null;
-    const profile = await unwrap(
-      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-    );
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, country_id")
+      .eq("id", user.id)
+      .maybeSingle();
     const roles = await unwrap(supabase.from("user_roles").select("role").eq("user_id", user.id));
     const mainAdmins = await unwrap(
       supabase.from("user_roles").select("id").eq("role", "MAIN_ADMIN").limit(1),
     );
+
     const list = (roles ?? []).map((r) => r.role as Me["role"]);
     const role: Me["role"] = list.includes("MAIN_ADMIN")
       ? "MAIN_ADMIN"
