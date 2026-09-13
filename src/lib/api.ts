@@ -124,6 +124,14 @@ export type RegionWithSlots = {
   slots: { id: string; slot_index: number; building: string }[];
 };
 
+type RegionRow = {
+  id: string;
+  name: string;
+  country_id: string;
+  region_slots: RegionWithSlots["slots"] | null;
+};
+
+
 export function regionsQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["regions", countryId],
