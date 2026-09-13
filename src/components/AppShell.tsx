@@ -30,7 +30,7 @@ export function AppShell({
 }: {
   me: Me | null;
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   children: ReactNode;
 }) {
   const router = useRouter();

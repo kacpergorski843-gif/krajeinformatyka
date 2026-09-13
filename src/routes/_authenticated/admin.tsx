@@ -413,7 +413,7 @@ function EconomyTab() {
         </Button>
       </Panel>
       <Panel className="divide-border divide-y p-0">
-        {((runs ?? []) as { id: string; run_date: string; ran_at: string; summary: Record<string, unknown> }[]).map(
+        {((runs ?? []) as unknown as { id: string; run_date: string; ran_at: string; summary: Record<string, unknown> }[]).map(
           (r) => (
             <div key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3">
               <div className="min-w-0">
@@ -442,7 +442,7 @@ function HistoryTab() {
     <div className="space-y-4">
       <SectionTitle>Transakcje</SectionTitle>
       <Panel className="divide-border divide-y p-0">
-        {((tx ?? []) as { id: string; label: string; amount_kr: string; created_at: string }[]).map(
+        {((tx ?? []) as unknown as { id: string; label: string; amount_kr: string; created_at: string }[]).map(
           (t) => (
             <div key={t.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3">
               <div className="min-w-0">
@@ -456,7 +456,7 @@ function HistoryTab() {
       </Panel>
       <SectionTitle>Akcje administracyjne</SectionTitle>
       <Panel className="divide-border divide-y p-0">
-        {((actions ?? []) as { id: string; action: string; created_at: string; details: Record<string, unknown> }[]).map(
+        {((actions ?? []) as unknown as { id: string; action: string; created_at: string; details: Record<string, unknown> }[]).map(
           (a) => (
             <div key={a.id} className="p-3">
               <p className="text-sm">{a.action}</p>

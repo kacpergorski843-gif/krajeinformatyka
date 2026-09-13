@@ -144,7 +144,7 @@ function MyCountry() {
 
       <SectionTitle>Ostatnie operacje</SectionTitle>
       <Panel className="divide-border divide-y p-0">
-        {((history ?? []) as { id: string; label: string; amount_kr: string; created_at: string }[]).map(
+        {((history ?? []) as unknown as { id: string; label: string; amount_kr: string; created_at: string }[]).map(
           (t) => (
             <div key={t.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3">
               <div className="min-w-0">

@@ -34,7 +34,7 @@ function costRows(item: ShopItem) {
   const rows: { label: string; value: string }[] = [{ label: "Koszt", value: kr(item.cost_kr) }];
   (["coal", "oil", "copper", "iron", "uranium"] as const).forEach((r) => {
     const v = item[`cost_${r}` as keyof ShopItem] as string;
-    if (Number(v) > 0) rows.push({ label: RESOURCE_LABELS[r], value: units(v) });
+    if (Number(v) > 0) rows.push({ label: RESOURCE_LABELS[r] ?? r, value: units(v) });
   });
   return rows;
 }
@@ -163,7 +163,7 @@ function Shop() {
                 ) : null}
                 {i.produces ? (
                   <p className="text-primary mt-1 text-xs">
-                    +{units(i.produces_amount)} {RESOURCE_LABELS[i.produces]} / doba
+                    +{units(i.produces_amount)} {RESOURCE_LABELS[i.produces] ?? i.produces} / doba
                   </p>
                 ) : null}
                 <p className="text-muted-foreground mt-2 text-xs">Zajmuje 1 slot w regionie</p>
