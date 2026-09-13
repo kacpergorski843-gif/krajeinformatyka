@@ -14,6 +14,8 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPanstwoRouteImport } from './routes/_authenticated/panstwo'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
+import { Route as AuthenticatedRegionyRouteImport } from './routes/_authenticated/regiony'
+import { Route as AuthenticatedSklepRouteImport } from './routes/_authenticated/sklep'
 import { Route as AuthenticatedSwiatRouteImport } from './routes/_authenticated/swiat'
 import { Route as AuthenticatedSwiatIdRouteImport } from './routes/_authenticated/swiat.$id'
 
@@ -41,6 +43,16 @@ const AuthenticatedRankingRoute = AuthenticatedRankingRouteImport.update({
   path: '/ranking',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRegionyRoute = AuthenticatedRegionyRouteImport.update({
+  id: '/regiony',
+  path: '/regiony',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSklepRoute = AuthenticatedSklepRouteImport.update({
+  id: '/sklep',
+  path: '/sklep',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSwiatRoute = AuthenticatedSwiatRouteImport.update({
   id: '/swiat',
   path: '/swiat',
@@ -57,6 +69,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/regiony': typeof AuthenticatedRegionyRoute
+  '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
@@ -65,6 +79,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/regiony': typeof AuthenticatedRegionyRoute
+  '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
@@ -75,14 +91,32 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/panstwo': typeof AuthenticatedPanstwoRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
+  '/_authenticated/regiony': typeof AuthenticatedRegionyRoute
+  '/_authenticated/sklep': typeof AuthenticatedSklepRoute
   '/_authenticated/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/_authenticated/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/panstwo' | '/ranking' | '/swiat' | '/swiat/$id'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/panstwo'
+    | '/ranking'
+    | '/regiony'
+    | '/sklep'
+    | '/swiat'
+    | '/swiat/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/panstwo' | '/ranking' | '/swiat' | '/swiat/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/panstwo'
+    | '/ranking'
+    | '/regiony'
+    | '/sklep'
+    | '/swiat'
+    | '/swiat/$id'
   id:
     | '__root__'
     | '/'
@@ -90,6 +124,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/panstwo'
     | '/_authenticated/ranking'
+    | '/_authenticated/regiony'
+    | '/_authenticated/sklep'
     | '/_authenticated/swiat'
     | '/_authenticated/swiat/$id'
   fileRoutesById: FileRoutesById
@@ -137,6 +173,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRankingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/regiony': {
+      id: '/_authenticated/regiony'
+      path: '/regiony'
+      fullPath: '/regiony'
+      preLoaderRoute: typeof AuthenticatedRegionyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sklep': {
+      id: '/_authenticated/sklep'
+      path: '/sklep'
+      fullPath: '/sklep'
+      preLoaderRoute: typeof AuthenticatedSklepRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/swiat': {
       id: '/_authenticated/swiat'
       path: '/swiat'
@@ -168,12 +218,16 @@ const AuthenticatedSwiatRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPanstwoRoute: typeof AuthenticatedPanstwoRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
+  AuthenticatedRegionyRoute: typeof AuthenticatedRegionyRoute
+  AuthenticatedSklepRoute: typeof AuthenticatedSklepRoute
   AuthenticatedSwiatRoute: typeof AuthenticatedSwiatRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPanstwoRoute: AuthenticatedPanstwoRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
+  AuthenticatedRegionyRoute: AuthenticatedRegionyRoute,
+  AuthenticatedSklepRoute: AuthenticatedSklepRoute,
   AuthenticatedSwiatRoute: AuthenticatedSwiatRouteWithChildren,
 }
 
