@@ -136,14 +136,13 @@ export function regionsQuery(countryId: string | null | undefined) {
           .eq("country_id", countryId!)
           .order("created_at"),
       );
-      return (rows ?? []).map((r: Record<string, unknown>) => ({
-        id: r.id as string,
-        name: r.name as string,
-        country_id: r.country_id as string,
-        slots: ((r.region_slots as RegionWithSlots["slots"]) ?? []).sort(
-          (a, b) => a.slot_index - b.slot_index,
-        ),
+      return ((rows ?? []) as unknown as RegionRow[]).map((r) => ({
+        id: r.id,
+        name: r.name,
+        country_id: r.country_id,
+        slots: [...(r.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
       }));
+
     },
   });
 }
