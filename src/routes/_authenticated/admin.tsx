@@ -462,7 +462,7 @@ function HistoryTab() {
               <p className="text-sm">{a.action}</p>
               <p className="text-muted-foreground text-xs">{dateTime(a.created_at)}</p>
               <p className="text-muted-foreground mt-1 truncate text-[11px]">
-                {units(JSON.stringify(a.details).length)} znaków szczegółów
+                {JSON.stringify(a.details)}
               </p>
             </div>
           ),
