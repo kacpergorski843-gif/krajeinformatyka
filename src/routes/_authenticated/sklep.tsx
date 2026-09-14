@@ -136,7 +136,7 @@ function Shop() {
             ) : null}
             <Button
               className="mt-3 w-full"
-              disabled={!countryId}
+              disabled={!countryId || isBlocked(i.code, country)}
               onClick={() => {
                 setItem(i);
                 setQty(1);
