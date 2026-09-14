@@ -386,6 +386,7 @@ export type Database = {
           copper_prod: number | null
           country_id: string | null
           flag: string | null
+          fort_votes: number | null
           forts: number | null
           gross_income: number | null
           iron: number | null
@@ -400,6 +401,7 @@ export type Database = {
           regions_count: number | null
           soldier_packs: number | null
           tank_packs: number | null
+          total_votes: number | null
           uranium: number | null
           uranium_prod: number | null
           war_votes: number | null
