@@ -21,39 +21,65 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const EMAIL_DOMAIN = "nationdynamics.internal";
+
+function normalizeUsername(raw: string) {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "-")
+    .replace(/^[.\-_]+|[.\-_]+$/g, "");
+}
+
 function AuthPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const clean = normalizeUsername(username);
+    if (clean.length < 3) {
+      toast.error("Nazwa użytkownika musi mieć co najmniej 3 znaki (litery, cyfry, . _ -)");
+      return;
+    }
+    const email = `${clean}@${EMAIL_DOMAIN}`;
     setBusy(true);
     try {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          throw new Error(
+            error.message.toLowerCase().includes("invalid login")
+              ? "Nieprawidłowa nazwa użytkownika lub hasło"
+              : error.message,
+          );
+        }
         toast.success("Zalogowano");
         router.navigate({ to: "/panstwo" });
       } else {
-        const { data, error } = await supabase.auth.signUp({
+        const { data: taken } = await supabase.rpc("username_taken", { p_username: clean });
+        if (taken) throw new Error("Ta nazwa użytkownika jest już zajęta");
+
+        const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { display_name: name || email.split("@")[0] },
-          },
+          options: { data: { username: clean, display_name: username.trim() || clean } },
         });
-        if (error) throw error;
-        if (!data.session) {
-          toast.success("Konto utworzone. Potwierdź adres e-mail, aby się zalogować.");
-        } else {
-          toast.success("Konto utworzone");
-          router.navigate({ to: "/panstwo" });
+        if (error) {
+          const msg = error.message.toLowerCase();
+          throw new Error(
+            msg.includes("already registered") || msg.includes("already been registered")
+              ? "Ta nazwa użytkownika jest już zajęta"
+              : error.message,
+          );
         }
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+        toast.success("Konto utworzone");
+        router.navigate({ to: "/panstwo" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Nie udało się zalogować");
@@ -75,21 +101,15 @@ function AuthPage() {
           Dostęp do panelu państwa nadaje administrator gry.
         </p>
         <form onSubmit={submit} className="mt-5 space-y-3">
-          {mode === "signup" ? (
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Nazwa gracza</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-          ) : null}
           <div className="space-y-1.5">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="username">Nazwa użytkownika</Label>
             <Input
-              id="email"
-              type="email"
+              id="username"
               required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              minLength={3}
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
@@ -119,3 +139,4 @@ function AuthPage() {
     </div>
   );
 }
+
