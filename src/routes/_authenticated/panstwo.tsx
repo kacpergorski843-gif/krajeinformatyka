@@ -1,17 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, Map } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
-import { countriesQuery, meQuery, regionsQuery, transactionsQuery } from "@/lib/api";
+import { countriesQuery, meQuery, regionsQuery, rpc, transactionsQuery } from "@/lib/api";
 import { BUILDING_LABELS, dateTime, kr, krShort, units } from "@/lib/format";
+
 
 export const Route = createFileRoute("/_authenticated/panstwo")({
   component: MyCountry,
 });
 
 function MyCountry() {
+  const queryClient = useQueryClient();
   const { data: me } = useQuery(meQuery);
+
   const { data: countries } = useQuery(countriesQuery);
   const country = countries?.find((c) => c.country_id === me?.countryId);
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
