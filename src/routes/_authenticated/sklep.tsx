@@ -67,9 +67,19 @@ function Shop() {
 
   function limitInfo(code: string, c?: CountryStats) {
     if (!c) return null;
-    if (code === "soldiers") return `${c.soldier_packs}/6 pakietów · +1 głos wojenny`;
-    if (code === "tanks") return `${c.tank_packs}/4 pakiety · +1 głos wojenny`;
+    if (code === "soldiers")
+      return `${c.soldier_packs}/6 pakietów · +1 głos · głosy wojska ${c.war_votes}/10`;
+    if (code === "tanks")
+      return `${c.tank_packs}/4 pakiety · +1 głos · głosy wojska ${c.war_votes}/10`;
+    if (code === "aa") return "Bez limitu · nie zajmuje slotu · nie zużywa się w obronie";
     return null;
+  }
+
+  function isBlocked(code: string, c?: CountryStats) {
+    if (!c) return false;
+    if (code === "soldiers") return c.soldier_packs >= 6 || c.war_votes >= 10;
+    if (code === "tanks") return c.tank_packs >= 4 || c.war_votes >= 10;
+    return false;
   }
 
   return (
@@ -126,7 +136,7 @@ function Shop() {
             ) : null}
             <Button
               className="mt-3 w-full"
-              disabled={!countryId}
+              disabled={!countryId || isBlocked(i.code, country)}
               onClick={() => {
                 setItem(i);
                 setQty(1);

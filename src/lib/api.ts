@@ -24,6 +24,8 @@ export type CountryStats = {
   soldier_packs: number;
   tank_packs: number;
   war_votes: number;
+  fort_votes: number;
+  total_votes: number;
   regions_count: number;
   gross_income: string;
   coal_upkeep: string;
