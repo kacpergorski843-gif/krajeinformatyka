@@ -15,6 +15,13 @@
       "when": 1789307175689,
       "tag": "0001_country_roleplay_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789360354919,
+      "tag": "0002_username_auth",
+      "breakpoints": true
     }
   ]
 }

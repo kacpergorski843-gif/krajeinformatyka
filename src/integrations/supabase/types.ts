@@ -144,6 +144,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          username: string | null
         }
         Insert: {
           country_id?: string | null
@@ -151,6 +152,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id: string
+          username?: string | null
         }
         Update: {
           country_id?: string | null
@@ -158,6 +160,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          username?: string | null
         }
         Relationships: [
           {
@@ -469,6 +472,7 @@ export type Database = {
         }
         Returns: Json
       }
+      username_taken: { Args: { p_username: string }; Returns: boolean }
     }
     Enums: {
       app_role: "PLAYER" | "ADMIN" | "MAIN_ADMIN"
