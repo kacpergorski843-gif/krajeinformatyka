@@ -19,6 +19,30 @@ function MyCountry() {
 
   if (!me) return null;
 
+  const claimPanel = !me.mainAdminExists ? (
+    <Panel className="mt-3">
+      <p className="text-sm font-semibold">Gra nie ma jeszcze głównego administratora</p>
+      <p className="text-muted-foreground mt-2 text-sm">
+        Jeśli prowadzisz tę rozgrywkę, przejmij rolę głównego administratora — dostaniesz panel do
+        zarządzania państwami, regionami, sklepem i uprawnieniami.
+      </p>
+      <button
+        className="bg-primary text-primary-foreground mt-3 rounded-md px-4 py-2 text-sm font-semibold"
+        onClick={async () => {
+          try {
+            await rpc("claim_main_admin", {});
+            toast.success("Jesteś głównym administratorem");
+            queryClient.invalidateQueries();
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Nie udało się");
+          }
+        }}
+      >
+        Przejmij rolę głównego administratora
+      </button>
+    </Panel>
+  ) : null;
+
   if (!country) {
     return (
       <AppShell me={me} title="Moje państwo">
@@ -30,9 +54,11 @@ function MyCountry() {
             <Link to="/ranking" className="text-primary">ranking</Link>.
           </p>
         </Panel>
+        {claimPanel}
       </AppShell>
     );
   }
+
 
   const resources = [
     { key: "coal", label: "Węgiel", icon: Flame, value: country.coal, prod: country.coal_prod },
