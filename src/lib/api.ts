@@ -55,7 +55,22 @@ export type ShopItem = {
   produces: string | null;
   produces_amount: string;
   sort_order: number;
+  active: boolean;
 };
+
+export type MissileStrike = {
+  id: string;
+  attacker_country_id: string | null;
+  defender_country_id: string | null;
+  region_id: string | null;
+  region_name: string;
+  missile_code: string;
+  result: string;
+  aa_defense: number;
+  destroyed: { slot_index: number; building: string }[];
+  created_at: string;
+};
+
 
 export type Me = {
   userId: string;
