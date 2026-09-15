@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Trophy,
   ShieldHalf,
+  Rocket,
   LogOut,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -15,9 +16,10 @@ import type { Me } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
 
 const NAV = [
-  { to: "/panstwo", label: "Moje państwo", icon: Landmark },
+  { to: "/panstwo", label: "Moje", icon: Landmark },
   { to: "/swiat", label: "Świat", icon: Globe2 },
   { to: "/regiony", label: "Regiony", icon: Map },
+  { to: "/arsenal", label: "Arsenał", icon: Rocket },
   { to: "/sklep", label: "Sklep", icon: ShoppingCart },
   { to: "/ranking", label: "Ranking", icon: Trophy },
 ] as const;
@@ -48,50 +50,50 @@ export function AppShell({
     : NAV;
 
   return (
-    <div className="min-h-screen pb-24 lg:pb-0">
-      <div className="mx-auto flex w-full max-w-6xl gap-6 px-4 py-5 lg:px-8">
-        <aside className="hidden w-56 shrink-0 lg:block">
-          <div className="sticky top-6 space-y-1">
-            <div className="mb-5 px-2">
-              <p className="font-display text-sm tracking-[0.2em] text-primary uppercase">
-                Sztab
+    <div className="tactical-bg min-h-screen pb-24 lg:pb-0">
+      <div className="mx-auto flex w-full max-w-6xl gap-6 px-3 py-4 sm:px-4 lg:px-8 lg:py-5">
+        <aside className="hidden w-52 shrink-0 lg:block">
+          <div className="sticky top-6 space-y-0.5">
+            <div className="border-border/70 mb-5 border-b px-2 pb-3">
+              <p className="font-display text-primary text-sm tracking-[0.24em] uppercase">
+                Country RP
               </p>
-              <p className="text-muted-foreground text-xs">Country Roleplay</p>
+              <p className="label-hud">Sztab dowodzenia</p>
             </div>
             {items.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
-                activeProps={{ className: "bg-secondary text-foreground" }}
-                className="text-muted-foreground hover:text-foreground flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
+                activeProps={{
+                  className: "bg-secondary text-foreground border-primary/60",
+                }}
+                className="text-muted-foreground hover:text-foreground hover:bg-secondary/50 flex items-center gap-3 rounded-sm border-l-2 border-transparent px-3 py-2 text-sm transition-colors"
               >
-                <item.icon className="size-4 shrink-0" />
+                <item.icon className="size-4 shrink-0" strokeWidth={1.5} />
                 <span className="truncate">{item.label}</span>
               </Link>
             ))}
             <button
               onClick={signOut}
-              className="text-muted-foreground hover:text-foreground flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm"
+              className="text-inactive hover:text-foreground mt-2 flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm"
             >
-              <LogOut className="size-4 shrink-0" />
+              <LogOut className="size-4 shrink-0" strokeWidth={1.5} />
               Wyloguj
             </button>
           </div>
         </aside>
 
         <main className="min-w-0 flex-1">
-          <header className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <header className="border-border/70 mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b pb-3">
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-bold sm:text-2xl">{title}</h1>
-              {subtitle ? (
-                <p className="text-muted-foreground truncate text-xs sm:text-sm">{subtitle}</p>
-              ) : null}
+              <h1 className="truncate text-lg font-semibold tracking-tight sm:text-2xl">{title}</h1>
+              {subtitle ? <p className="label-hud truncate">{subtitle}</p> : null}
             </div>
             <div className="shrink-0 text-right">
               <p className="max-w-[9rem] truncate text-xs font-medium sm:max-w-none">
                 {me?.displayName ?? me?.email ?? ""}
               </p>
-              <p className="text-primary text-[11px] tracking-wide uppercase">
+              <p className="text-primary text-[10px] tracking-[0.16em] uppercase">
                 {me ? ROLE_LABELS[me.role] : ""}
               </p>
             </div>
@@ -101,27 +103,21 @@ export function AppShell({
       </div>
 
       <nav className="border-border bg-card/95 fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-6">
+        <div
+          className="mx-auto grid max-w-lg"
+          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        >
           {items.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               activeProps={{ className: "text-primary" }}
-              className="text-muted-foreground flex flex-col items-center gap-1 py-2.5 text-[10px]"
+              className="text-inactive flex flex-col items-center gap-1 py-2.5 text-[10px]"
             >
-              <item.icon className="size-5" />
-              <span className="max-w-full truncate px-0.5">{item.label.split(" ")[0]}</span>
+              <item.icon className="size-5" strokeWidth={1.5} />
+              <span className="max-w-full truncate px-0.5">{item.label}</span>
             </Link>
           ))}
-          {!me?.isAdmin ? (
-            <button
-              onClick={signOut}
-              className="text-muted-foreground flex flex-col items-center gap-1 py-2.5 text-[10px]"
-            >
-              <LogOut className="size-5" />
-              Wyjdź
-            </button>
-          ) : null}
         </div>
       </nav>
     </div>

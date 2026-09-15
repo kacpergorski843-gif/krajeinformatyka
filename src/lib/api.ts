@@ -223,3 +223,41 @@ export async function rpc<T = unknown>(
   if (error) throw new Error(error.message);
   return data as T;
 }
+
+export const adminShopQuery = queryOptions({
+  queryKey: ["admin_shop_items"],
+  queryFn: async () =>
+    (await unwrap(
+      supabase.from("shop_items").select("*").order("sort_order"),
+    )) as unknown as ShopItem[],
+});
+
+export const allRegionsQuery = queryOptions({
+  queryKey: ["all_regions"],
+  queryFn: async (): Promise<RegionWithSlots[]> => {
+    const rows = await unwrap(
+      supabase
+        .from("regions")
+        .select("id, name, country_id, region_slots(id, slot_index, building)")
+        .order("created_at"),
+    );
+    return ((rows ?? []) as unknown as RegionRow[]).map((r) => ({
+      id: r.id,
+      name: r.name,
+      country_id: r.country_id,
+      slots: [...(r.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
+    }));
+  },
+});
+
+export const strikesQuery = queryOptions({
+  queryKey: ["missile_strikes"],
+  queryFn: async () =>
+    (await unwrap(
+      supabase
+        .from("missile_strikes")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50),
+    )) as unknown as MissileStrike[],
+});
