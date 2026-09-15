@@ -137,6 +137,77 @@ export type Database = {
         }
         Relationships: []
       }
+      missile_strikes: {
+        Row: {
+          aa_defense: number
+          actor_id: string | null
+          attacker_country_id: string | null
+          created_at: string
+          defender_country_id: string | null
+          destroyed: Json
+          id: string
+          missile_code: string
+          region_id: string | null
+          region_name: string
+          result: string
+        }
+        Insert: {
+          aa_defense?: number
+          actor_id?: string | null
+          attacker_country_id?: string | null
+          created_at?: string
+          defender_country_id?: string | null
+          destroyed?: Json
+          id?: string
+          missile_code: string
+          region_id?: string | null
+          region_name?: string
+          result: string
+        }
+        Update: {
+          aa_defense?: number
+          actor_id?: string | null
+          attacker_country_id?: string | null
+          created_at?: string
+          defender_country_id?: string | null
+          destroyed?: Json
+          id?: string
+          missile_code?: string
+          region_id?: string | null
+          region_name?: string
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missile_strikes_attacker_country_id_fkey"
+            columns: ["attacker_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missile_strikes_attacker_country_id_fkey"
+            columns: ["attacker_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "missile_strikes_defender_country_id_fkey"
+            columns: ["defender_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missile_strikes_defender_country_id_fkey"
+            columns: ["defender_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           country_id: string | null
@@ -438,6 +509,11 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      admin_toggle_shop_item: {
+        Args: { p_active: boolean; p_code: string }
+        Returns: Json
+      }
+      admin_upsert_shop_item: { Args: { p_item: Json }; Returns: string }
       assert_can_manage: { Args: { p_country_id: string }; Returns: undefined }
       build_in_slot: {
         Args: { p_item_code: string; p_region_id: string; p_slot_index: number }
@@ -461,6 +537,16 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      launch_missile: {
+        Args: {
+          p_country_id: string
+          p_missile_code: string
+          p_mode?: string
+          p_region_id: string
+          p_slot_ids?: string[]
+        }
+        Returns: Json
+      }
       my_country_id: { Args: never; Returns: string }
       purchase_unit: {
         Args: { p_country_id: string; p_item_code: string; p_qty?: number }

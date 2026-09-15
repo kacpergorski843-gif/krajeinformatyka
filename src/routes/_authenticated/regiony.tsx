@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { Panel, SectionTitle } from "@/components/stat";
+import { Panel } from "@/components/stat";
 import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import {
   Dialog,
   DialogContent,
@@ -21,11 +23,27 @@ import {
 } from "@/components/ui/select";
 import { countriesQuery, meQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
 import type { RegionWithSlots, ShopItem } from "@/lib/api";
-import { BUILDING_LABELS, krShort, units } from "@/lib/format";
+import { BUILDING_LABELS, RESOURCE_LABELS, fmtKR, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/regiony")({
+  head: () => ({
+    meta: [
+      { title: "Regiony — COUNTRY RP" },
+      {
+        name: "description",
+        content: "Zarządzaj 9 slotami w każdym regionie: fabryki, wytwórnie i fortyfikacje.",
+      },
+      { property: "og:title", content: "Regiony — COUNTRY RP" },
+      {
+        property: "og:description",
+        content: "Zarządzaj 9 slotami w każdym regionie: fabryki, wytwórnie i fortyfikacje.",
+      },
+    ],
+  }),
   component: Regions,
 });
+
+const RESOURCES = ["coal", "oil", "copper", "iron", "uranium"] as const;
 
 function slotBlockReason(region: RegionWithSlots, item: ShopItem): string | null {
   const b = item.building!;
@@ -53,7 +71,8 @@ function Regions() {
   const countryId = selected ?? me?.countryId ?? null;
   const { data: regions } = useQuery(regionsQuery(countryId));
   const country = countries?.find((c) => c.country_id === countryId);
-  const [target, setTarget] = useState<{ region: RegionWithSlots; index: number } | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [buildFor, setBuildFor] = useState<RegionWithSlots | null>(null);
   const [occupied, setOccupied] = useState<{ id: string; building: string; region: string } | null>(
     null,
   );
@@ -67,7 +86,7 @@ function Regions() {
       }),
     onSuccess: () => {
       toast.success("Obiekt wybudowany");
-      setTarget(null);
+      setBuildFor(null);
       queryClient.invalidateQueries();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -84,6 +103,13 @@ function Regions() {
   });
 
   const buildings = (shop ?? []).filter((i) => i.building);
+
+  function firstFreeSlot(region: RegionWithSlots): number | null {
+    for (let i = 1; i <= 9; i++) {
+      if (!region.slots.some((s) => s.slot_index === i)) return i;
+    }
+    return null;
+  }
 
   return (
     <AppShell
@@ -109,110 +135,152 @@ function Regions() {
       ) : null}
 
       {country ? (
-        <Panel className="mb-4">
-          <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-            <div>
-              <p className="text-muted-foreground">Skarbiec</p>
-              <p className="num text-primary">{krShort(country.balance)}</p>
+        <Panel className="hud-frame mb-4 overflow-x-auto p-0">
+          <div className="divide-border grid min-w-max grid-cols-6 divide-x text-xs">
+            <div className="min-w-24 px-3 py-2.5">
+              <p className="label-hud">Skarbiec</p>
+              <p className="num text-primary mt-1">{fmtKR(country.balance)}</p>
             </div>
-            <div>
-              <p className="text-muted-foreground">Węgiel</p>
-              <p className="num">{units(country.coal)}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Żelazo</p>
-              <p className="num">{units(country.iron)}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Miedź</p>
-              <p className="num">{units(country.copper)}</p>
-            </div>
+            {RESOURCES.map((r) => (
+              <div key={r} className="min-w-24 px-3 py-2.5">
+                <p className="label-hud">{RESOURCE_LABELS[r]}</p>
+                <p
+                  className={`num mt-1 ${Number(country[r]) === 0 ? "text-inactive" : "text-foreground"}`}
+                >
+                  {units(country[r])}
+                </p>
+              </div>
+            ))}
           </div>
         </Panel>
       ) : null}
 
       {!countryId ? (
-        <Panel>
+        <Panel className="p-4">
           <p className="text-muted-foreground text-sm">
             Nie masz przypisanego państwa — poproś administratora gry.
           </p>
         </Panel>
       ) : null}
 
-      {(regions ?? []).map((r) => (
-        <div key={r.id}>
-          <SectionTitle>
-            {r.name} — {r.slots.length}/9 slotów
-          </SectionTitle>
-          <div className="grid grid-cols-3 gap-2 sm:max-w-md">
-            {Array.from({ length: 9 }, (_, i) => i + 1).map((idx) => {
-              const slot = r.slots.find((s) => s.slot_index === idx);
-              return (
-                <button
-                  key={idx}
-                  onClick={() =>
-                    slot
-                      ? setOccupied({ id: slot.id, building: slot.building, region: r.name })
-                      : setTarget({ region: r, index: idx })
-                  }
-                  className={`flex aspect-square flex-col items-center justify-center rounded-lg border p-1.5 text-center text-[10px] leading-tight transition-colors ${
-                    slot
-                      ? "border-primary/50 bg-primary/10 hover:bg-primary/20"
-                      : "border-border/70 text-muted-foreground hover:border-primary/60 border-dashed"
-                  }`}
+      <div className="space-y-2">
+        {(regions ?? []).map((r) => {
+          const open = expanded === r.id;
+          const free = 9 - r.slots.length;
+          return (
+            <Panel key={r.id} className="hud-frame p-0">
+              <button
+                onClick={() => setExpanded(open ? null : r.id)}
+                className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{r.name}</p>
+                  <p className="text-inactive text-[11px] tracking-[0.12em] uppercase">
+                    {free === 0 ? "brak wolnych slotów" : `${free} wolnych slotów`}
+                  </p>
+                </div>
+                <span
+                  className={`num shrink-0 text-sm ${r.slots.length === 0 ? "text-inactive" : "text-primary"}`}
                 >
-                  <span className="num mb-1 text-[9px] opacity-60">{idx}</span>
-                  {slot ? BUILDING_LABELS[slot.building] : "+ wolny"}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+                  {r.slots.length}/9
+                </span>
+                <ChevronDown
+                  className={`text-muted-foreground size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+                  strokeWidth={1.5}
+                />
+              </button>
+
+              {open ? (
+                <div className="border-border/70 border-t p-3">
+                  <div className="divide-border/70 divide-y">
+                    {r.slots.map((s) => (
+                      <div
+                        key={s.id}
+                        className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-2"
+                      >
+                        <span className="num text-inactive text-xs">{s.slot_index}</span>
+                        <p className="truncate text-sm">{BUILDING_LABELS[s.building]}</p>
+                        <button
+                          className="text-inactive hover:text-destructive shrink-0"
+                          onClick={() =>
+                            setOccupied({ id: s.id, building: s.building, region: r.name })
+                          }
+                        >
+                          <Trash2 className="size-4" strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    ))}
+                    {r.slots.length === 0 ? (
+                      <p className="text-inactive py-2 text-xs">Region jest pusty.</p>
+                    ) : null}
+                  </div>
+                  <Button
+                    className="mt-3 w-full"
+                    disabled={free === 0}
+                    onClick={() => setBuildFor(r)}
+                  >
+                    <Plus className="mr-1.5 size-4" strokeWidth={1.5} />
+                    {free === 0 ? "Brak wolnych slotów" : "Zbuduj obiekt"}
+                  </Button>
+                </div>
+              ) : null}
+            </Panel>
+          );
+        })}
+      </div>
+
       {regions && regions.length === 0 && countryId ? (
-        <Panel>
+        <Panel className="p-4">
           <p className="text-muted-foreground text-sm">
             To państwo nie ma jeszcze regionów. Administrator dodaje je w panelu.
           </p>
         </Panel>
       ) : null}
 
-      <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Budowa w slocie {target?.index}</DialogTitle>
-            <DialogDescription>{target?.region.name}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
+      <Drawer open={!!buildFor} onOpenChange={(o) => !o && setBuildFor(null)}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle className="tracking-[0.14em] uppercase">
+              Budowa — {buildFor?.name}
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="space-y-2 overflow-y-auto px-4 pb-8">
             {buildings.map((item) => {
-              const reason = target ? slotBlockReason(target.region, item) : null;
+              const reason = buildFor ? slotBlockReason(buildFor, item) : null;
               const tooPoor = country ? Number(country.balance) < Number(item.cost_kr) : false;
               const blocked = !!reason || tooPoor;
               return (
                 <button
                   key={item.code}
                   disabled={blocked || build.isPending}
-                  onClick={() =>
-                    target &&
-                    build.mutate({ regionId: target.region.id, index: target.index, code: item.code })
-                  }
-                  className={`w-full rounded-lg border p-3 text-left transition-colors ${
-                    blocked
-                      ? "border-border/50 opacity-45"
-                      : "border-border hover:border-primary/60 hover:bg-secondary/60"
-                  }`}
+                  onClick={() => {
+                    if (!buildFor) return;
+                    const index = firstFreeSlot(buildFor);
+                    if (!index) {
+                      toast.error("Region nie ma wolnych slotów");
+                      return;
+                    }
+                    build.mutate({ regionId: buildFor.id, index, code: item.code });
+                  }}
+                  className={`panel w-full p-3 text-left ${blocked ? "opacity-45" : "hover:border-primary/60"}`}
                 >
                   <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                     <p className="truncate text-sm font-semibold">{item.name}</p>
-                    <p className="num text-accent shrink-0 text-xs">{krShort(item.cost_kr)}</p>
+                    <p className="num text-primary shrink-0 text-xs">{fmtKR(item.cost_kr)}</p>
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">{item.description}</p>
                   {Number(item.income_kr) > 0 ? (
-                    <p className="text-primary mt-1 text-xs">+{krShort(item.income_kr)} / doba</p>
+                    <p className="text-success mt-1 text-xs">+{fmtKR(item.income_kr)} / doba</p>
                   ) : null}
                   {item.produces ? (
-                    <p className="text-primary mt-1 text-xs">
-                      +{units(item.produces_amount)} {BUILDING_LABELS[item.building!] ?? ""} / doba
+                    <p className="text-success mt-1 text-xs">
+                      +{units(item.produces_amount)}{" "}
+                      {RESOURCE_LABELS[item.produces] ?? item.produces} / doba
+                    </p>
+                  ) : null}
+                  {Number(item.cost_iron) > 0 ? (
+                    <p className="text-muted-foreground mt-1 text-xs uppercase">
+                      Żelazo: <span className="num">{units(item.cost_iron)}</span>
                     </p>
                   ) : null}
                   {reason ? <p className="text-destructive mt-1 text-xs">{reason}</p> : null}
@@ -223,8 +291,8 @@ function Regions() {
               );
             })}
           </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
 
       <Dialog open={!!occupied} onOpenChange={(o) => !o && setOccupied(null)}>
         <DialogContent>

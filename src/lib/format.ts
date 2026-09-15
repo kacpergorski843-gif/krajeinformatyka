@@ -18,18 +18,36 @@ export function kr(v: string | number | null | undefined): string {
   return `${groupDigits(v)}${NBSP}KR`;
 }
 
-/** Skrót: 1,5 bln KR */
-export function krShort(v: string | number | null | undefined): string {
+const SCALES: { limit: number; unit: string }[] = [
+  { limit: 1e12, unit: "bln" },
+  { limit: 1e9, unit: "mld" },
+  { limit: 1e6, unit: "mln" },
+  { limit: 1e3, unit: "tys." },
+];
+
+/** Globalny skrót liczby: 1,5 bln / 250 mld / 12,4 tys. */
+export function fmtNum(v: string | number | null | undefined): string {
   const n = toNum(v);
   const abs = Math.abs(n);
-  const fmt = (x: number, unit: string) => {
-    const s = (x % 1 === 0 ? x.toFixed(0) : x.toFixed(1)).replace(".", ",");
-    return `${n < 0 ? "-" : ""}${s}${NBSP}${unit}${NBSP}KR`;
-  };
-  if (abs >= 1e12) return fmt(abs / 1e12, "bln");
-  if (abs >= 1e9) return fmt(abs / 1e9, "mld");
-  if (abs >= 1e6) return fmt(abs / 1e6, "mln");
-  return kr(n);
+  const sign = n < 0 ? "-" : "";
+  for (const s of SCALES) {
+    if (abs >= s.limit) {
+      const x = abs / s.limit;
+      const str = (x >= 100 || x % 1 === 0 ? x.toFixed(0) : x.toFixed(1)).replace(".", ",");
+      return `${sign}${str}${NBSP}${s.unit}`;
+    }
+  }
+  return groupDigits(n);
+}
+
+/** Globalny skrót kwoty: 1,5 bln KR */
+export function fmtKR(v: string | number | null | undefined): string {
+  return `${fmtNum(v)}${NBSP}KR`;
+}
+
+/** Alias historyczny */
+export function krShort(v: string | number | null | undefined): string {
+  return fmtKR(v);
 }
 
 export function units(v: string | number | null | undefined): string {
@@ -60,6 +78,12 @@ export const RESOURCE_LABELS: Record<string, string> = {
   uranium: "Uran",
 };
 
+export const MISSILE_LABELS: Record<string, string> = {
+  missile_1: "Rakieta I",
+  missile_2: "Rakieta II",
+  missile_3: "Rakieta III",
+};
+
 export const ROLE_LABELS: Record<string, string> = {
   PLAYER: "Gracz",
   ADMIN: "Administrator",
@@ -74,4 +98,24 @@ export function dateTime(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** Ile zostało do najbliższej 20:00 czasu warszawskiego, jako "04:12:33" */
+export function timeToDailyCycle(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("pl-PL", {
+    timeZone: "Europe/Warsaw",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  const secondsNow = get("hour") * 3600 + get("minute") * 60 + get("second");
+  const target = 20 * 3600;
+  let diff = target - secondsNow;
+  if (diff <= 0) diff += 24 * 3600;
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  return [h, m, s].map((x) => String(x).padStart(2, "0")).join(":");
 }

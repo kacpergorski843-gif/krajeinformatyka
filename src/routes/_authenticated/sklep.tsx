@@ -22,21 +22,31 @@ import {
 } from "@/components/ui/select";
 import { countriesQuery, meQuery, rpc, shopQuery } from "@/lib/api";
 import type { CountryStats, ShopItem } from "@/lib/api";
-import { RESOURCE_LABELS, kr, krShort, units } from "@/lib/format";
+import { RESOURCE_LABELS, fmtKR, fmtNum, kr, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/sklep")({
+  head: () => ({
+    meta: [
+      { title: "Sklep — COUNTRY RP" },
+      {
+        name: "description",
+        content: "Zakup wojska, obrony i obiektów regionalnych za KR i surowce.",
+      },
+      { property: "og:title", content: "Sklep — COUNTRY RP" },
+      {
+        property: "og:description",
+        content: "Zakup wojska, obrony i obiektów regionalnych za KR i surowce.",
+      },
+    ],
+  }),
   component: Shop,
 });
 
-const CATEGORY_ORDER = ["WOJSKO", "FABRYKI", "WYTWÓRNIE", "FORTYFIKACJE"];
+const RESOURCES = ["coal", "oil", "copper", "iron", "uranium"] as const;
+type Resource = (typeof RESOURCES)[number];
 
-function costRows(item: ShopItem) {
-  const rows: { label: string; value: string }[] = [{ label: "Koszt", value: kr(item.cost_kr) }];
-  (["coal", "oil", "copper", "iron", "uranium"] as const).forEach((r) => {
-    const v = item[`cost_${r}` as keyof ShopItem] as string;
-    if (Number(v) > 0) rows.push({ label: RESOURCE_LABELS[r] ?? r, value: units(v) });
-  });
-  return rows;
+function unitCost(item: ShopItem, r: Resource): number {
+  return Number(item[`cost_${r}` as keyof ShopItem] as string);
 }
 
 function Shop() {
@@ -48,7 +58,8 @@ function Shop() {
   const countryId = selected ?? me?.countryId ?? null;
   const country = countries?.find((c) => c.country_id === countryId);
   const [item, setItem] = useState<ShopItem | null>(null);
-  const [qty, setQty] = useState(1);
+  const [qtyText, setQtyText] = useState("1");
+  const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
 
   const buy = useMutation({
     mutationFn: (v: { code: string; qty: number }) =>
@@ -56,7 +67,7 @@ function Shop() {
     onSuccess: () => {
       toast.success("Zakup zrealizowany");
       setItem(null);
-      setQty(1);
+      setQtyText("1");
       queryClient.invalidateQueries();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -82,11 +93,35 @@ function Shop() {
     return false;
   }
 
+  const maxByLimit = (code: string, c?: CountryStats) => {
+    if (!c) return 100;
+    const votesLeft = Math.max(0, 10 - c.war_votes);
+    if (code === "soldiers") return Math.min(6 - c.soldier_packs, votesLeft);
+    if (code === "tanks") return Math.min(4 - c.tank_packs, votesLeft);
+    return 100;
+  };
+
+  // Braki dla aktualnie wybranego produktu i ilości
+  const needKr = item ? Number(item.cost_kr) * qty : 0;
+  const haveKr = Number(country?.balance ?? 0);
+  const krShort_ = item ? haveKr < needKr : false;
+  const resourceRows = item
+    ? RESOURCES.filter((r) => unitCost(item, r) > 0).map((r) => {
+        const need = unitCost(item, r) * qty;
+        const have = Number((country?.[r] as string) ?? 0);
+        return { r, need, have, missing: have < need };
+      })
+    : [];
+  const limitLeft = item ? maxByLimit(item.code, country) : 100;
+  const overLimit = item ? qty > limitLeft : false;
+  const cannotBuy =
+    !country || krShort_ || resourceRows.some((x) => x.missing) || overLimit || qty < 1;
+
   return (
     <AppShell
       me={me ?? null}
       title="Sklep"
-      subtitle={country ? `${country.flag} ${country.name} — ${kr(country.balance)}` : undefined}
+      subtitle={country ? `${country.flag} ${country.name} — ${fmtKR(country.balance)}` : undefined}
     >
       {me?.isAdmin ? (
         <div className="mb-4 max-w-xs">
@@ -106,7 +141,7 @@ function Shop() {
       ) : null}
 
       {!countryId ? (
-        <Panel>
+        <Panel className="p-4">
           <p className="text-muted-foreground text-sm">
             Nie masz przypisanego państwa — zakupy będą możliwe po przypisaniu.
           </p>
@@ -116,30 +151,28 @@ function Shop() {
       <SectionTitle>Wojsko i obrona</SectionTitle>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {units_.map((i) => (
-          <Panel key={i.code} className="flex h-full flex-col">
+          <Panel key={i.code} className="hud-frame flex h-full flex-col p-4">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
               <p className="truncate text-sm font-semibold">{i.name}</p>
-              <p className="num text-accent shrink-0 text-xs">{krShort(i.cost_kr)}</p>
+              <p className="num text-primary shrink-0 text-xs">{fmtKR(i.cost_kr)}</p>
             </div>
             <p className="text-muted-foreground mt-1 text-xs">{i.description}</p>
-            <ul className="text-muted-foreground mt-2 space-y-0.5 text-xs">
-              {costRows(i)
-                .slice(1)
-                .map((r) => (
-                  <li key={r.label}>
-                    {r.label}: <span className="num">{r.value}</span>
-                  </li>
-                ))}
+            <ul className="mt-2 space-y-0.5 text-xs">
+              {RESOURCES.filter((r) => unitCost(i, r) > 0).map((r) => (
+                <li key={r} className="text-muted-foreground uppercase">
+                  {RESOURCE_LABELS[r]}: <span className="num text-foreground">{units(unitCost(i, r))}</span>
+                </li>
+              ))}
             </ul>
             {limitInfo(i.code, country) ? (
-              <p className="text-primary mt-2 text-xs">{limitInfo(i.code, country)}</p>
+              <p className="text-info mt-2 text-xs">{limitInfo(i.code, country)}</p>
             ) : null}
             <Button
               className="mt-3 w-full"
               disabled={!countryId || isBlocked(i.code, country)}
               onClick={() => {
                 setItem(i);
-                setQty(1);
+                setQtyText("1");
               }}
             >
               Kup
@@ -158,74 +191,113 @@ function Shop() {
         Obiekty regionalne
       </SectionTitle>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {CATEGORY_ORDER.filter((cat) => cat !== "WOJSKO").flatMap((cat) =>
-          buildings
-            .filter((i) => i.category === cat)
-            .map((i) => (
-              <Panel key={i.code}>
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                  <p className="truncate text-sm font-semibold">{i.name}</p>
-                  <p className="num text-accent shrink-0 text-xs">{krShort(i.cost_kr)}</p>
-                </div>
-                <p className="text-muted-foreground mt-1 text-xs">{i.description}</p>
-                {Number(i.income_kr) > 0 ? (
-                  <p className="text-primary mt-1 text-xs">+{krShort(i.income_kr)} / doba</p>
-                ) : null}
-                {i.produces ? (
-                  <p className="text-primary mt-1 text-xs">
-                    +{units(i.produces_amount)} {RESOURCE_LABELS[i.produces] ?? i.produces} / doba
-                  </p>
-                ) : null}
-                <p className="text-muted-foreground mt-2 text-xs">Zajmuje 1 slot w regionie</p>
-              </Panel>
-            )),
-        )}
+        {buildings.map((i) => (
+          <Panel key={i.code} className="p-4">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <p className="truncate text-sm font-semibold">{i.name}</p>
+              <p className="num text-primary shrink-0 text-xs">{fmtKR(i.cost_kr)}</p>
+            </div>
+            <p className="text-muted-foreground mt-1 text-xs">{i.description}</p>
+            {RESOURCES.filter((r) => unitCost(i, r) > 0).map((r) => (
+              <p key={r} className="text-muted-foreground mt-1 text-xs uppercase">
+                {RESOURCE_LABELS[r]}: <span className="num text-foreground">{units(unitCost(i, r))}</span>
+              </p>
+            ))}
+            {Number(i.income_kr) > 0 ? (
+              <p className="text-success mt-1 text-xs">+{fmtKR(i.income_kr)} / doba</p>
+            ) : null}
+            {Number(i.upkeep_coal) > 0 ? (
+              <p className="text-destructive mt-1 text-xs">
+                -{units(i.upkeep_coal)} węgla / doba
+              </p>
+            ) : null}
+            {i.produces ? (
+              <p className="text-success mt-1 text-xs">
+                +{units(i.produces_amount)} {RESOURCE_LABELS[i.produces] ?? i.produces} / doba
+              </p>
+            ) : null}
+            <p className="text-inactive mt-2 text-xs">Zajmuje 1 slot w regionie</p>
+          </Panel>
+        ))}
       </div>
 
       <Dialog open={!!item} onOpenChange={(o) => !o && setItem(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Potwierdzenie zakupu</DialogTitle>
+            <DialogTitle className="tracking-[0.14em] uppercase">Potwierdzenie zakupu</DialogTitle>
             <DialogDescription>{item?.name}</DialogDescription>
           </DialogHeader>
           {item ? (
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label htmlFor="qty" className="text-muted-foreground text-xs">
+                <label htmlFor="qty" className="label-hud">
                   Ilość
                 </label>
-                <Input
-                  id="qty"
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={qty}
-                  onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
-                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setQtyText(String(Math.max(1, qty - 1)))}
+                  >
+                    −
+                  </Button>
+                  <Input
+                    id="qty"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    value={qtyText}
+                    onChange={(e) => setQtyText(e.target.value)}
+                    onBlur={() => setQtyText(String(qty))}
+                    className="num text-center"
+                  />
+                  <Button variant="outline" size="icon" onClick={() => setQtyText(String(qty + 1))}>
+                    +
+                  </Button>
+                </div>
+                {overLimit ? (
+                  <p className="text-destructive text-xs">
+                    Limit dla tego produktu: maks. {limitLeft} szt.
+                  </p>
+                ) : null}
               </div>
-              <div className="panel space-y-1 p-3 text-xs">
-                {costRows(item).map((r) => (
-                  <div key={r.label} className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">{r.label} (razem)</span>
-                    <span className="num">
-                      {r.label === "Koszt" ? kr(Number(item.cost_kr) * qty) : units(Number(r.value.replace(/\D/g, "")) * qty)}
+
+              <div className="panel hud-frame space-y-1.5 p-3 text-xs">
+                <div className="flex justify-between gap-2">
+                  <span className="text-muted-foreground uppercase">KR</span>
+                  <span className={`num ${krShort_ ? "text-destructive" : "text-foreground"}`}>
+                    {fmtNum(haveKr)} / {fmtNum(needKr)}
+                  </span>
+                </div>
+                {resourceRows.map((row) => (
+                  <div key={row.r} className="flex justify-between gap-2">
+                    <span className="text-muted-foreground uppercase">
+                      {RESOURCE_LABELS[row.r]}
+                    </span>
+                    <span className={`num ${row.missing ? "text-destructive" : "text-foreground"}`}>
+                      {units(row.have)} / {units(row.need)}
                     </span>
                   </div>
                 ))}
                 <div className="border-border mt-2 flex justify-between gap-2 border-t pt-2">
-                  <span className="text-muted-foreground">Skarbiec po zakupie</span>
-                  <span className="num text-primary">
-                    {kr(Number(country?.balance ?? 0) - Number(item.cost_kr) * qty)}
+                  <span className="text-muted-foreground uppercase">Koszt razem</span>
+                  <span className="num text-primary">{kr(needKr)}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-muted-foreground uppercase">Skarbiec po zakupie</span>
+                  <span className={`num ${krShort_ ? "text-destructive" : "text-success"}`}>
+                    {kr(haveKr - needKr)}
                   </span>
                 </div>
               </div>
+
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setItem(null)}>
                   Anuluj
                 </Button>
                 <Button
                   className="flex-1"
-                  disabled={buy.isPending}
+                  disabled={buy.isPending || cannotBuy}
                   onClick={() => buy.mutate({ code: item.code, qty })}
                 >
                   {buy.isPending ? "Realizuję…" : "Potwierdź zakup"}
