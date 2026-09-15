@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedArsenalRouteImport } from './routes/_authenticated/arsenal'
 import { Route as AuthenticatedPanstwoRouteImport } from './routes/_authenticated/panstwo'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
 import { Route as AuthenticatedRegionyRouteImport } from './routes/_authenticated/regiony'
@@ -37,6 +38,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedArsenalRoute = AuthenticatedArsenalRouteImport.update({
+  id: '/arsenal',
+  path: '/arsenal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPanstwoRoute = AuthenticatedPanstwoRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/regiony': typeof AuthenticatedRegionyRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/regiony': typeof AuthenticatedRegionyRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/arsenal': typeof AuthenticatedArsenalRoute
   '/_authenticated/panstwo': typeof AuthenticatedPanstwoRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/regiony': typeof AuthenticatedRegionyRoute
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/arsenal'
     | '/panstwo'
     | '/ranking'
     | '/regiony'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/arsenal'
     | '/panstwo'
     | '/ranking'
     | '/regiony'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/arsenal'
     | '/_authenticated/panstwo'
     | '/_authenticated/ranking'
     | '/_authenticated/regiony'
@@ -176,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/arsenal': {
+      id: '/_authenticated/arsenal'
+      path: '/arsenal'
+      fullPath: '/arsenal'
+      preLoaderRoute: typeof AuthenticatedArsenalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/panstwo': {
@@ -236,6 +255,7 @@ const AuthenticatedSwiatRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedArsenalRoute: typeof AuthenticatedArsenalRoute
   AuthenticatedPanstwoRoute: typeof AuthenticatedPanstwoRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedRegionyRoute: typeof AuthenticatedRegionyRoute
@@ -245,6 +265,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedArsenalRoute: AuthenticatedArsenalRoute,
   AuthenticatedPanstwoRoute: AuthenticatedPanstwoRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedRegionyRoute: AuthenticatedRegionyRoute,
