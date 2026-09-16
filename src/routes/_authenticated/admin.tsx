@@ -3,15 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
-  Activity,
-  Banknote,
   Boxes,
   Building2,
   CalendarClock,
-  CheckCircle2,
   ChevronRight,
   CircleDollarSign,
-  Factory,
   History,
   PackagePlus,
   Radar,
@@ -20,14 +16,11 @@ import {
   Shield,
   ShieldAlert,
   ShoppingCart,
-  Target,
   Truck,
   Trash2,
-  TrendingUp,
   UserCog,
   Users,
   Warehouse,
-  Wheat,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle } from "@/components/stat";
