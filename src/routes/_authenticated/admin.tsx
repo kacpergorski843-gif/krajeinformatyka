@@ -21,7 +21,7 @@ import {
   ShieldAlert,
   ShoppingCart,
   Target,
-  Tank,
+  Truck,
   Trash2,
   TrendingUp,
   UserCog,
@@ -159,7 +159,7 @@ const MILITARY_FIELDS: FieldKey[] = ["soldier_packs", "tank_packs", "aa_defense"
 
 const MILITARY_ICONS: Record<string, typeof Shield> = {
   soldier_packs: Users,
-  tank_packs: Tank,
+  tank_packs: Truck,
   aa_defense: Radar,
   missile_1: Rocket,
   missile_2: Rocket,
@@ -370,7 +370,7 @@ function CountriesTab() {
         </Panel>
       )}
 
-      <CountryDashboard country={countryQuery.data?.find((country) => country.country_id === openId) ?? null} users={users} shopItems={[]} onClose={() => setOpenId(null)} />
+      <CountryDashboard country={countryQuery.data?.find((country) => country.country_id === openId) ?? null} users={users} onClose={() => setOpenId(null)} />
       <ConfirmDialog open={creating} onOpenChange={setCreating} title="Utwórz nowe państwo" description="Nowe państwo zostanie dodane bez właściciela i będzie dostępne do przypisania graczowi." confirmLabel="Utwórz państwo" pending={create.isPending} disabled={!newName.trim()} onConfirm={() => create.mutate()}>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem]">
           <Field label="Nazwa państwa"><Input value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Nazwa" /></Field>
@@ -381,7 +381,7 @@ function CountriesTab() {
   );
 }
 
-function CountryDashboard({ country, users, onClose }: { country: CountryStats | null; users: AdminUser[]; shopItems: ShopItem[]; onClose: () => void }) {
+function CountryDashboard({ country, users, onClose }: { country: CountryStats | null; users: AdminUser[]; onClose: () => void }) {
   const queryClient = useQueryClient();
   const regions = useQuery(regionsQuery(country?.country_id ?? null));
   const history = useQuery(transactionsQuery(country?.country_id ?? null, 50));
@@ -455,7 +455,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   );
 }
 
-function AdjustmentField({ field, country, value, onChange }: { field: FieldKey; country: CountryStats; value?: string; onChange: (value: string) => void }) {
+function AdjustmentField({ field, country, value, onChange }: { field: FieldKey; country: CountryStats; value: string | undefined; onChange: (value: string) => void }) {
   const current = Number(country[field]) || 0;
   const next = value === undefined || value === "" ? current : Math.max(0, Number(value) || 0);
   const delta = next - current;
@@ -534,7 +534,7 @@ function ShopTab() {
 }
 
 function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<string, string> | null; items: ShopItem[]; onEdit: (value: Record<string, string> | null) => void; onSave: (value: Record<string, string>) => void; pending: boolean }) {
-  return <Dialog open={!!edit} onOpenChange={(open) => !open && onEdit(null)}><DialogContent className="admin-dialog max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl overflow-y-auto sm:w-[calc(100%-2rem)]"><DialogHeader><DialogTitle>{edit?.code ? "Edycja produktu" : "Nowy produkt"}</DialogTitle><DialogDescription>Te wartości są wspólnym źródłem dla sklepu i walidacji zakupów.</DialogDescription></DialogHeader>{edit ? <div className="space-y-5"><section><p className="label-hud mb-3">Identyfikacja</p><div className="grid gap-3 sm:grid-cols-2">{[["code","Kod produktu"],["name","Nazwa"],["category","Kategoria"],["building","Typ budynku"],["produces","Produkowany surowiec"]].map(([key,label]) => <Field key={key} label={label}><Input value={edit[key] ?? ""} disabled={key === "code" && items.some((item) => item.code === edit.code)} onChange={(event) => onEdit({ ...edit, [key]: event.target.value })} /></Field>)}</div><Field label="Opis" className="mt-3"><Input value={edit.description ?? ""} onChange={(event) => onEdit({ ...edit, description: event.target.value })} /></Field></section><section><p className="label-hud mb-3">Koszty i efekty</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{SHOP_NUMERIC.map(([key,label]) => <Field key={key} label={label}><Input className="num" type="number" min="0" value={edit[key] ?? "0"} onChange={(event) => onEdit({ ...edit, [key]: event.target.value })} /></Field>)}</div></section><div className="flex items-center gap-3 border border-border p-3"><Switch checked={edit.active === "true"} onCheckedChange={(active) => onEdit({ ...edit, active: String(active) })} /><span className="text-sm">Produkt widoczny w sklepie</span></div><div className="grid gap-2 sm:grid-cols-2"><Button variant="outline" onClick={() => onEdit(null)}>Anuluj</Button><Button disabled={!edit.code.trim() || !edit.name.trim() || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button></div></div> : null}</DialogContent></Dialog>;
+  return <Dialog open={!!edit} onOpenChange={(open) => !open && onEdit(null)}><DialogContent className="admin-dialog max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl overflow-y-auto sm:w-[calc(100%-2rem)]"><DialogHeader><DialogTitle>{edit?.code ? "Edycja produktu" : "Nowy produkt"}</DialogTitle><DialogDescription>Te wartości są wspólnym źródłem dla sklepu i walidacji zakupów.</DialogDescription></DialogHeader>{edit ? <div className="space-y-5"><section><p className="label-hud mb-3">Identyfikacja</p><div className="grid gap-3 sm:grid-cols-2">{([["code","Kod produktu"],["name","Nazwa"],["category","Kategoria"],["building","Typ budynku"],["produces","Produkowany surowiec"]] as const).map(([key,label]) => <Field key={key} label={label}><Input value={edit[key] ?? ""} disabled={key === "code" && items.some((item) => item.code === edit["code"])} onChange={(event) => onEdit({ ...edit, [key]: event.target.value })} /></Field>)}</div><Field label="Opis" className="mt-3"><Input value={edit["description"] ?? ""} onChange={(event) => onEdit({ ...edit, description: event.target.value })} /></Field></section><section><p className="label-hud mb-3">Koszty i efekty</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{SHOP_NUMERIC.map(([key,label]) => <Field key={key} label={label}><Input className="num" type="number" min="0" value={edit[key] ?? "0"} onChange={(event) => onEdit({ ...edit, [key]: event.target.value })} /></Field>)}</div></section><div className="flex items-center gap-3 border border-border p-3"><Switch checked={edit["active"] === "true"} onCheckedChange={(active) => onEdit({ ...edit, active: String(active) })} /><span className="text-sm">Produkt widoczny w sklepie</span></div><div className="grid gap-2 sm:grid-cols-2"><Button variant="outline" onClick={() => onEdit(null)}>Anuluj</Button><Button disabled={!(edit["code"] ?? "").trim() || !(edit["name"] ?? "").trim() || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button></div></div> : null}</DialogContent></Dialog>;
 }
 
 function EconomyTab({ countdown }: { countdown: string }) {
@@ -545,7 +545,7 @@ function EconomyTab({ countdown }: { countdown: string }) {
   const runs = (runQuery.data ?? []) as unknown as EconomyRun[];
   const totals = (countryQuery.data ?? []).reduce((sum, country) => ({ income: sum.income + Number(country.gross_income), coal: sum.coal + Number(country.coal_prod), oil: sum.oil + Number(country.oil_prod), copper: sum.copper + Number(country.copper_prod), iron: sum.iron + Number(country.iron_prod), uranium: sum.uranium + Number(country.uranium_prod), upkeep: sum.upkeep + Number(country.coal_upkeep) }), { income: 0, coal: 0, oil: 0, copper: 0, iron: 0, uranium: 0, upkeep: 0 });
   const run = useMutation({ mutationFn: () => rpc<{ ok: boolean; reason?: string }>("run_daily_economy", {}), onSuccess: (result) => { result?.ok ? toast.success("Cykl dobowy rozliczony") : toast.info("Cykl na dzisiaj został już rozliczony"); setConfirm(false); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
-  return <div className="space-y-4"><div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"><Panel className="hud-frame p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div><p className="label-hud">Następny automatyczny cykl</p><p className="num mt-2 text-3xl text-primary sm:text-4xl">{countdown}</p><p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p></div><CalendarClock className="size-7 text-primary" /></div><Button className="mt-5 w-full sm:w-auto" onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button></Panel><Panel className="p-4"><p className="label-hud">Prognoza kolejnego cyklu</p><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Przychód KR" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep)}`} tone="destructive" />{[["Węgiel",totals.coal],["Ropa",totals.oil],["Miedź",totals.copper],["Żelazo",totals.iron],["Uran",totals.uranium]].map(([label,value]) => <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(Number(value))}`} tone="success" />)}</div></Panel></div><SectionTitle>Ostatnie rozliczenia</SectionTitle><Panel className="divide-y divide-border p-0">{runs.filter((entry) => Number(entry.summary?.total_kr ?? 0) !== 0).map((entry) => <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="text-sm">Cykl {entry.run_date}</p><p className="text-xs text-muted-foreground">{dateTime(entry.ran_at)}</p></div><p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.total_kr ?? 0))}</p></div>)}{runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}</Panel><ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Uruchomić cykl dobowy?" description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`} confirmLabel="Uruchom cykl" destructive pending={run.isPending} onConfirm={() => run.mutate()}><div className="grid grid-cols-2 gap-2"><ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep)} węgla`} tone="destructive" /></div></ConfirmDialog></div>;
+  return <div className="space-y-4"><div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"><Panel className="hud-frame p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div><p className="label-hud">Następny automatyczny cykl</p><p className="num mt-2 text-3xl text-primary sm:text-4xl">{countdown}</p><p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p></div><CalendarClock className="size-7 text-primary" /></div><Button className="mt-5 w-full sm:w-auto" onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button></Panel><Panel className="p-4"><p className="label-hud">Prognoza kolejnego cyklu</p><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Przychód KR" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep)}`} tone="destructive" />{[["Węgiel",totals.coal],["Ropa",totals.oil],["Miedź",totals.copper],["Żelazo",totals.iron],["Uran",totals.uranium]].map(([label,value]) => <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(Number(value))}`} tone="success" />)}</div></Panel></div><SectionTitle>Ostatnie rozliczenia</SectionTitle><Panel className="divide-y divide-border p-0">{runs.filter((entry) => Number(entry.summary?.["total_kr"] ?? 0) !== 0).map((entry) => <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="text-sm">Cykl {entry.run_date}</p><p className="text-xs text-muted-foreground">{dateTime(entry.ran_at)}</p></div><p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.["total_kr"] ?? 0))}</p></div>)}{runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}</Panel><ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Uruchomić cykl dobowy?" description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`} confirmLabel="Uruchom cykl" destructive pending={run.isPending} onConfirm={() => run.mutate()}><div className="grid grid-cols-2 gap-2"><ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep)} węgla`} tone="destructive" /></div></ConfirmDialog></div>;
 }
 
 type HistoryFilter = "all" | "adjustments" | "build" | "cycles" | "military" | "missiles";
@@ -573,14 +573,14 @@ function classifyTransaction(transaction: TransactionRow): HistoryFilter {
   return "adjustments";
 }
 
-function TransactionItem({ transaction, country }: { transaction: TransactionRow; country?: string }) {
+function TransactionItem({ transaction, country }: { transaction: TransactionRow; country: string | undefined }) {
   const amount = Number(transaction.amount_kr);
   return <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{transaction.label}</p><p className="truncate text-xs text-muted-foreground">{country ? `${country} · ` : ""}{dateTime(transaction.created_at)}</p></div><p className={`num shrink-0 text-sm ${amount > 0 ? "text-success" : amount < 0 ? "text-destructive" : "text-inactive"}`}>{amount > 0 ? "+" : ""}{fmtKR(transaction.amount_kr)}</p></div>;
 }
 
-function AuditItem({ action, country }: { action: AdminActionRow; country?: string }) {
-  const oldValues = (action.details?.old ?? {}) as Record<string, unknown>;
-  const newValues = (action.details?.new ?? {}) as Record<string, unknown>;
+function AuditItem({ action, country }: { action: AdminActionRow; country: string | undefined }) {
+  const oldValues = (action.details?.["old"] ?? {}) as Record<string, unknown>;
+  const newValues = (action.details?.["new"] ?? {}) as Record<string, unknown>;
   const keys = Object.keys(newValues);
   return <div className="min-w-0 p-3"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div className="min-w-0"><p className="truncate text-sm">{action.action}</p><p className="truncate text-xs text-muted-foreground">{country ?? "Operacja globalna"}</p></div><p className="shrink-0 text-xs text-muted-foreground">{dateTime(action.created_at)}</p></div>{keys.length ? <div className="admin-scrollbar mt-2 max-w-full overflow-x-auto"><div className="flex min-w-max gap-2">{keys.map((key) => <div key={key} className="border border-border bg-secondary/30 px-2 py-1 text-xs"><span className="text-muted-foreground">{FIELD_LABELS[key as FieldKey] ?? key}: </span><span className="num text-destructive">{units(String(oldValues[key] ?? "—"))}</span><span className="mx-1 text-muted-foreground">→</span><span className="num text-success">{units(String(newValues[key] ?? "—"))}</span></div>)}</div></div> : null}</div>;
 }
