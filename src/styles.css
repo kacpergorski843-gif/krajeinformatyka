@@ -122,6 +122,12 @@
     border-color: var(--color-border);
   }
 
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -231,4 +237,16 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-muted-foreground);
+}
+
+
+@utility admin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brass) var(--color-secondary);
+}
+
+@utility admin-dialog {
+  border-color: color-mix(in oklab, var(--color-brass) 45%, var(--color-border));
+  background: color-mix(in oklab, var(--color-card) 96%, transparent);
+  box-shadow: 0 24px 80px color-mix(in oklab, var(--color-background) 72%, transparent);
 }

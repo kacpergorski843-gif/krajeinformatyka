@@ -8,6 +8,16 @@ import { countriesQuery, meQuery } from "@/lib/api";
 import { krShort, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/swiat")({
+  head: () => ({
+    meta: [
+      { title: "Świat i państwa — COUNTRY RP" },
+      { name: "description", content: "Przegląd państw, ich gospodarek, regionów i siły militarnej." },
+      { property: "og:title", content: "Świat i państwa — COUNTRY RP" },
+      { property: "og:description", content: "Przegląd państw, ich gospodarek, regionów i siły militarnej." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: World,
 });
 

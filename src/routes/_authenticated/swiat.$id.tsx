@@ -6,6 +6,16 @@ import { countriesQuery, meQuery, regionsQuery } from "@/lib/api";
 import { BUILDING_LABELS, kr, krShort, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/swiat/$id")({
+  head: () => ({
+    meta: [
+      { title: "Dane państwa — COUNTRY RP" },
+      { name: "description", content: "Szczegółowy podgląd gospodarki, wojska, surowców i regionów państwa." },
+      { property: "og:title", content: "Dane państwa — COUNTRY RP" },
+      { property: "og:description", content: "Szczegółowy podgląd gospodarki, wojska, surowców i regionów państwa." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: CountryDetail,
 });
 

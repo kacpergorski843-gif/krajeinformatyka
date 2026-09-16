@@ -74,6 +74,7 @@ export function AppShell({
               </Link>
             ))}
             <button
+              type="button"
               onClick={signOut}
               className="text-inactive hover:text-foreground mt-2 flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm"
             >
@@ -104,15 +105,14 @@ export function AppShell({
 
       <nav className="border-border bg-card/95 fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur lg:hidden">
         <div
-          className="mx-auto grid max-w-lg"
-          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+          className="admin-scrollbar mx-auto flex max-w-full overflow-x-auto px-1"
         >
           {items.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               activeProps={{ className: "text-primary" }}
-              className="text-inactive flex flex-col items-center gap-1 py-2.5 text-[10px]"
+              className="text-inactive flex min-w-14 flex-1 flex-col items-center gap-1 py-2.5 text-[10px]"
             >
               <item.icon className="size-5" strokeWidth={1.5} />
               <span className="max-w-full truncate px-0.5">{item.label}</span>
