@@ -36,6 +36,18 @@ export type CountryStats = {
   uranium_prod: string;
   forts: number;
   military_value: string;
+  vote_potential: number;
+  region_aa_total: number;
+};
+
+export type PublicRankingRow = {
+  country_id: string;
+  name: string;
+  gross_income: string;
+  vote_potential: number;
+  soldier_packs: number;
+  tank_packs: number;
+  regions_count: number;
 };
 
 export type ShopItem = {
@@ -67,6 +79,8 @@ export type MissileStrike = {
   missile_code: string;
   result: string;
   aa_defense: number;
+  region_aa: number | null;
+  required_aa: number | null;
   destroyed: { slot_index: number; building: string }[];
   created_at: string;
 };
@@ -138,6 +152,7 @@ export type RegionWithSlots = {
   id: string;
   name: string;
   country_id: string;
+  aa_defense: number;
   slots: { id: string; slot_index: number; building: string }[];
 };
 
@@ -145,6 +160,7 @@ type RegionRow = {
   id: string;
   name: string;
   country_id: string;
+  aa_defense: number;
   region_slots: RegionWithSlots["slots"] | null;
 };
 
@@ -157,7 +173,7 @@ export function regionsQuery(countryId: string | null | undefined) {
       const rows = await unwrap(
         supabase
           .from("regions")
-          .select("id, name, country_id, region_slots(id, slot_index, building)")
+          .select("id, name, country_id, aa_defense, region_slots(id, slot_index, building)")
           .eq("country_id", countryId!)
           .order("created_at"),
       );
@@ -165,6 +181,7 @@ export function regionsQuery(countryId: string | null | undefined) {
         id: r.id,
         name: r.name,
         country_id: r.country_id,
+        aa_defense: r.aa_defense ?? 0,
         slots: [...(r.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
       }));
 
@@ -238,13 +255,14 @@ export const allRegionsQuery = queryOptions({
     const rows = await unwrap(
       supabase
         .from("regions")
-        .select("id, name, country_id, region_slots(id, slot_index, building)")
+        .select("id, name, country_id, aa_defense, region_slots(id, slot_index, building)")
         .order("created_at"),
     );
     return ((rows ?? []) as unknown as RegionRow[]).map((r) => ({
       id: r.id,
       name: r.name,
       country_id: r.country_id,
+      aa_defense: r.aa_defense ?? 0,
       slots: [...(r.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
     }));
   },
@@ -260,4 +278,13 @@ export const strikesQuery = queryOptions({
         .order("created_at", { ascending: false })
         .limit(50),
     )) as unknown as MissileStrike[],
+});
+
+export const publicRankingQuery = queryOptions({
+  queryKey: ["public_ranking"],
+  queryFn: async () =>
+    (await unwrap(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase.from as any)("public_ranking").select("*"),
+    )) as unknown as PublicRankingRow[],
 });
