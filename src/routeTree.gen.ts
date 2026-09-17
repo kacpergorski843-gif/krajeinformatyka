@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as RankingPublicznyRouteImport } from './routes/ranking-publiczny'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedArsenalRouteImport } from './routes/_authenticated/arsenal'
 import { Route as AuthenticatedPanstwoRouteImport } from './routes/_authenticated/panstwo'
@@ -33,6 +34,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingPublicznyRoute = RankingPublicznyRouteImport.update({
+  id: '/ranking-publiczny',
+  path: '/ranking-publiczny',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -79,6 +85,7 @@ const AuthenticatedSwiatIdRoute = AuthenticatedSwiatIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ranking-publiczny': typeof RankingPublicznyRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ranking-publiczny': typeof RankingPublicznyRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/ranking-publiczny': typeof RankingPublicznyRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/arsenal': typeof AuthenticatedArsenalRoute
   '/_authenticated/panstwo': typeof AuthenticatedPanstwoRoute
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/ranking-publiczny'
     | '/admin'
     | '/arsenal'
     | '/panstwo'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/ranking-publiczny'
     | '/admin'
     | '/arsenal'
     | '/panstwo'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/ranking-publiczny'
     | '/_authenticated/admin'
     | '/_authenticated/arsenal'
     | '/_authenticated/panstwo'
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  RankingPublicznyRoute: typeof RankingPublicznyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking-publiczny': {
+      id: '/ranking-publiczny'
+      path: '/ranking-publiczny'
+      fullPath: '/ranking-publiczny'
+      preLoaderRoute: typeof RankingPublicznyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  RankingPublicznyRoute: RankingPublicznyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
