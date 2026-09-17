@@ -36,6 +36,13 @@
       "when": 1789479407890,
       "tag": "0004_missile_strikes_and_admin_shop",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789620524396,
+      "tag": "0005_update3_region_aa_and_salvo",
+      "breakpoints": true
     }
   ]
 }

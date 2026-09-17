@@ -1,0 +1,124 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Coins, Vote, ArrowLeft } from "lucide-react";
+import { Panel } from "@/components/stat";
+import { publicRankingQuery } from "@/lib/api";
+import type { PublicRankingRow } from "@/lib/api";
+import { fmtKR, units } from "@/lib/format";
+
+export const Route = createFileRoute("/ranking-publiczny")({
+  head: () => ({
+    meta: [
+      { title: "Ranking państw — Nation Dynamics" },
+      {
+        name: "description",
+        content:
+          "Publiczny ranking państw: największe dzienne zarobki oraz potencjał głosów wojennych.",
+      },
+      { property: "og:title", content: "Ranking państw — Nation Dynamics" },
+      {
+        property: "og:description",
+        content: "Największe zarobki dzienne i potencjał głosów wojennych państw.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: PublicRanking,
+});
+
+type Mode = "income" | "votes";
+
+function PublicRanking() {
+  const { data, isLoading, isError } = useQuery(publicRankingQuery);
+  const [mode, setMode] = useState<Mode>("income");
+
+  const list = [...(data ?? [])].sort((a, b) =>
+    mode === "income"
+      ? Number(b.gross_income) - Number(a.gross_income)
+      : b.vote_potential - a.vote_potential,
+  );
+
+  return (
+    <div className="tactical-bg min-h-screen">
+      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+        <Link to="/" className="text-muted-foreground inline-flex items-center gap-2 text-xs">
+          <ArrowLeft className="size-3.5" strokeWidth={1.5} /> Strona główna
+        </Link>
+        <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Ranking państw</h1>
+        <p className="label-hud">Podgląd publiczny, tylko do odczytu</p>
+
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          {(
+            [
+              ["income", "Największe zarobki", Coins],
+              ["votes", "Potencjał głosów", Vote],
+            ] as const
+          ).map(([key, label, Icon]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setMode(key)}
+              className={`flex min-w-0 items-center justify-center gap-2 rounded-sm border px-3 py-2.5 text-xs tracking-[0.12em] uppercase ${
+                mode === key
+                  ? "border-primary/70 text-primary bg-secondary"
+                  : "border-border text-muted-foreground"
+              }`}
+            >
+              <Icon className="size-4 shrink-0" strokeWidth={1.5} />
+              <span className="truncate">{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {isLoading ? <p className="text-muted-foreground mt-6 text-sm">Wczytywanie…</p> : null}
+        {isError ? (
+          <p className="text-destructive mt-6 text-sm">Nie udało się wczytać rankingu.</p>
+        ) : null}
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {list.slice(0, 3).map((c, i) => (
+            <Panel key={c.country_id} className="hud-frame">
+              <p className="text-primary font-display text-xs tracking-[0.24em] uppercase">
+                RANK {String(i + 1).padStart(2, "0")}
+              </p>
+              <p className="mt-2 truncate text-base font-semibold">{c.name}</p>
+              <p className="num text-accent mt-2 text-lg">{valueOf(c, mode)}</p>
+              <p className="text-inactive mt-1 text-[11px] uppercase">{hintOf(c, mode)}</p>
+            </Panel>
+          ))}
+        </div>
+
+        <Panel className="divide-border mt-3 divide-y p-0">
+          {list.slice(3).map((c, i) => (
+            <div
+              key={c.country_id}
+              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5"
+            >
+              <span className="num text-inactive w-6 shrink-0 text-sm">{i + 4}</span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{c.name}</span>
+                <span className="text-inactive text-[11px] uppercase">{hintOf(c, mode)}</span>
+              </span>
+              <span className="num text-primary shrink-0 text-sm">{valueOf(c, mode)}</span>
+            </div>
+          ))}
+          {!isLoading && list.length === 0 ? (
+            <p className="text-muted-foreground p-3 text-sm">Brak państw w rozgrywce.</p>
+          ) : null}
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function valueOf(c: PublicRankingRow, mode: Mode) {
+  return mode === "income" ? fmtKR(c.gross_income) : `${units(c.vote_potential)} gł.`;
+}
+
+function hintOf(c: PublicRankingRow, mode: Mode) {
+  return mode === "income"
+    ? `Regiony: ${c.regions_count}`
+    : `Żołnierze ${units(c.soldier_packs * 500000)} · Czołgi ${units(c.tank_packs * 50)}`;
+}

@@ -33,7 +33,11 @@ function normalizeUsername(raw: string) {
 
 function AuthPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const initialMode =
+    typeof window !== "undefined" && window.location.search.includes("mode=signup")
+      ? "signup"
+      : "login";
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);

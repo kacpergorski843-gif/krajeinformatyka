@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Rocket, ShieldCheck, Target } from "lucide-react";
+import { useState } from "react";
+import { Rocket, ShieldCheck, Crosshair, Target, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -13,433 +14,478 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { allRegionsQuery, countriesQuery, meQuery, rpc, strikesQuery } from "@/lib/api";
+import {
+  allRegionsQuery,
+  countriesQuery,
+  meQuery,
+  regionsQuery,
+  rpc,
+  strikesQuery,
+} from "@/lib/api";
 import type { RegionWithSlots } from "@/lib/api";
 import { BUILDING_LABELS, MISSILE_LABELS, dateTime, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/arsenal")({
   head: () => ({
     meta: [
-      { title: "Arsenał — COUNTRY RP" },
+      { title: "Arsenał — Nation Dynamics" },
       {
         name: "description",
-        content: "Rakiety, obrona przeciwlotnicza i dziennik operacji rakietowych twojego państwa.",
+        content: "Wystrzel rakiety I–III, prowadź salwy i sprawdzaj obronę OPL w regionach.",
       },
-      { property: "og:title", content: "Arsenał — COUNTRY RP" },
+      { property: "og:title", content: "Arsenał — Nation Dynamics" },
       {
         property: "og:description",
-        content: "Rakiety, obrona przeciwlotnicza i dziennik operacji rakietowych.",
+        content: "Rakiety, salwy i obrona przeciwlotnicza regionów.",
       },
     ],
   }),
   component: Arsenal,
 });
 
-const MISSILES = [
-  {
-    code: "missile_1",
-    targets: 1,
-    aa: 1,
-    desc: "Niszczy 1 wybrany budynek w regionie.",
-  },
-  {
-    code: "missile_2",
-    targets: 2,
-    aa: 2,
-    desc: "Niszczy 2 wybrane budynki w regionie.",
-  },
+type MissileCode = "missile_1" | "missile_2" | "missile_3";
+
+const MISSILES: {
+  code: MissileCode;
+  targets: number;
+  requiredAa: number;
+  effect: string;
+}[] = [
+  { code: "missile_1", targets: 1, requiredAa: 1, effect: "Niszczy 1 wybrany budynek" },
+  { code: "missile_2", targets: 2, requiredAa: 2, effect: "Niszczy 2 wybrane budynki" },
   {
     code: "missile_3",
     targets: 0,
-    aa: 10,
-    desc: "Niszczy wszystkie fabryki ALBO wszystkie wytwórnie surowców w regionie.",
+    requiredAa: 10,
+    effect: "Niszczy wszystkie fabryki LUB wszystkie zakłady surowcowe",
   },
-] as const;
+];
 
-type Step = "missile" | "country" | "region" | "target" | "confirm";
+type Phase = "idle" | "confirm" | "flight" | "result";
+
+type SalvoResult = {
+  launched?: number;
+  intercepted?: number;
+  impacts?: number;
+  destroyed?: number;
+  stopped_reason?: string | null;
+};
 
 function Arsenal() {
   const { data: me } = useQuery(meQuery);
   const { data: countries } = useQuery(countriesQuery);
-  const { data: regions } = useQuery(allRegionsQuery);
+  const { data: allRegions } = useQuery(allRegionsQuery);
+  const { data: myRegions } = useQuery(regionsQuery(me?.countryId));
   const { data: strikes } = useQuery(strikesQuery);
   const queryClient = useQueryClient();
 
   const country = countries?.find((c) => c.country_id === me?.countryId);
 
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<Step>("missile");
-  const [missile, setMissile] = useState<string | null>(null);
+  const [missile, setMissile] = useState<MissileCode | null>(null);
   const [targetCountry, setTargetCountry] = useState<string | null>(null);
-  const [region, setRegion] = useState<RegionWithSlots | null>(null);
+  const [regionId, setRegionId] = useState<string | null>(null);
   const [slotIds, setSlotIds] = useState<string[]>([]);
   const [mode, setMode] = useState<"factories" | "mines">("factories");
+  const [countText, setCountText] = useState("1");
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [result, setResult] = useState<SalvoResult | null>(null);
 
-  const spec = MISSILES.find((m) => m.code === missile);
-  const defender = countries?.find((c) => c.country_id === targetCountry);
-
-  const countryRegions = useMemo(
-    () => (regions ?? []).filter((r) => r.country_id === targetCountry),
-    [regions, targetCountry],
-  );
-
-  const modeTargets = useMemo(() => {
-    if (!region) return [];
-    return region.slots.filter((s) =>
-      mode === "factories" ? s.building.startsWith("factory_") : s.building.startsWith("mine_"),
-    );
-  }, [region, mode]);
+  const count = Math.min(100, Math.max(1, Math.floor(Number(countText) || 0) || 1));
+  const spec = MISSILES.find((m) => m.code === missile) ?? null;
+  const region = (allRegions ?? []).find((r) => r.id === regionId) ?? null;
+  const enemyRegions = (allRegions ?? []).filter((r) => r.country_id === targetCountry);
+  const stock = missile && country ? Number(country[missile]) : 0;
 
   function reset() {
-    setStep("missile");
     setMissile(null);
     setTargetCountry(null);
-    setRegion(null);
+    setRegionId(null);
     setSlotIds([]);
-    setMode("factories");
+    setCountText("1");
+    setPhase("idle");
   }
 
   const launch = useMutation({
     mutationFn: () =>
-      rpc<{ result: string }>("launch_missile", {
+      rpc<SalvoResult>("launch_salvo", {
         p_country_id: me?.countryId,
         p_missile_code: missile,
-        p_region_id: region?.id,
+        p_region_id: regionId,
         p_slot_ids: slotIds,
         p_mode: mode,
+        p_count: count,
       }),
-    onSuccess: (res) => {
-      if (res?.result === "PRZECHWYCONA") toast.error("Rakieta PRZECHWYCONA przez OPL celu");
-      else toast.success("CEL ZNISZCZONY");
-      setOpen(false);
-      reset();
+    onSuccess: (data) => {
+      setResult(data);
+      setPhase("flight");
+      window.setTimeout(() => setPhase("result"), 1900);
       queryClient.invalidateQueries();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      setPhase("idle");
+      toast.error(e.message);
+    },
   });
 
-  const inventory = (code: string) => {
-    if (!country) return 0;
-    if (code === "missile_1") return country.missile_1;
-    if (code === "missile_2") return country.missile_2;
-    return country.missile_3;
-  };
+  const targetsPicked =
+    spec?.code === "missile_3" ? true : slotIds.length > 0 && slotIds.length <= (spec?.targets ?? 0);
+  const canLaunch = !!missile && !!regionId && targetsPicked && stock >= count;
 
-  const nameOf = (id: string | null) =>
-    countries?.find((c) => c.country_id === id)?.name ?? "nieznane";
-  const flagOf = (id: string | null) => countries?.find((c) => c.country_id === id)?.flag ?? "";
+  const modeSlots = (r: RegionWithSlots) =>
+    r.slots.filter((s) =>
+      mode === "factories" ? s.building.startsWith("factory_") : s.building.startsWith("mine_"),
+    );
 
   return (
-    <AppShell
-      me={me ?? null}
-      title="Arsenał"
-      subtitle={country ? `${country.flag} ${country.name}` : "Brak przypisanego państwa"}
-    >
-      {!country ? (
-        <Panel className="hud-frame p-4">
-          <p className="text-muted-foreground text-sm">
-            Arsenał będzie dostępny po przypisaniu państwa przez administratora.
-          </p>
-        </Panel>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat
-              label="OPL"
-              value={units(country.aa_defense)}
-              hint="Nie zużywa się w obronie"
-              tone="primary"
-              icon={<ShieldCheck className="size-4" strokeWidth={1.5} />}
-            />
-            <Stat label="Rakieta I" value={units(country.missile_1)} hint="1 budynek" />
-            <Stat label="Rakieta II" value={units(country.missile_2)} hint="2 budynki" />
-            <Stat label="Rakieta III" value={units(country.missile_3)} hint="Cały typ w regionie" />
+    <AppShell me={me ?? null} title="Arsenał" subtitle="Rakiety, salwy i obrona OPL">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Stat label="Rakiety I" value={units(country?.missile_1 ?? 0)} tone="primary" />
+        <Stat label="Rakiety II" value={units(country?.missile_2 ?? 0)} tone="primary" />
+        <Stat label="Rakiety III" value={units(country?.missile_3 ?? 0)} tone="primary" />
+      </div>
+
+      <SectionTitle>Obrona OPL w Twoich regionach</SectionTitle>
+      <Panel className="divide-border divide-y p-0">
+        {(myRegions ?? []).map((r) => (
+          <div key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2.5">
+            <p className="truncate text-sm">{r.name}</p>
+            <p
+              className={`num flex shrink-0 items-center gap-1.5 text-sm ${
+                r.aa_defense === 0 ? "text-inactive" : "text-info"
+              }`}
+            >
+              <ShieldCheck className="size-3.5" strokeWidth={1.5} /> {units(r.aa_defense)} OPL
+            </p>
           </div>
+        ))}
+        {myRegions && myRegions.length === 0 ? (
+          <p className="text-muted-foreground p-3 text-sm">Brak regionów do obrony.</p>
+        ) : null}
+      </Panel>
+      <p className="text-inactive mt-2 text-xs">
+        OPL kupujesz w sklepie dla wybranego regionu. Rakieta I wymaga 1 OPL, II — 2 OPL, III — 10
+        OPL w atakowanym regionie. Za mało OPL: żadne nie zostaje zużyte, cele padają.
+      </p>
 
-          <Button
-            className="mt-4 w-full py-6 text-sm tracking-[0.2em] uppercase"
+      <SectionTitle>Wystrzel rakietę</SectionTitle>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {MISSILES.map((m) => (
+          <button
+            key={m.code}
+            type="button"
             onClick={() => {
-              reset();
-              setOpen(true);
+              setMissile(m.code);
+              setSlotIds([]);
             }}
+            className={`panel hud-frame p-4 text-left ${
+              missile === m.code ? "border-primary/70" : ""
+            }`}
           >
-            <Rocket className="mr-2 size-4" strokeWidth={1.5} /> Wystrzel rakietę
-          </Button>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+              <p className="truncate text-sm font-semibold">{MISSILE_LABELS[m.code]}</p>
+              <Rocket
+                className={`size-4 shrink-0 ${missile === m.code ? "text-primary" : "text-inactive"}`}
+                strokeWidth={1.5}
+              />
+            </div>
+            <p className="text-muted-foreground mt-1 text-xs">{m.effect}</p>
+            <p className="text-info mt-1 text-xs">Przechwycenie od {m.requiredAa} OPL</p>
+            <p className={`num mt-2 text-xs ${Number(country?.[m.code] ?? 0) === 0 ? "text-inactive" : "text-primary"}`}>
+              W arsenale: {units(country?.[m.code] ?? 0)}
+            </p>
+          </button>
+        ))}
+      </div>
 
-          <Panel className="mt-4 p-4">
-            <p className="label-hud">Obrona przeciwlotnicza</p>
-            <ul className="text-muted-foreground mt-2 space-y-1 text-xs">
-              <li>Rakieta I zostaje przechwycona przy 1 lub więcej OPL celu.</li>
-              <li>Rakieta II — przy 2 lub więcej OPL.</li>
-              <li>Rakieta III — przy 10 lub więcej OPL.</li>
-              <li>OPL nigdy się nie zużywa, rakieta zużywa się także po przechwyceniu.</li>
-            </ul>
+      {missile ? (
+        <>
+          <SectionTitle>Cel — państwo</SectionTitle>
+          <Panel className="divide-border divide-y p-0">
+            {(countries ?? [])
+              .filter((c) => c.country_id !== me?.countryId)
+              .map((c) => (
+                <button
+                  key={c.country_id}
+                  type="button"
+                  onClick={() => {
+                    setTargetCountry(c.country_id);
+                    setRegionId(null);
+                    setSlotIds([]);
+                  }}
+                  className={`hover:bg-secondary/50 grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 text-left ${
+                    targetCountry === c.country_id ? "bg-secondary" : ""
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm">{c.name}</span>
+                    <span className="text-inactive text-[11px] uppercase">
+                      Regiony: {c.regions_count} · OPL łącznie: {units(c.region_aa_total)}
+                    </span>
+                  </span>
+                  <ChevronRight className="text-inactive size-4 shrink-0" strokeWidth={1.5} />
+                </button>
+              ))}
           </Panel>
         </>
-      )}
+      ) : null}
+
+      {targetCountry ? (
+        <>
+          <SectionTitle>Cel — region</SectionTitle>
+          <Panel className="divide-border divide-y p-0">
+            {enemyRegions.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => {
+                  setRegionId(r.id);
+                  setSlotIds([]);
+                }}
+                className={`hover:bg-secondary/50 grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 text-left ${
+                  regionId === r.id ? "bg-secondary" : ""
+                }`}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm">{r.name}</span>
+                  <span className="text-inactive text-[11px] uppercase">
+                    Sloty {r.slots.length}/9
+                  </span>
+                </span>
+                <span
+                  className={`num shrink-0 text-xs ${r.aa_defense === 0 ? "text-inactive" : "text-info"}`}
+                >
+                  {units(r.aa_defense)} OPL
+                </span>
+              </button>
+            ))}
+            {enemyRegions.length === 0 ? (
+              <p className="text-muted-foreground p-3 text-sm">To państwo nie ma regionów.</p>
+            ) : null}
+          </Panel>
+        </>
+      ) : null}
+
+      {region && spec ? (
+        <>
+          <SectionTitle>Cel — obiekty</SectionTitle>
+          {spec.code === "missile_3" ? (
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["factories", "Wszystkie fabryki"],
+                  ["mines", "Wszystkie zakłady surowcowe"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setMode(key)}
+                  className={`rounded-sm border px-3 py-2.5 text-xs tracking-[0.1em] uppercase ${
+                    mode === key
+                      ? "border-primary/70 text-primary bg-secondary"
+                      : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                  <span className="num text-inactive mt-1 block">
+                    {modeSlots(region).length} obiektów
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Panel className="divide-border divide-y p-0">
+              {region.slots.map((s) => {
+                const picked = slotIds.includes(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() =>
+                      setSlotIds((prev) =>
+                        prev.includes(s.id)
+                          ? prev.filter((x) => x !== s.id)
+                          : prev.length >= spec.targets
+                            ? prev
+                            : [...prev, s.id],
+                      )
+                    }
+                    className={`hover:bg-secondary/50 grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 text-left ${
+                      picked ? "bg-secondary" : ""
+                    }`}
+                  >
+                    <span className="num text-inactive text-xs">{s.slot_index}</span>
+                    <span className="truncate text-sm">{BUILDING_LABELS[s.building]}</span>
+                    <Crosshair
+                      className={`size-4 shrink-0 ${picked ? "text-destructive" : "text-inactive"}`}
+                      strokeWidth={1.5}
+                    />
+                  </button>
+                );
+              })}
+              {region.slots.length === 0 ? (
+                <p className="text-muted-foreground p-3 text-sm">Region jest pusty.</p>
+              ) : null}
+            </Panel>
+          )}
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div className="space-y-1.5">
+              <label htmlFor="salvo" className="label-hud">
+                Salwa — liczba rakiet
+              </label>
+              <Input
+                id="salvo"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={100}
+                value={countText}
+                onChange={(e) => setCountText(e.target.value)}
+                onBlur={() => setCountText(String(count))}
+                className="num"
+              />
+              <p className={`text-xs ${stock < count ? "text-destructive" : "text-inactive"}`}>
+                W arsenale: {units(stock)} / potrzeba {units(count)}
+              </p>
+            </div>
+            <Button
+              className="sm:w-48"
+              disabled={!canLaunch}
+              onClick={() => setPhase("confirm")}
+            >
+              <Target className="mr-1.5 size-4" strokeWidth={1.5} /> Wystrzel
+            </Button>
+          </div>
+        </>
+      ) : null}
 
       <SectionTitle>Dziennik operacji rakietowych</SectionTitle>
       <Panel className="divide-border divide-y p-0">
-        {(strikes ?? []).map((s) => {
-          const mine = s.attacker_country_id === me?.countryId;
-          const intercepted = s.result === "PRZECHWYCONA";
-          return (
-            <div key={s.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm">
-                  {flagOf(s.attacker_country_id)} {nameOf(s.attacker_country_id)} →{" "}
-                  {flagOf(s.defender_country_id)} {nameOf(s.defender_country_id)}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {MISSILE_LABELS[s.missile_code] ?? s.missile_code} · {s.region_name} · OPL{" "}
-                  {s.aa_defense} · {dateTime(s.created_at)}
-                </p>
-                {s.destroyed.length > 0 ? (
-                  <p className="text-destructive mt-1 text-xs">
-                    Zniszczone: {s.destroyed.map((d) => BUILDING_LABELS[d.building]).join(", ")}
-                  </p>
-                ) : null}
-              </div>
-              <div className="shrink-0 text-right">
-                <p
-                  className={`text-[10px] tracking-[0.14em] uppercase ${
-                    intercepted ? "text-info" : "text-destructive"
-                  }`}
-                >
-                  {s.result}
-                </p>
-                <p className="text-inactive text-[10px] uppercase">
-                  {mine ? "atak" : s.defender_country_id === me?.countryId ? "obrona" : "raport"}
-                </p>
-              </div>
+        {(strikes ?? []).slice(0, 15).map((s) => (
+          <div key={s.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2.5">
+            <div className="min-w-0">
+              <p className="truncate text-sm">
+                {MISSILE_LABELS[s.missile_code]} — region {s.region_name}
+              </p>
+              <p className="text-inactive text-[11px]">
+                {dateTime(s.created_at)} · OPL regionu {units(s.region_aa ?? s.aa_defense)} / wymagane{" "}
+                {units(s.required_aa ?? 0)}
+              </p>
             </div>
-          );
-        })}
+            <p
+              className={`shrink-0 text-xs tracking-[0.1em] uppercase ${
+                s.result === "PRZECHWYCONA" ? "text-info" : "text-destructive"
+              }`}
+            >
+              {s.result}
+            </p>
+          </div>
+        ))}
         {strikes && strikes.length === 0 ? (
           <p className="text-muted-foreground p-3 text-sm">Brak operacji rakietowych.</p>
         ) : null}
       </Panel>
 
       <Dialog
-        open={open}
+        open={phase !== "idle"}
         onOpenChange={(o) => {
-          setOpen(o);
-          if (!o) reset();
+          if (!o) {
+            setPhase("idle");
+            if (phase === "result") reset();
+          }
         }}
       >
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="tracking-[0.14em] uppercase">Wystrzel rakietę</DialogTitle>
-            <DialogDescription>
-              {step === "missile"
-                ? "Wybierz rakietę z arsenału"
-                : step === "country"
-                  ? "Wybierz państwo celu"
-                  : step === "region"
-                    ? "Wybierz region celu"
-                    : step === "target"
-                      ? "Wybierz cel uderzenia"
-                      : "Potwierdzenie operacji"}
-            </DialogDescription>
-          </DialogHeader>
-
-          {step === "missile" ? (
-            <div className="space-y-2">
-              {MISSILES.map((m) => {
-                const have = inventory(m.code);
-                return (
-                  <button
-                    key={m.code}
-                    disabled={have < 1}
-                    onClick={() => {
-                      setMissile(m.code);
-                      setStep("country");
-                    }}
-                    className="panel hud-frame w-full p-3 text-left disabled:opacity-40"
-                  >
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                      <p className="text-sm font-semibold">{MISSILE_LABELS[m.code]}</p>
-                      <p className="num text-primary text-xs">{have} szt.</p>
-                    </div>
-                    <p className="text-muted-foreground mt-1 text-xs">{m.desc}</p>
-                    <p className="text-info mt-1 text-xs">
-                      Przechwytywana przy {m.aa} OPL i więcej
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-
-          {step === "country" ? (
-            <div className="space-y-2">
-              {(countries ?? [])
-                .filter((c) => c.country_id !== me?.countryId)
-                .map((c) => (
-                  <button
-                    key={c.country_id}
-                    onClick={() => {
-                      setTargetCountry(c.country_id);
-                      setStep("region");
-                    }}
-                    className="panel w-full p-3 text-left"
-                  >
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                      <p className="truncate text-sm font-semibold">
-                        {c.flag} {c.name}
-                      </p>
-                      <p className="num text-info text-xs">OPL {c.aa_defense}</p>
-                    </div>
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      {c.regions_count} regionów
-                    </p>
-                  </button>
-                ))}
-            </div>
-          ) : null}
-
-          {step === "region" ? (
-            <div className="space-y-2">
-              {countryRegions.map((r) => (
-                <button
-                  key={r.id}
-                  disabled={r.slots.length === 0}
-                  onClick={() => {
-                    setRegion(r);
-                    setSlotIds([]);
-                    setStep("target");
-                  }}
-                  className="panel w-full p-3 text-left disabled:opacity-40"
-                >
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                    <p className="truncate text-sm font-semibold">{r.name}</p>
-                    <p className="num text-muted-foreground text-xs">{r.slots.length}/9</p>
-                  </div>
-                </button>
-              ))}
-              {countryRegions.length === 0 ? (
-                <p className="text-muted-foreground text-sm">To państwo nie ma regionów.</p>
-              ) : null}
-            </div>
-          ) : null}
-
-          {step === "target" && region ? (
-            <div className="space-y-2">
-              {missile === "missile_3" ? (
-                <>
-                  <div className="grid grid-cols-2 gap-2">
-                    {(["factories", "mines"] as const).map((m) => (
-                      <button
-                        key={m}
-                        onClick={() => setMode(m)}
-                        className={`panel p-3 text-xs uppercase ${
-                          mode === m ? "border-primary text-primary" : "text-muted-foreground"
-                        }`}
-                      >
-                        {m === "factories" ? "Wszystkie fabryki" : "Wszystkie wytwórnie"}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    Cele w regionie: {modeTargets.length}
-                  </p>
-                  <ul className="text-muted-foreground space-y-1 text-xs">
-                    {modeTargets.map((s) => (
-                      <li key={s.id}>
-                        Slot {s.slot_index} — {BUILDING_LABELS[s.building]}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className="w-full"
-                    disabled={modeTargets.length === 0}
-                    onClick={() => setStep("confirm")}
-                  >
-                    Dalej
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <p className="text-muted-foreground text-xs">
-                    Wybierz maksymalnie {spec?.targets} budynek/budynki
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {region.slots.map((s) => {
-                      const picked = slotIds.includes(s.id);
-                      return (
-                        <button
-                          key={s.id}
-                          onClick={() =>
-                            setSlotIds((prev) =>
-                              prev.includes(s.id)
-                                ? prev.filter((x) => x !== s.id)
-                                : prev.length >= (spec?.targets ?? 1)
-                                  ? prev
-                                  : [...prev, s.id],
-                            )
-                          }
-                          className={`rounded-sm border p-2 text-[10px] leading-tight ${
-                            picked
-                              ? "border-destructive text-destructive bg-destructive/10"
-                              : "border-border text-muted-foreground"
-                          }`}
-                        >
-                          <span className="num block opacity-60">{s.slot_index}</span>
-                          {BUILDING_LABELS[s.building]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <Button
-                    className="w-full"
-                    disabled={slotIds.length === 0}
-                    onClick={() => setStep("confirm")}
-                  >
-                    Dalej
-                  </Button>
-                </>
-              )}
-            </div>
-          ) : null}
-
-          {step === "confirm" ? (
-            <div className="space-y-3">
+        <DialogContent className="admin-dialog max-h-[85vh] overflow-y-auto">
+          {phase === "confirm" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="tracking-[0.14em] uppercase">
+                  Autoryzacja odpalenia
+                </DialogTitle>
+                <DialogDescription>
+                  Operacja jest nieodwracalna. Rakiety zużywają się niezależnie od wyniku.
+                </DialogDescription>
+              </DialogHeader>
               <div className="panel hud-frame space-y-1.5 p-3 text-xs">
-                <Row label="Rakieta" value={MISSILE_LABELS[missile ?? ""] ?? ""} />
-                <Row label="Państwo celu" value={`${flagOf(targetCountry)} ${nameOf(targetCountry)}`} />
-                <Row label="Region" value={region?.name ?? ""} />
+                <Row k="Rakieta" v={missile ? (MISSILE_LABELS[missile] ?? missile) : ""} />
+                <Row k="Liczba rakiet" v={units(count)} />
                 <Row
-                  label="Liczba celów"
-                  value={String(missile === "missile_3" ? modeTargets.length : slotIds.length)}
+                  k="Cel"
+                  v={`${countries?.find((c) => c.country_id === targetCountry)?.name ?? ""} — ${region?.name ?? ""}`}
                 />
-                <Row label="OPL obrońcy" value={String(defender?.aa_defense ?? 0)} />
                 <Row
-                  label="Prognoza"
-                  value={
-                    (defender?.aa_defense ?? 0) >= (spec?.aa ?? 1)
-                      ? "Ryzyko przechwycenia"
-                      : "Obrona niewystarczająca"
+                  k="Obiekty"
+                  v={
+                    spec?.code === "missile_3"
+                      ? mode === "factories"
+                        ? "Wszystkie fabryki"
+                        : "Wszystkie zakłady surowcowe"
+                      : `${slotIds.length} wybranych`
                   }
                 />
+                <Row k="OPL regionu" v={units(region?.aa_defense ?? 0)} />
+                <Row k="Wymagane OPL do przechwycenia" v={units(spec?.requiredAa ?? 0)} />
               </div>
-              <p className="text-destructive text-xs">
-                Operacja jest nieodwracalna — rakieta zostanie zużyta niezależnie od wyniku.
-              </p>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setStep("target")}>
-                  Wróć
+                <Button variant="outline" className="flex-1" onClick={() => setPhase("idle")}>
+                  Anuluj
                 </Button>
                 <Button
-                  variant="destructive"
                   className="flex-1"
                   disabled={launch.isPending}
                   onClick={() => launch.mutate()}
                 >
-                  <Target className="mr-2 size-4" strokeWidth={1.5} />
                   {launch.isPending ? "Odpalam…" : "Odpal"}
                 </Button>
               </div>
-            </div>
+            </>
+          ) : null}
+
+          {phase === "flight" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="tracking-[0.14em] uppercase">
+                  Trajektoria — w powietrzu
+                </DialogTitle>
+                <DialogDescription>Namierzanie regionu {region?.name}</DialogDescription>
+              </DialogHeader>
+              <div className="panel relative h-24 overflow-hidden p-3">
+                <div className="border-primary/40 absolute inset-x-3 top-1/2 border-t border-dashed" />
+                <Rocket
+                  className="text-primary absolute top-1/2 size-5 -translate-y-1/2 animate-[flight_1.8s_linear_forwards]"
+                  strokeWidth={1.5}
+                />
+                <Target className="text-destructive absolute top-1/2 right-3 size-5 -translate-y-1/2" strokeWidth={1.5} />
+              </div>
+              <p className="label-hud text-center">Analiza obrony przeciwlotniczej…</p>
+            </>
+          ) : null}
+
+          {phase === "result" && result ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="tracking-[0.14em] uppercase">Raport operacji</DialogTitle>
+                <DialogDescription>Region {region?.name}</DialogDescription>
+              </DialogHeader>
+              <div className="panel hud-frame space-y-1.5 p-3 text-xs">
+                <Row k="Wystrzelone" v={units(result.launched ?? 0)} />
+                <Row k="Przechwycone (INTERCEPTED)" v={units(result.intercepted ?? 0)} />
+                <Row k="Trafienia (IMPACT)" v={units(result.impacts ?? 0)} />
+                <Row k="Zniszczone obiekty" v={units(result.destroyed ?? 0)} />
+                {result.stopped_reason ? (
+                  <p className="text-destructive pt-1">{result.stopped_reason}</p>
+                ) : null}
+              </div>
+              <Button
+                onClick={() => {
+                  setPhase("idle");
+                  reset();
+                }}
+              >
+                Zamknij raport
+              </Button>
+            </>
           ) : null}
         </DialogContent>
       </Dialog>
@@ -447,11 +493,11 @@ function Arsenal() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="num text-right">{value}</span>
+    <div className="flex justify-between gap-2">
+      <span className="text-muted-foreground uppercase">{k}</span>
+      <span className="num text-foreground text-right">{v}</span>
     </div>
   );
 }

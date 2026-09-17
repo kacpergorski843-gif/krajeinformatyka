@@ -250,3 +250,14 @@
   background: color-mix(in oklab, var(--color-card) 96%, transparent);
   box-shadow: 0 24px 80px color-mix(in oklab, var(--color-background) 72%, transparent);
 }
+
+@keyframes flight {
+  from {
+    left: 0.75rem;
+    opacity: 0.4;
+  }
+  to {
+    left: calc(100% - 2.25rem);
+    opacity: 1;
+  }
+}
