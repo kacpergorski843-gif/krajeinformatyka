@@ -54,6 +54,13 @@ export type Database = {
             referencedRelation: "country_stats"
             referencedColumns: ["country_id"]
           },
+          {
+            foreignKeyName: "admin_actions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
         ]
       }
       countries: {
@@ -147,9 +154,12 @@ export type Database = {
           destroyed: Json
           id: string
           missile_code: string
+          region_aa: number | null
           region_id: string | null
           region_name: string
+          required_aa: number | null
           result: string
+          salvo_index: number | null
         }
         Insert: {
           aa_defense?: number
@@ -160,9 +170,12 @@ export type Database = {
           destroyed?: Json
           id?: string
           missile_code: string
+          region_aa?: number | null
           region_id?: string | null
           region_name?: string
+          required_aa?: number | null
           result: string
+          salvo_index?: number | null
         }
         Update: {
           aa_defense?: number
@@ -173,9 +186,12 @@ export type Database = {
           destroyed?: Json
           id?: string
           missile_code?: string
+          region_aa?: number | null
           region_id?: string | null
           region_name?: string
+          required_aa?: number | null
           result?: string
+          salvo_index?: number | null
         }
         Relationships: [
           {
@@ -193,6 +209,13 @@ export type Database = {
             referencedColumns: ["country_id"]
           },
           {
+            foreignKeyName: "missile_strikes_attacker_country_id_fkey"
+            columns: ["attacker_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
             foreignKeyName: "missile_strikes_defender_country_id_fkey"
             columns: ["defender_country_id"]
             isOneToOne: false
@@ -204,6 +227,13 @@ export type Database = {
             columns: ["defender_country_id"]
             isOneToOne: false
             referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "missile_strikes_defender_country_id_fkey"
+            columns: ["defender_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
             referencedColumns: ["country_id"]
           },
         ]
@@ -248,6 +278,13 @@ export type Database = {
             referencedRelation: "country_stats"
             referencedColumns: ["country_id"]
           },
+          {
+            foreignKeyName: "profiles_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
         ]
       }
       region_slots: {
@@ -284,18 +321,21 @@ export type Database = {
       }
       regions: {
         Row: {
+          aa_defense: number
           country_id: string
           created_at: string
           id: string
           name: string
         }
         Insert: {
+          aa_defense?: number
           country_id: string
           created_at?: string
           id?: string
           name: string
         }
         Update: {
+          aa_defense?: number
           country_id?: string
           created_at?: string
           id?: string
@@ -314,6 +354,13 @@ export type Database = {
             columns: ["country_id"]
             isOneToOne: false
             referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "regions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
             referencedColumns: ["country_id"]
           },
         ]
@@ -424,6 +471,13 @@ export type Database = {
             referencedRelation: "country_stats"
             referencedColumns: ["country_id"]
           },
+          {
+            foreignKeyName: "transactions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
         ]
       }
       user_roles: {
@@ -469,13 +523,28 @@ export type Database = {
           name: string | null
           oil: number | null
           oil_prod: number | null
+          region_aa_total: number | null
           regions_count: number | null
           soldier_packs: number | null
           tank_packs: number | null
           total_votes: number | null
           uranium: number | null
           uranium_prod: number | null
+          vote_potential: number | null
           war_votes: number | null
+        }
+        Relationships: []
+      }
+      public_ranking: {
+        Row: {
+          country_id: string | null
+          flag: string | null
+          gross_income: number | null
+          name: string | null
+          regions_count: number | null
+          soldier_packs: number | null
+          tank_packs: number | null
+          vote_potential: number | null
         }
         Relationships: []
       }
@@ -547,7 +616,22 @@ export type Database = {
         }
         Returns: Json
       }
+      launch_salvo: {
+        Args: {
+          p_count?: number
+          p_country_id: string
+          p_missile_code: string
+          p_mode?: string
+          p_region_id: string
+          p_slot_ids?: string[]
+        }
+        Returns: Json
+      }
       my_country_id: { Args: never; Returns: string }
+      purchase_aa: {
+        Args: { p_country_id: string; p_qty?: number; p_region_id: string }
+        Returns: Json
+      }
       purchase_unit: {
         Args: { p_country_id: string; p_item_code: string; p_qty?: number }
         Returns: Json
