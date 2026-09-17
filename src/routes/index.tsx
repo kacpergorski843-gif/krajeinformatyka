@@ -51,14 +51,12 @@ function Landing() {
         <div className="mt-8 grid gap-3">
           <Link
             to="/auth"
-            search={{ mode: "signup" }}
             className="bg-primary text-primary-foreground flex items-center justify-center gap-2 rounded-sm px-5 py-3.5 text-sm font-semibold tracking-[0.14em] uppercase"
           >
             <UserPlus className="size-4" strokeWidth={1.5} /> Nowy użytkownik? Zarejestruj się
           </Link>
           <Link
             to="/auth"
-            search={{ mode: "login" }}
             className="border-primary/60 text-primary flex items-center justify-center gap-2 rounded-sm border px-5 py-3.5 text-sm font-semibold tracking-[0.14em] uppercase"
           >
             <LogIn className="size-4" strokeWidth={1.5} /> Masz już konto? Zaloguj się

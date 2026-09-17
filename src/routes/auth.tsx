@@ -7,9 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    mode: (search["mode"] === "signup" ? "signup" : "login") as "signup" | "login" | undefined,
-  }),
   head: () => ({
     meta: [
       { title: "Logowanie — Sztab | Country Roleplay" },
@@ -36,8 +33,11 @@ function normalizeUsername(raw: string) {
 
 function AuthPage() {
   const router = useRouter();
-  const { mode: initialMode } = Route.useSearch();
-  const [mode, setMode] = useState<"login" | "signup">(initialMode ?? "login");
+  const initialMode =
+    typeof window !== "undefined" && window.location.search.includes("mode=signup")
+      ? "signup"
+      : "login";
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
