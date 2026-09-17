@@ -49,12 +49,12 @@ function Landing() {
         </p>
 
         <div className="mt-8 grid gap-3">
-          <Link
-            to="/auth"
+          <a
+            href="/auth?mode=signup"
             className="bg-primary text-primary-foreground flex items-center justify-center gap-2 rounded-sm px-5 py-3.5 text-sm font-semibold tracking-[0.14em] uppercase"
           >
             <UserPlus className="size-4" strokeWidth={1.5} /> Nowy użytkownik? Zarejestruj się
-          </Link>
+          </a>
           <Link
             to="/auth"
             className="border-primary/60 text-primary flex items-center justify-center gap-2 rounded-sm border px-5 py-3.5 text-sm font-semibold tracking-[0.14em] uppercase"

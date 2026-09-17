@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { countriesQuery, meQuery, rpc, shopQuery } from "@/lib/api";
+import { countriesQuery, meQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
 import type { CountryStats, ShopItem } from "@/lib/api";
 import { RESOURCE_LABELS, fmtKR, fmtNum, kr, units } from "@/lib/format";
 
@@ -57,13 +57,21 @@ function Shop() {
   const [selected, setSelected] = useState<string | null>(null);
   const countryId = selected ?? me?.countryId ?? null;
   const country = countries?.find((c) => c.country_id === countryId);
+  const { data: regions } = useQuery(regionsQuery(countryId));
   const [item, setItem] = useState<ShopItem | null>(null);
+  const [aaRegion, setAaRegion] = useState<string | null>(null);
   const [qtyText, setQtyText] = useState("1");
   const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
 
   const buy = useMutation({
     mutationFn: (v: { code: string; qty: number }) =>
-      rpc("purchase_unit", { p_country_id: countryId, p_item_code: v.code, p_qty: v.qty }),
+      v.code === "aa"
+        ? rpc("purchase_aa", {
+            p_country_id: countryId,
+            p_region_id: aaRegion,
+            p_qty: v.qty,
+          })
+        : rpc("purchase_unit", { p_country_id: countryId, p_item_code: v.code, p_qty: v.qty }),
     onSuccess: () => {
       toast.success("Zakup zrealizowany");
       setItem(null);
@@ -82,7 +90,7 @@ function Shop() {
       return `${c.soldier_packs}/6 pakietów · +1 głos · głosy wojska ${c.war_votes}/10`;
     if (code === "tanks")
       return `${c.tank_packs}/4 pakiety · +1 głos · głosy wojska ${c.war_votes}/10`;
-    if (code === "aa") return "Bez limitu · nie zajmuje slotu · nie zużywa się w obronie";
+    if (code === "aa") return "Bez limitu · kupowane dla wybranego regionu · broni tylko tego regionu";
     return null;
   }
 
@@ -115,13 +123,18 @@ function Shop() {
   const limitLeft = item ? maxByLimit(item.code, country) : 100;
   const overLimit = item ? qty > limitLeft : false;
   const cannotBuy =
-    !country || krShort_ || resourceRows.some((x) => x.missing) || overLimit || qty < 1;
+    !country ||
+    krShort_ ||
+    resourceRows.some((x) => x.missing) ||
+    overLimit ||
+    qty < 1 ||
+    (item?.code === "aa" && !aaRegion);
 
   return (
     <AppShell
       me={me ?? null}
       title="Sklep"
-      subtitle={country ? `${country.flag} ${country.name} — ${fmtKR(country.balance)}` : undefined}
+      subtitle={country ? `${country.name} — ${fmtKR(country.balance)}` : undefined}
     >
       {me?.isAdmin ? (
         <div className="mb-4 max-w-xs">
@@ -132,7 +145,7 @@ function Shop() {
             <SelectContent>
               {(countries ?? []).map((c) => (
                 <SelectItem key={c.country_id} value={c.country_id}>
-                  {c.flag} {c.name}
+                  {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -261,6 +274,24 @@ function Shop() {
                   </p>
                 ) : null}
               </div>
+
+              {item.code === "aa" ? (
+                <div className="space-y-1.5">
+                  <p className="label-hud">Region obrony</p>
+                  <Select value={aaRegion ?? ""} onValueChange={setAaRegion}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wybierz region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(regions ?? []).map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.name} — {units(r.aa_defense)} OPL
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
 
               <div className="panel hud-frame space-y-1.5 p-3 text-xs">
                 <div className="flex justify-between gap-2">
