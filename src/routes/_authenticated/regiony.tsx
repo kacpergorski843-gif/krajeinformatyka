@@ -115,7 +115,7 @@ function Regions() {
     <AppShell
       me={me ?? null}
       title="Regiony"
-      subtitle={country ? `${country.flag} ${country.name} — 9 slotów w regionie` : undefined}
+      subtitle={country ? `${country.name} — 9 slotów w regionie` : undefined}
     >
       {me?.isAdmin ? (
         <div className="mb-4 max-w-xs">
@@ -126,7 +126,7 @@ function Regions() {
             <SelectContent>
               {(countries ?? []).map((c) => (
                 <SelectItem key={c.country_id} value={c.country_id}>
-                  {c.flag} {c.name}
+                  {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -179,10 +179,17 @@ function Regions() {
                     {free === 0 ? "brak wolnych slotów" : `${free} wolnych slotów`}
                   </p>
                 </div>
-                <span
-                  className={`num shrink-0 text-sm ${r.slots.length === 0 ? "text-inactive" : "text-primary"}`}
-                >
-                  {r.slots.length}/9
+                <span className="shrink-0 text-right">
+                  <span
+                    className={`num block text-sm ${r.slots.length === 0 ? "text-inactive" : "text-primary"}`}
+                  >
+                    SLOTY {r.slots.length}/9
+                  </span>
+                  <span
+                    className={`num block text-[11px] ${r.aa_defense === 0 ? "text-inactive" : "text-info"}`}
+                  >
+                    {units(r.aa_defense)} OPL
+                  </span>
                 </span>
                 <ChevronDown
                   className={`text-muted-foreground size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}

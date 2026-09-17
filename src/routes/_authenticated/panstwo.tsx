@@ -5,8 +5,9 @@ import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, ChevronRight, Timer } f
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
+import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
 import { countriesQuery, meQuery, regionsQuery, rpc, transactionsQuery } from "@/lib/api";
-import { dateTime, fmtKR, kr, timeToDailyCycle, units } from "@/lib/format";
+import { fmtKR, kr, timeToDailyCycle, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/panstwo")({
   head: () => ({
@@ -33,7 +34,7 @@ function MyCountry() {
   const { data: countries } = useQuery(countriesQuery);
   const country = countries?.find((c) => c.country_id === me?.countryId);
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
-  const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 12));
+  const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 200));
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
 
   useEffect(() => {
@@ -100,7 +101,7 @@ function MyCountry() {
   const shortage = Number(country.coal_upkeep) > Number(country.coal) + Number(country.coal_prod);
 
   const military = [
-    { label: "OPL", value: country.aa_defense },
+    { label: "OPL (regiony)", value: country.region_aa_total },
     { label: "Rakiety I", value: country.missile_1 },
     { label: "Rakiety II", value: country.missile_2 },
     { label: "Rakiety III", value: country.missile_3 },
@@ -109,7 +110,7 @@ function MyCountry() {
   ];
 
   return (
-    <AppShell me={me} title={`${country.flag} ${country.name}`} subtitle="Pulpit dowodzenia">
+    <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
       {/* Skarbiec + przychód */}
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat
@@ -174,7 +175,12 @@ function MyCountry() {
         </div>
       </Panel>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
-        <Stat label="Głosy wojska" value={`${country.war_votes}/10`} tone="accent" />
+        <Stat
+          label="Potencjał głosów"
+          value={units(country.vote_potential)}
+          hint="Bez limitu — pakiety żołnierzy + czołgów"
+          tone="accent"
+        />
         <Stat label="Głosy fortyfikacji" value={units(country.fort_votes)} />
         <Stat label="Wartość militarna" value={fmtKR(country.military_value)} />
       </div>
@@ -216,39 +222,7 @@ function MyCountry() {
         ) : null}
       </Panel>
 
-      <SectionTitle>Ostatnie operacje</SectionTitle>
-      <Panel className="divide-border divide-y p-0">
-        {(
-          (history ?? []) as unknown as {
-            id: string;
-            label: string;
-            amount_kr: string;
-            created_at: string;
-          }[]
-        ).map((t) => (
-          <div key={t.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2.5">
-            <div className="min-w-0">
-              <p className="truncate text-sm">{t.label}</p>
-              <p className="text-inactive text-xs">{dateTime(t.created_at)}</p>
-            </div>
-            <p
-              className={`num shrink-0 text-sm ${
-                Number(t.amount_kr) > 0
-                  ? "text-success"
-                  : Number(t.amount_kr) < 0
-                    ? "text-destructive"
-                    : "text-inactive"
-              }`}
-            >
-              {Number(t.amount_kr) > 0 ? "+" : ""}
-              {fmtKR(t.amount_kr)}
-            </p>
-          </div>
-        ))}
-        {history && history.length === 0 ? (
-          <p className="text-muted-foreground p-3 text-sm">Brak operacji.</p>
-        ) : null}
-      </Panel>
+      <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
       <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
         <Timer className="size-3.5" strokeWidth={1.5} /> Do rozliczenia dobowego:{" "}

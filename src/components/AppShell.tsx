@@ -10,7 +10,15 @@ import {
   Rocket,
   LogOut,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
@@ -37,6 +45,7 @@ export function AppShell({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [confirmOut, setConfirmOut] = useState(false);
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -75,7 +84,7 @@ export function AppShell({
             ))}
             <button
               type="button"
-              onClick={signOut}
+              onClick={() => setConfirmOut(true)}
               className="text-inactive hover:text-foreground mt-2 flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm"
             >
               <LogOut className="size-4 shrink-0" strokeWidth={1.5} />
@@ -120,6 +129,32 @@ export function AppShell({
           ))}
         </div>
       </nav>
+
+      <Dialog open={confirmOut} onOpenChange={setConfirmOut}>
+        <DialogContent className="admin-dialog">
+          <DialogHeader>
+            <DialogTitle className="tracking-[0.14em] uppercase">Wyloguj się</DialogTitle>
+            <DialogDescription>
+              Zamkniesz sesję dowodzenia. Panele państwa będą dostępne po ponownym zalogowaniu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setConfirmOut(false)}>
+              Anuluj
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => {
+                setConfirmOut(false);
+                void signOut();
+              }}
+            >
+              Wyloguj się
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
