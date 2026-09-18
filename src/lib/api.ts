@@ -109,9 +109,8 @@ export const meQuery = queryOptions({
       .eq("id", user.id)
       .maybeSingle();
     const roles = await unwrap(supabase.from("user_roles").select("role").eq("user_id", user.id));
-    const mainAdmins = await unwrap(
-      supabase.from("user_roles").select("id").eq("role", "MAIN_ADMIN").limit(1),
-    );
+    const { data: mainAdminExists } = await supabase.rpc("main_admin_exists");
+
 
     const list = (roles ?? []).map((r) => r.role as Me["role"]);
     const role: Me["role"] = list.includes("MAIN_ADMIN")
@@ -127,7 +126,7 @@ export const meQuery = queryOptions({
       role,
       isAdmin: role !== "PLAYER",
       isMainAdmin: role === "MAIN_ADMIN",
-      mainAdminExists: (mainAdmins ?? []).length > 0,
+      mainAdminExists: mainAdminExists === true,
     };
   },
 });
