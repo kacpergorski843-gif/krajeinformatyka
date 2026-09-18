@@ -566,6 +566,7 @@ export type Database = {
         Args: { p_country_id: string; p_name: string }
         Returns: string
       }
+      admin_delete_country: { Args: { p_country_id: string }; Returns: Json }
       admin_delete_region: { Args: { p_region_id: string }; Returns: Json }
       admin_list_users: {
         Args: never
@@ -577,6 +578,11 @@ export type Database = {
           id: string
           role: Database["public"]["Enums"]["app_role"]
         }[]
+      }
+      admin_purge_player: { Args: { p_user_id: string }; Returns: Json }
+      admin_set_region_aa: {
+        Args: { p_region_id: string; p_value: number }
+        Returns: Json
       }
       admin_toggle_shop_item: {
         Args: { p_active: boolean; p_code: string }
@@ -627,6 +633,7 @@ export type Database = {
         }
         Returns: Json
       }
+      main_admin_exists: { Args: never; Returns: boolean }
       my_country_id: { Args: never; Returns: string }
       purchase_aa: {
         Args: { p_country_id: string; p_qty?: number; p_region_id: string }
@@ -644,6 +651,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sync_country_aa: { Args: { p_country_id: string }; Returns: undefined }
       username_taken: { Args: { p_username: string }; Returns: boolean }
     }
     Enums: {
