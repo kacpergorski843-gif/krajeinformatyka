@@ -22,7 +22,9 @@ import {
   Users,
   Warehouse,
 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
+import { deletePlayerAccount } from "@/lib/admin.functions";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -490,6 +492,29 @@ function ValueBox({ label, value, hint, tone = "default" }: { label: string; val
   return <div className="min-w-0 border border-border/70 bg-secondary/30 p-2"><span className="block text-[10px] uppercase text-muted-foreground">{label}</span><span className={`num mt-1 block break-words text-sm ${toneClass}`}>{value}</span>{hint ? <span className={`num mt-0.5 block text-[10px] ${toneClass}`}>{hint}</span> : null}</div>;
 }
 
+function RegionAaEditor({ regions, pending, onSave }: { regions: RegionWithSlots[]; pending: boolean; onSave: (regionId: string, value: number) => void }) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  if (regions.length === 0) return <EmptyLine text="To państwo nie ma regionów." />;
+  return (
+    <div className="grid gap-3 lg:grid-cols-2">
+      {regions.map((region) => {
+        const raw = values[region.id];
+        const next = raw === undefined || raw === "" ? region.aa_defense : Math.max(0, Number(raw) || 0);
+        return (
+          <Panel key={region.id} className="min-w-0 p-3">
+            <Label className="label-hud truncate">{region.name}</Label>
+            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <Input className="num min-w-0" type="number" min="0" value={raw ?? String(region.aa_defense)} onChange={(event) => setValues((current) => ({ ...current, [region.id]: event.target.value }))} />
+              <Button size="sm" disabled={pending || next === region.aa_defense} onClick={() => onSave(region.id, next)}>Zapisz</Button>
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">Aktualne OPL: <span className="num text-info">{units(region.aa_defense)}</span></p>
+          </Panel>
+        );
+      })}
+    </div>
+  );
+}
+
 function RegionManagement({ country, regions, shopItems, regionName, onRegionName, onAdd, adding, onRemoveRegion, onRemoveSlot, loading }: { country: CountryStats; regions: RegionWithSlots[]; shopItems: ShopItem[]; regionName: string; onRegionName: (value: string) => void; onAdd: () => void; adding: boolean; onRemoveRegion: (region: RegionWithSlots) => void; onRemoveSlot: (slot: { id: string; building: string; region: string }) => void; loading: boolean }) {
   const itemByBuilding = new Map(shopItems.filter((item) => item.building).map((item) => [item.building, item]));
   return <div className="space-y-4"><SectionHeading icon={<Warehouse />} title="Regiony i terytorium" description={`${country.regions_count} regionów · po 9 slotów w każdym`} /><Panel className="p-3"><div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"><Input value={regionName} onChange={(event) => onRegionName(event.target.value)} placeholder="Nazwa nowego regionu" /><Button disabled={!regionName.trim() || adding} onClick={onAdd}><PackagePlus />Dodaj region</Button></div></Panel>{loading ? <LoadingRows /> : regions.length === 0 ? <HudState icon={<Warehouse />} title="Brak regionów" description="Dodaj pierwszy region tego państwa." /> : <div className="space-y-3">{regions.map((region) => {
@@ -517,7 +542,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [toDelete, setToDelete] = useState<AdminUser | null>(null);
   const deleteUser = useServerFn(deletePlayerAccount);
   const removeUser = useMutation({ mutationFn: (userId: string) => deleteUser({ data: { userId } }), onSuccess: () => { toast.success("Konto gracza usunięte"); setToDelete(null); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
-  return <div className="space-y-4"><Panel className="hud-frame p-3"><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Szukaj użytkownika lub państwa…" value={search} onChange={(event) => setSearch(event.target.value)} /></div></Panel>{userQuery.isLoading ? <LoadingRows /> : users.length === 0 ? <HudState icon={<Users />} title="Brak użytkowników" description="Nie znaleziono użytkowników dla podanego wyszukiwania." /> : <div className="grid gap-3 xl:grid-cols-2">{users.map((user) => <Panel key={user.id} className="min-w-0 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3"><div className="min-w-0"><p className="truncate font-semibold">{user.display_name ?? "Użytkownik"}</p><p className="truncate text-xs text-muted-foreground">{user.country_name ?? "Bez przypisanego państwa"}</p></div><Badge variant="outline" className="shrink-0 border-primary/40 text-primary">{ROLE_LABELS[user.role ?? "PLAYER"]}</Badge></div><div className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Przypisane państwo"><Select value={user.country_id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate({ userId: user.id, countryId: value })}><SelectTrigger className="min-w-0"><SelectValue placeholder="Brak" /></SelectTrigger><SelectContent><SelectItem value="unassigned" disabled>Brak przypisania</SelectItem>{(countryQuery.data ?? []).map((country) => <SelectItem key={country.country_id} value={country.country_id}>{country.flag} {country.name}</SelectItem>)}</SelectContent></Select></Field>{isMainAdmin ? <Field label="Uprawnienia"><Select value={user.role ?? "PLAYER"} onValueChange={(role) => setRole.mutate({ userId: user.id, role })}><SelectTrigger className="min-w-0"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PLAYER">Gracz</SelectItem><SelectItem value="ADMIN">Administrator</SelectItem><SelectItem value="MAIN_ADMIN">Główny administrator</SelectItem></SelectContent></Select></Field> : null}</div></Panel>)}</div>}{!isMainAdmin ? <p className="text-xs text-muted-foreground">Zmiana uprawnień jest dostępna wyłącznie dla głównego administratora.</p> : null}</div>;
+  return <div className="space-y-4"><Panel className="hud-frame p-3"><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Szukaj użytkownika lub państwa…" value={search} onChange={(event) => setSearch(event.target.value)} /></div></Panel>{userQuery.isLoading ? <LoadingRows /> : users.length === 0 ? <HudState icon={<Users />} title="Brak użytkowników" description="Nie znaleziono użytkowników dla podanego wyszukiwania." /> : <div className="grid gap-3 xl:grid-cols-2">{users.map((user) => <Panel key={user.id} className="min-w-0 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3"><div className="min-w-0"><p className="truncate font-semibold">{user.display_name ?? "Użytkownik"}</p><p className="truncate text-xs text-muted-foreground">{user.country_name ?? "Bez przypisanego państwa"}</p></div><Badge variant="outline" className="shrink-0 border-primary/40 text-primary">{ROLE_LABELS[user.role ?? "PLAYER"]}</Badge></div><div className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Przypisane państwo"><Select value={user.country_id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate({ userId: user.id, countryId: value })}><SelectTrigger className="min-w-0"><SelectValue placeholder="Brak" /></SelectTrigger><SelectContent><SelectItem value="unassigned" disabled>Brak przypisania</SelectItem>{(countryQuery.data ?? []).map((country) => <SelectItem key={country.country_id} value={country.country_id}>{country.flag} {country.name}</SelectItem>)}</SelectContent></Select></Field>{isMainAdmin ? <Field label="Uprawnienia"><Select value={user.role ?? "PLAYER"} onValueChange={(role) => setRole.mutate({ userId: user.id, role })}><SelectTrigger className="min-w-0"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PLAYER">Gracz</SelectItem><SelectItem value="ADMIN">Administrator</SelectItem><SelectItem value="MAIN_ADMIN">Główny administrator</SelectItem></SelectContent></Select></Field> : null}</div><div className="mt-3 flex justify-end"><Button size="sm" variant="destructive" onClick={() => setToDelete(user)}><Trash2 />Usuń konto</Button></div></Panel>)}</div>}{!isMainAdmin ? <p className="text-xs text-muted-foreground">Zmiana uprawnień jest dostępna wyłącznie dla głównego administratora.</p> : null}<ConfirmDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)} title={`Usunąć konto ${toDelete?.display_name ?? "gracza"}?`} description="Operacja jest NIEODWRACALNA. Konto, profil i uprawnienia zostaną trwale usunięte, a państwo zwolnione. Operacja zostanie zapisana w audycie." confirmLabel="Usuń trwale" destructive pending={removeUser.isPending} onConfirm={() => toDelete && removeUser.mutate(toDelete.id)} /></div>;
 }
 
 function ShopTab() {
