@@ -43,6 +43,13 @@
       "when": 1789620524396,
       "tag": "0005_update3_region_aa_and_salvo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789757864022,
+      "tag": "0006_update35_aa_single_source_and_admin_deletes",
+      "breakpoints": true
     }
   ]
 }
