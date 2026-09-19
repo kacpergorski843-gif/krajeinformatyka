@@ -746,6 +746,9 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [newCountryName, setNewCountryName] = useState("");
   const [newCountryFile, setNewCountryFile] = useState<File | null>(null);
   const [newCountryPreview, setNewCountryPreview] = useState<string | null>(null);
+  const [editFlagCountry, setEditFlagCountry] = useState<{ id: string; name: string; flag: string } | null>(null);
+  const [editFlagFile, setEditFlagFile] = useState<File | null>(null);
+  const [editFlagPreview, setEditFlagPreview] = useState<string | null>(null);
   const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(search.trim().toLowerCase()));
 
   const assign = useMutation({
@@ -767,11 +770,54 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
             p_flag: "",
           })
         : Promise.reject(new Error("Nie wybrano gracza")),
-    onSuccess: () => {
+    onSuccess: async (countryId) => {
+      if (newCountryFile && countryId) {
+        const extension = newCountryFile.name.split(".").pop()?.toLowerCase() || "png";
+        const path = countryId + "/flag-" + Date.now() + "." + extension;
+        const upload = await supabase.storage.from("country-flags").upload(path, newCountryFile, {
+          upsert: true,
+          contentType: newCountryFile.type,
+        });
+        if (upload.error) throw upload.error;
+        const { data } = supabase.storage.from("country-flags").getPublicUrl(path);
+        const { error } = await supabase.rpc("admin_set_country_flag", {
+          p_country_id: countryId,
+          p_flag: data.publicUrl,
+        });
+        if (error) throw error;
+      }
       toast.success("Nowe państwo utworzone i przypisane graczowi");
       setNewCountryFor(null);
       setNewCountryName("");
-      setNewCountryFlag("");
+      setNewCountryFile(null);
+      setNewCountryPreview(null);
+      queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const editFlag = useMutation({
+    mutationFn: async () => {
+      if (!editFlagCountry || !editFlagFile) throw new Error("Wybierz plik z flagą");
+      const extension = editFlagFile.name.split(".").pop()?.toLowerCase() || "png";
+      const path = editFlagCountry.id + "/flag-" + Date.now() + "." + extension;
+      const upload = await supabase.storage.from("country-flags").upload(path, editFlagFile, {
+        upsert: true,
+        contentType: editFlagFile.type,
+      });
+      if (upload.error) throw upload.error;
+      const { data } = supabase.storage.from("country-flags").getPublicUrl(path);
+      const { error } = await supabase.rpc("admin_set_country_flag", {
+        p_country_id: editFlagCountry.id,
+        p_flag: data.publicUrl,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Flaga państwa została zmieniona");
+      setEditFlagCountry(null);
+      setEditFlagFile(null);
+      setEditFlagPreview(null);
       queryClient.invalidateQueries();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -835,20 +881,26 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
                   </Select>
                 </Field>
 
-                <div className="flex items-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      setNewCountryFor(user);
-                      setNewCountryName("");
-                      setNewCountryFile(null);
-                      setNewCountryPreview(null);
-                    }}
-                  >
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button type="button" variant="outline" className="w-full" onClick={() => {
+                    setNewCountryFor(user);
+                    setNewCountryName("");
+                    setNewCountryFile(null);
+                    setNewCountryPreview(null);
+                  }}>
                     <PackagePlus /> Dodaj nowe państwo
                   </Button>
+                  {user.country_id ? (
+                    <Button type="button" variant="outline" className="w-full" onClick={() => {
+                      const country = (countryQuery.data ?? []).find((item) => item.country_id === user.country_id);
+                      if (!country) return;
+                      setEditFlagCountry({ id: country.country_id, name: country.name, flag: country.flag });
+                      setEditFlagFile(null);
+                      setEditFlagPreview(null);
+                    }}>
+                      Zmień flagę
+                    </Button>
+                  ) : null}
                 </div>
 
                 {isMainAdmin ? (
@@ -920,6 +972,46 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
               onClick={() => createAndAssign.mutate()}
             >
               {createAndAssign.isPending ? "Tworzenie…" : "Utwórz i przypisz"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editFlagCountry} onOpenChange={(open) => !open && setEditFlagCountry(null)}>
+        <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-lg sm:w-[calc(100%-2rem)]">
+          <DialogHeader>
+            <DialogTitle>Zmień flagę państwa</DialogTitle>
+            <DialogDescription>{editFlagCountry?.name ?? "Wybrane państwo"}</DialogDescription>
+          </DialogHeader>
+          {editFlagCountry?.flag ? (
+            <div className="flex items-center gap-3 border border-border p-2">
+              <CountryFlag flag={editFlagCountry.flag} alt="Aktualna flaga" className="h-12 w-20 rounded-sm object-cover text-2xl" />
+              <span className="text-xs text-muted-foreground">Aktualna flaga</span>
+            </div>
+          ) : null}
+          <Field label="Nowa flaga">
+            <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => {
+              const file = event.target.files?.[0] ?? null;
+              if (!file) return;
+              if (file.size > 2 * 1024 * 1024) {
+                toast.error("Flaga może mieć maksymalnie 2 MB");
+                event.target.value = "";
+                return;
+              }
+              setEditFlagFile(file);
+              setEditFlagPreview(URL.createObjectURL(file));
+            }} />
+            {editFlagPreview ? (
+              <div className="mt-2 flex items-center gap-3 border border-border p-2">
+                <img src={editFlagPreview} alt="Podgląd nowej flagi" className="h-12 w-20 rounded-sm object-cover" />
+                <span className="truncate text-xs text-muted-foreground">{editFlagFile?.name}</span>
+              </div>
+            ) : <p className="mt-2 text-xs text-muted-foreground">PNG, JPG lub WebP · maks. 2 MB</p>}
+          </Field>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button variant="outline" onClick={() => setEditFlagCountry(null)}>Anuluj</Button>
+            <Button disabled={!editFlagFile || editFlag.isPending} onClick={() => editFlag.mutate()}>
+              {editFlag.isPending ? "Zapisywanie…" : "Zapisz flagę"}
             </Button>
           </div>
         </DialogContent>
