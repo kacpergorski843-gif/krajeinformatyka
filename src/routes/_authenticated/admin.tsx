@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
+import { supabase } from "@/integrations/supabase/client";
 import { deletePlayerAccount } from "@/lib/admin.functions";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
@@ -742,6 +743,8 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [search, setSearch] = useState("");
   const [newCountryFor, setNewCountryFor] = useState<AdminUser | null>(null);
   const [newCountryName, setNewCountryName] = useState("");
+  const [newCountryFile, setNewCountryFile] = useState<File | null>(null);
+  const [newCountryPreview, setNewCountryPreview] = useState<string | null>(null);
   const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(search.trim().toLowerCase()));
 
   const assign = useMutation({
@@ -760,6 +763,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
         ? rpc("admin_create_country_for_user", {
             p_user_id: newCountryFor.id,
             p_name: newCountryName.trim(),
+            p_flag: "",
           })
         : Promise.reject(new Error("Nie wybrano gracza")),
     onSuccess: () => {
@@ -838,6 +842,8 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
                     onClick={() => {
                       setNewCountryFor(user);
                       setNewCountryName("");
+                      setNewCountryFile(null);
+                      setNewCountryPreview(null);
                     }}
                   >
                     <PackagePlus /> Dodaj nowe państwo
@@ -878,6 +884,33 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
           </DialogHeader>
           <Field label="Nazwa państwa">
             <Input value={newCountryName} onChange={(event) => setNewCountryName(event.target.value)} placeholder="Nazwa" />
+          </Field>
+          <Field label="Własna flaga (opcjonalnie)">
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  if (!file) return;
+                  if (file.size > 2 * 1024 * 1024) {
+                    toast.error("Flaga może mieć maksymalnie 2 MB");
+                    event.target.value = "";
+                    return;
+                  }
+                  setNewCountryFile(file);
+                  setNewCountryPreview(URL.createObjectURL(file));
+                }}
+              />
+              {newCountryPreview ? (
+                <div className="flex items-center gap-3 border border-border p-2">
+                  <img src={newCountryPreview} alt="Podgląd flagi" className="h-12 w-20 rounded-sm object-cover" />
+                  <span className="truncate text-xs text-muted-foreground">{newCountryFile?.name}</span>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">PNG, JPG lub WebP · maks. 2 MB</p>
+              )}
+            </div>
           </Field>
           <div className="grid gap-2 sm:grid-cols-2">
             <Button variant="outline" onClick={() => setNewCountryFor(null)}>Anuluj</Button>
