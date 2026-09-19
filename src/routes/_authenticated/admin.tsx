@@ -1,3 +1,4 @@
+// LOVABLE GITHUB SYNC TEST — WIDOCZNA ZMIANA
 // Lovable sync refresh: clean parser-safe admin route
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
