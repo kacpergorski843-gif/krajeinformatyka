@@ -57,6 +57,13 @@ function Transfers() {
   const Icon = useMemo(() => resources.find((x) => x[0] === resource)?.[2] ?? Coins, [resource]);
 
   return <AppShell me={me ?? null} title="Transfery" subtitle="Przekazuj zasoby innym państwom">
+    <div className="transfer-hero">
+      <div>
+        <p className="label-hud">LOGISTICS COMMAND</p>
+        <h2 className="mt-1 text-xl font-semibold">Centrum transferów</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Przekazuj zasoby między państwami w kontrolowanym, atomowym transferze.</p>
+      </div>
+    </div>
     <div className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
       <Panel className="hud-frame">
         <div className="mb-6 flex items-center gap-3"><div className="brand-mark"><ArrowRightLeft className="size-5"/></div><div><p className="font-display text-lg font-semibold">Nowy transfer</p><p className="text-sm text-muted-foreground">Operacja jest wykonywana atomowo przez backend.</p></div></div>
