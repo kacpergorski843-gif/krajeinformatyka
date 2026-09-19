@@ -114,7 +114,7 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
-      <Panel data-tour="tour-country-name" className="mb-4 flex items-center gap-3 p-3"><CountryFlag flag={country.flag} alt={"Flaga państwa " + country.name} className="h-12 w-20 rounded-sm text-2xl" /><div><p className="label-hud">PAŃSTWO</p><p className="font-display text-lg font-semibold">{country.name}</p></div></Panel>
+      <Panel className="mb-4 flex items-center gap-3 p-3"><CountryFlag flag={country.flag} alt={"Flaga państwa " + country.name} className="h-12 w-20 rounded-sm text-2xl" /><div><p className="label-hud">PAŃSTWO</p><p className="font-display text-lg font-semibold">{country.name}</p></div></Panel>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
       {occupationHistory?.slice(0, 3).map((occupation) => {
         const isCurrent = occupation.current_country_id === me.countryId;
@@ -137,14 +137,14 @@ function MyCountry() {
 
       {/* Skarbiec + przychód */}
       <div className="grid gap-3 sm:grid-cols-3">
-        <div data-tour="tour-treasury"><Stat
+        <Stat
           label="Skarbiec"
           value={kr(country.balance)}
           hint={fmtKR(country.balance)}
           tone="primary"
           icon={<Coins className="size-4" strokeWidth={1.5} />}
         /></div>
-        <div data-tour="tour-income"><Stat label="Przychód / doba" value={fmtKR(country.gross_income)} tone="accent" />
+        <Stat label="Przychód / doba" value={fmtKR(country.gross_income)} tone="accent" />
         <Stat
           label="Zużycie węgla / doba"
           value={units(country.coal_upkeep)}
@@ -175,7 +175,7 @@ function MyCountry() {
         </div>
       </Panel>
 
-      <div data-tour="tour-military"><SectionTitle
+      <SectionTitle
         action={
           <Link to="/arsenal" className="text-primary shrink-0 text-xs">
             Arsenał
@@ -211,7 +211,7 @@ function MyCountry() {
       </div>
 
       {/* Widget regionów */}
-      <div data-tour="tour-country-regions"><SectionTitle
+      <SectionTitle
         action={
           <Link to="/regiony" className="text-primary flex shrink-0 items-center gap-1 text-xs">
             Zarządzaj <ChevronRight className="size-3.5" strokeWidth={1.5} />
@@ -248,7 +248,7 @@ function MyCountry() {
       </Panel>
       </div>
 
-      <div data-tour="tour-operations-history"><OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
+      <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
       </div>
 
