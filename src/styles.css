@@ -815,3 +815,43 @@
     border-top: 1px solid var(--color-border);
   }
 }
+
+@media (max-width: 640px) {
+  .content-area button:not(.mobile-menu-button),
+  .mobile-drawer button,
+  [data-radix-dialog-content] button {
+    min-height: 44px;
+  }
+
+  .content-area input,
+  .content-area select,
+  .content-area [role="combobox"],
+  [data-radix-dialog-content] input,
+  [data-radix-dialog-content] [role="combobox"] {
+    min-height: 44px;
+  }
+
+  .content-area button[size="icon"],
+  [data-radix-dialog-content] button[size="icon"] {
+    min-width: 44px;
+  }
+
+  [data-radix-dialog-content] {
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  [data-radix-dialog-content] > [data-radix-dialog-title] {
+    overflow-wrap: anywhere;
+  }
+
+  [data-radix-dialog-content] > button[aria-label="Close"],
+  [data-radix-dialog-content] > button:not([aria-label]) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
