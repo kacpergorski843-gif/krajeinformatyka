@@ -153,7 +153,7 @@ function MyCountry() {
       </div>
 
       {/* Poziomy pasek zasobów */}
-      <Panel data-tour="tour-resources" className="hud-frame mt-3 overflow-x-auto p-0">
+      <Panel className="hud-frame mt-3 overflow-x-auto p-0">
         <div className="divide-border grid min-w-max grid-cols-5 divide-x">
           {resources.map((r) => {
             const zero = Number(r.value) === 0;
