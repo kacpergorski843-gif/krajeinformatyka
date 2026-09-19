@@ -81,6 +81,7 @@ export function AppShell({ me, title, subtitle, children }: {
         <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Activity className="size-5"/></div><span className="font-display font-bold tracking-[0.18em]">COUNTRY RP</span></div>
         <button onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button></div>
         <div className="mt-5">{nav(true)}</div>
+        <button type="button" className="nav-item mt-3" onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("country-rp:restart-tutorial")); }}>Uruchom samouczek ponownie</button>
       </aside>
     </div> : null}
     <CountryTutorial me={me} />\n    <Dialog open={confirmOut} onOpenChange={setConfirmOut}><DialogContent className="admin-dialog">
