@@ -45,7 +45,7 @@ export function CountryTutorial({ me }: { me: Me | null }) {
   const [welcome, setWelcome] = useState(false);
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
-  const [targetReady, setTargetReady] = useState(false);
+  const [targetReady, setTargetReady] = useState(false);\n  const [targetRect, setTargetRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     if (!me?.userId) return;
@@ -112,7 +112,7 @@ export function CountryTutorial({ me }: { me: Me | null }) {
     void router.navigate({ to: STEPS[prev].route });
   }
 
-  if (!me?.userId) return null;
+  if (!me?.userId) return null;\n\n  const targetStyle = targetRect ? { top: targetRect.top - 8, left: targetRect.left - 8, width: targetRect.width + 16, height: targetRect.height + 16 } : undefined;
 
   return <>
     {welcome ? (
@@ -132,7 +132,7 @@ export function CountryTutorial({ me }: { me: Me | null }) {
 
     {active ? (
       <div className="tutorial-overlay" aria-live="polite">
-        {targetReady && STEPS[step].target ? <div className="tutorial-target-ring" /> : null}
+        {targetReady && STEPS[step].target && targetRect ? <div className="tutorial-target-ring" style={targetStyle} /> : null}
         <div className={`tutorial-card ${step === STEPS.length - 1 ? "tutorial-card-finish" : ""}`}>
           <div className="tutorial-card-top">
             <span>KROK {step + 1} / {STEPS.length}</span>
