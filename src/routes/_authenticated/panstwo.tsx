@@ -114,7 +114,7 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
-      <Panel className="mb-4 flex items-center gap-3 p-3"><CountryFlag flag={country.flag} alt={"Flaga państwa " + country.name} className="h-12 w-20 rounded-sm text-2xl" /><div><p className="label-hud">PAŃSTWO</p><p className="font-display text-lg font-semibold">{country.name}</p></div></Panel>
+      <Panel data-tour="tour-country-name" className="mb-4 flex items-center gap-3 p-3"><CountryFlag flag={country.flag} alt={"Flaga państwa " + country.name} className="h-12 w-20 rounded-sm text-2xl" /><div><p className="label-hud">PAŃSTWO</p><p className="font-display text-lg font-semibold">{country.name}</p></div></Panel>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
       {occupationHistory?.slice(0, 3).map((occupation) => {
         const isCurrent = occupation.current_country_id === me.countryId;
@@ -153,7 +153,7 @@ function MyCountry() {
       </div>
 
       {/* Poziomy pasek zasobów */}
-      <Panel className="hud-frame mt-3 overflow-x-auto p-0">
+      <Panel data-tour="tour-resources" className="hud-frame mt-3 overflow-x-auto p-0">
         <div className="divide-border grid min-w-max grid-cols-5 divide-x">
           {resources.map((r) => {
             const zero = Number(r.value) === 0;
@@ -248,7 +248,7 @@ function MyCountry() {
 
       <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
-      <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
+      </div>\n\n      <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
         <Timer className="size-3.5" strokeWidth={1.5} /> Do rozliczenia dobowego:{" "}
         <span className="num text-primary">{countdown}</span>
       </div>
