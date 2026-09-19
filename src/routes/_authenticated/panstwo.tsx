@@ -250,7 +250,9 @@ function MyCountry() {
 
       <div data-tour="tour-operations-history"><OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
-      </div>\n\n      <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
+      </div>
+
+      <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
         <Timer className="size-3.5" strokeWidth={1.5} /> Do rozliczenia dobowego:{" "}
         <span className="num text-primary">{countdown}</span>
       </div>
