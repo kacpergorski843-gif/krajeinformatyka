@@ -295,7 +295,7 @@ function Shop() {
         {factories.map((i) => (
           <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
         ))}
-      </div></div>
+      </div>
 
       <SectionTitle>Wytwórnie surowców</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
