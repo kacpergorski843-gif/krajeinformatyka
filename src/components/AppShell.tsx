@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
-import { CountryTutorial } from "@/components/CountryTutorial";
 
 const NAV = [
   { to: "/panstwo", label: "Państwo", icon: Landmark },
@@ -82,10 +81,8 @@ export function AppShell({ me, title, subtitle, children }: {
         <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Activity className="size-5"/></div><span className="font-display font-bold tracking-[0.18em]">COUNTRY RP</span></div>
         <button onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button></div>
         <div className="mt-5">{nav(true)}</div>
-        <button type="button" className="nav-item mt-3" onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("country-rp:restart-tutorial")); }}>Uruchom samouczek ponownie</button>
       </aside>
     </div> : null}
-    <CountryTutorial me={me} />
     <Dialog open={confirmOut} onOpenChange={setConfirmOut}><DialogContent className="admin-dialog">
       <DialogHeader><DialogTitle>Wylogować się?</DialogTitle><DialogDescription>Zamkniesz bieżącą sesję dowodzenia. Dane gry pozostają bez zmian.</DialogDescription></DialogHeader>
       <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setConfirmOut(false)}>Anuluj</Button>
