@@ -56,7 +56,7 @@ export function CountryTutorial({ me }: { me: Me | null }) {
       setStep(0);
       saveStep(me.userId, 0);
       setActive(true);
-      void router.navigate({ to: STEPS[0].route });
+      void router.navigate({ to: STEPS[0].route as any });
     };
     window.addEventListener("country-rp:start-tutorial", onStart);
     return () => window.removeEventListener("country-rp:start-tutorial", onStart);
@@ -101,7 +101,7 @@ export function CountryTutorial({ me }: { me: Me | null }) {
     const nextStep = step + 1;
     setStep(nextStep);
     saveStep(me.userId, nextStep);
-    void router.navigate({ to: STEPS[nextStep].route });
+    void router.navigate({ to: STEPS[nextStep].route as any });
   }
 
   function back() {
@@ -109,7 +109,7 @@ export function CountryTutorial({ me }: { me: Me | null }) {
     const prev = step - 1;
     setStep(prev);
     if (me?.userId) saveStep(me.userId, prev);
-    void router.navigate({ to: STEPS[prev].route });
+    void router.navigate({ to: STEPS[prev].route as any });
   }
 
   if (!me?.userId) return null;\n\n  const targetStyle = targetRect ? { top: targetRect.top - 8, left: targetRect.left - 8, width: targetRect.width + 16, height: targetRect.height + 16 } : undefined;
