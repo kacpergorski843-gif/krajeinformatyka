@@ -88,6 +88,10 @@ function Shop() {
   const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
 
   const isBuilding = !!item?.building;
+  const coalHave = Number(country?.coal ?? 0);
+  const coalProd = Number(country?.coal_prod ?? 0);
+  const coalUse = Number(country?.coal_upkeep ?? 0);
+  const coalLeft = coalHave + coalProd - coalUse;
   const region = (regions ?? []).find((r) => r.id === regionId) ?? null;
 
   function openItem(i: ShopItem) {
@@ -159,6 +163,7 @@ function Shop() {
     krShort ||
     resourceRows.some((x) => x.missing) ||
     !!blockReason ||
+    !!(item?.building && levelLock(item)) ||
     (isBuilding && !region) ||
     (item?.code === "aa" && !regionId);
 
@@ -179,7 +184,8 @@ function Shop() {
           <p className="num text-primary shrink-0 text-sm">{fmtKR(i.cost_kr)}</p>
         </div>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{i.description}</p>
-        {locked ? <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-destructive">{locked}</p> : null}\n        <div className="mt-3 space-y-1 text-xs">
+        {levelLock(i) ? <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-destructive">{levelLock(i)}</p> : null}
+        <div className="mt-3 space-y-1 text-xs">
           {RESOURCES.filter((r) => unitCost(i, r) > 0).map((r) => (
             <p key={r} className="text-muted-foreground uppercase">
               {RESOURCE_LABELS[r]}:{" "}
@@ -201,7 +207,7 @@ function Shop() {
             <p className="text-info">Posiadasz: {units(owned)}</p>
           ) : null}
         </div>
-        <Button className="mt-4 w-full" disabled={!countryId} onClick={() => openItem(i)}>
+        <Button className="mt-4 w-full" disabled={!countryId || !!levelLock(i)} onClick={() => openItem(i)}>
           Kup
         </Button>
       </Panel>
@@ -262,7 +268,7 @@ function Shop() {
           </div>
           {coalLeft < 0 ? (
             <p className="text-destructive mt-3 text-sm">
-              Brakuje węgla — fabryki IV i V nie wypłacą przychodu. Dokup wytwórnie węgla.
+              Brakuje węgla — fabryki IV–VI nie wypłacą przychodu. Dokup wytwórnie węgla.
             </p>
           ) : (
             <p className="text-muted-foreground mt-3 text-sm">
