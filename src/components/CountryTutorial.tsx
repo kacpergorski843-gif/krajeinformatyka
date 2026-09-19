@@ -25,7 +25,7 @@ const STEPS: Step[] = [
 ];
 
 const STATUS_KEY = "country-rp:tutorial-status";
-const STEP_KEY = "country-rp:tutorial-step";
+const STEP_KEY = "country-rp:tutorial-step";\nconst ACTIVE_KEY = "country-rp:tutorial-active";
 
 function getStatus(userId: string) {
   try { return localStorage.getItem(`${STATUS_KEY}:${userId}`) ?? ""; } catch { return ""; }
@@ -108,7 +108,7 @@ export function CountryTutorial({ me }: { me: Me | null }) {
     if (step <= 0) return;
     const prev = step - 1;
     setStep(prev);
-    if (me?.userId) saveStep(me.userId, prev);
+    if (me?.userId) { saveStep(me.userId, prev); setActiveStorage(me.userId, true); }
     void router.navigate({ to: STEPS[prev].route as any });
   }
 
