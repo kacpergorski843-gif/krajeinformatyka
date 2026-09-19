@@ -25,7 +25,8 @@ const STEPS: Step[] = [
 ];
 
 const STATUS_KEY = "country-rp:tutorial-status";
-const STEP_KEY = "country-rp:tutorial-step";\nconst ACTIVE_KEY = "country-rp:tutorial-active";
+const STEP_KEY = "country-rp:tutorial-step";
+const ACTIVE_KEY = "country-rp:tutorial-active";
 
 function getStatus(userId: string) {
   try { return localStorage.getItem(`${STATUS_KEY}:${userId}`) ?? ""; } catch { return ""; }
@@ -39,13 +40,23 @@ function getSavedStep(userId: string) {
 function saveStep(userId: string, step: number) {
   try { localStorage.setItem(`${STEP_KEY}:${userId}`, String(step)); } catch {}
 }
+function setActiveStorage(userId: string, active: boolean) {
+  try {
+    if (active) localStorage.setItem(`${ACTIVE_KEY}:${userId}`, "1");
+    else localStorage.removeItem(`${ACTIVE_KEY}:${userId}`);
+  } catch {}
+}
+function getActiveStorage(userId: string) {
+  try { return localStorage.getItem(`${ACTIVE_KEY}:${userId}`) === "1"; } catch { return false; }
+}
 
 export function CountryTutorial({ me }: { me: Me | null }) {
   const router = useRouter();
   const [welcome, setWelcome] = useState(false);
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
-  const [targetReady, setTargetReady] = useState(false);\n  const [targetRect, setTargetRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [targetReady, setTargetReady] = useState(false);
+  const [targetRect, setTargetRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     if (!me?.userId) return;
@@ -112,7 +123,9 @@ export function CountryTutorial({ me }: { me: Me | null }) {
     void router.navigate({ to: STEPS[prev].route as any });
   }
 
-  if (!me?.userId) return null;\n\n  const targetStyle = targetRect ? { top: targetRect.top - 8, left: targetRect.left - 8, width: targetRect.width + 16, height: targetRect.height + 16 } : undefined;
+  if (!me?.userId) return null;
+
+  const targetStyle = targetRect ? { top: targetRect.top - 8, left: targetRect.left - 8, width: targetRect.width + 16, height: targetRect.height + 16 } : undefined;
 
   return <>
     {welcome ? (
