@@ -326,7 +326,7 @@ export const publicCountriesQuery = queryOptions({
   queryKey: ["public_countries"],
   queryFn: async () => {
     const { data, error } = await supabase
-      .from("country_stats")
+      .from("world_country_stats")
       .select("country_id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,gross_income,coal_upkeep,coal_prod,oil_prod,copper_prod,iron_prod,uranium_prod,forts,military_value,vote_potential,region_aa_total")
       .order("name");
     if (error) throw new Error(error.message);
@@ -340,7 +340,7 @@ export function publicCountryQuery(countryId: string | null | undefined) {
     enabled: !!countryId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("country_stats")
+        .from("world_country_stats")
         .select("country_id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,gross_income,coal_upkeep,coal_prod,oil_prod,copper_prod,iron_prod,uranium_prod,forts,military_value,vote_potential,region_aa_total")
         .eq("country_id", countryId!)
         .maybeSingle();
