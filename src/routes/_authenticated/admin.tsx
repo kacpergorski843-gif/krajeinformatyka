@@ -764,7 +764,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const createAndAssign = useMutation({
     mutationFn: () =>
       newCountryFor
-        ? rpc("admin_create_country_for_user", {
+        ? rpc<string>("admin_create_country_for_user", {
             p_user_id: newCountryFor.id,
             p_name: newCountryName.trim(),
             p_flag: "",
