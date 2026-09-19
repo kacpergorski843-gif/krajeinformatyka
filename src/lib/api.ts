@@ -194,6 +194,7 @@ export type RegionOccupation = {
   previous_country_id: string;
   current_country_id: string;
   occupied_at: string;
+  region_name: string;
 };
 
 export function regionOccupationsQuery(countryId: string | null | undefined) {
@@ -204,12 +205,19 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
       const rows = await unwrap(
         supabase
           .from("region_occupations")
-          .select("id, region_id, previous_country_id, current_country_id, occupied_at")
+          .select("id, region_id, previous_country_id, current_country_id, occupied_at, regions(name)")
           .or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`)
           .order("occupied_at", { ascending: false })
           .limit(50),
       );
-      return (rows ?? []) as unknown as RegionOccupation[];
+      return ((rows ?? []) as unknown as Array<RegionOccupation & { regions?: { name?: string } | null }>).map((row) => ({
+        id: row.id,
+        region_id: row.region_id,
+        previous_country_id: row.previous_country_id,
+        current_country_id: row.current_country_id,
+        occupied_at: row.occupied_at,
+        region_name: row.regions?.name ?? "Nieznany region",
+      }));
     },
   });
 }
