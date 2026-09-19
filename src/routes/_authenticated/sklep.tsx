@@ -219,7 +219,7 @@ function Shop() {
     const cannotBuyItem = itemCannotBuy(i);
 
     return (
-      <Panel className="hud-frame shop-card flex h-full flex-col p-5">
+      <Panel data-tour={i.building?.startsWith("factory_") ? "tour-factory-card" : undefined} className="hud-frame shop-card flex h-full flex-col p-5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <p className="truncate text-base font-semibold">{i.name}</p>
           <p className="num text-primary shrink-0 text-sm">{fmtKR(i.cost_kr)}</p>
@@ -295,7 +295,7 @@ function Shop() {
         {factories.map((i) => (
           <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
         ))}
-      </div>
+      </div></div>
 
       <SectionTitle>Wytwórnie surowców</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
