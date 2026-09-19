@@ -179,7 +179,7 @@ function Shop() {
           <p className="num text-primary shrink-0 text-sm">{fmtKR(i.cost_kr)}</p>
         </div>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{i.description}</p>
-        <div className="mt-3 space-y-1 text-xs">
+        {locked ? <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-destructive">{locked}</p> : null}\n        <div className="mt-3 space-y-1 text-xs">
           {RESOURCES.filter((r) => unitCost(i, r) > 0).map((r) => (
             <p key={r} className="text-muted-foreground uppercase">
               {RESOURCE_LABELS[r]}:{" "}
