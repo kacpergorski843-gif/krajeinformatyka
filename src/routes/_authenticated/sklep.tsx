@@ -219,7 +219,7 @@ function Shop() {
     const cannotBuyItem = itemCannotBuy(i);
 
     return (
-      <Panel className="hud-frame flex h-full flex-col p-5">
+      <Panel className="hud-frame shop-card flex h-full flex-col p-5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <p className="truncate text-base font-semibold">{i.name}</p>
           <p className="num text-primary shrink-0 text-sm">{fmtKR(i.cost_kr)}</p>
@@ -290,7 +290,7 @@ function Shop() {
         </Panel>
       ) : null}
 
-      <SectionTitle>Fabryki</SectionTitle>
+      <div className="shop-hero"><div><p className="label-hud">LOGISTYKA / ZAOPATRZENIE</p><h2 className="mt-1 text-xl font-semibold sm:text-2xl">Rynek państwa</h2><p className="mt-1 text-sm text-muted-foreground">Inwestycje, przemysł i jednostki. Dostępność zakupu jest sprawdzana przed otwarciem zamówienia.</p></div><div className="shop-balance"><span>SKARBIEC</span><strong>{country ? fmtKR(country.balance) : "—"}</strong></div></div><SectionTitle>Fabryki</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {factories.map((i) => (
           <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
