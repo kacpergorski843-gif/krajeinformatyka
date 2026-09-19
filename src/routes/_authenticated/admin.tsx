@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
+import { CountryFlag } from "@/components/CountryFlag";
 import { supabase } from "@/integrations/supabase/client";
 import { deletePlayerAccount } from "@/lib/admin.functions";
 import { Panel, SectionTitle } from "@/components/stat";
@@ -239,7 +240,7 @@ function Update4Tools() {
               <Label>Państwo</Label>
               <Select value={country} onValueChange={(value) => { setCountry(value); setRegion(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-1 inline-block h-4 w-6 rounded-sm align-middle text-base" />{item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
@@ -828,7 +829,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
                     <SelectContent>
                       <SelectItem value="unassigned" disabled>Brak przypisania</SelectItem>
                       {(countryQuery.data ?? []).map((country) => (
-                        <SelectItem key={country.country_id} value={country.country_id}>{country.flag} {country.name}</SelectItem>
+                        <SelectItem key={country.country_id} value={country.country_id}><CountryFlag flag={country.flag} alt="" className="mr-1 inline-block h-4 w-6 rounded-sm align-middle text-base" />{country.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
