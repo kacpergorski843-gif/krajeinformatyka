@@ -271,7 +271,7 @@ function AdminPanel() {
           <TabsContent value="users"><UsersTab isMainAdmin={!!me?.isMainAdmin} /></TabsContent>
           <TabsContent value="shop"><ShopTab /></TabsContent>
           <TabsContent value="economy"><EconomyTab countdown={countdown} /></TabsContent>
-          <TabsContent value="history"><HistoryTab /></TabsContent>\n          <div className="mt-5"><Update4Tools /></div>
+          <TabsContent value="history"><HistoryTab /></TabsContent>\n          <TabsContent value="update4"><Update4Tools /></TabsContent>
         </Tabs>
       </div>
     </AppShell>
