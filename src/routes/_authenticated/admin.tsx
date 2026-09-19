@@ -183,6 +183,7 @@ function Update4Tools() {
   const [region, setRegion] = useState("");
   const [occupationCountry, setOccupationCountry] = useState("");
   const [occupationRegion, setOccupationRegion] = useState("");
+  const [occupationTargetCountry, setOccupationTargetCountry] = useState("");
   const [building, setBuilding] = useState("factory_1");
   const [slot, setSlot] = useState("1");
   const [qty, setQty] = useState("1");
@@ -206,7 +207,8 @@ function Update4Tools() {
   const occupationRegions = (regions ?? []).filter((item) => item.country_id === occupationCountry);
   const selectedOccupationCountry = (countries ?? []).find((item) => item.country_id === occupationCountry);
   const selectedOccupationRegion = (regions ?? []).find((item) => item.id === occupationRegion);
-  const selectedTarget = selectedOccupationCountry;
+  const selectedOccupationTarget = (countries ?? []).find((item) => item.country_id === occupationTargetCountry);
+  const occupationIsSameCountry = occupationCountry !== "" && occupationCountry === occupationTargetCountry;
 
   return (
     <div className="admin-v4-tools">
@@ -299,7 +301,7 @@ function Update4Tools() {
           <div className="admin-v4-fields">
             <div className="admin-v4-field">
               <Label>Kraj</Label>
-              <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); }}>
+              <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); setOccupationTargetCountry(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz kraj" /></SelectTrigger>
                 <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
               </Select>
@@ -312,10 +314,17 @@ function Update4Tools() {
               </Select>
             </div>
           </div>
-          <div className="admin-v4-summary admin-v4-summary-danger">
-            <span>PRZEKAZANIE</span><strong>{selectedOccupationRegion?.name ?? "—"} → {selectedTarget?.name ?? "—"}</strong><small>Operacja trafi do historii okupacji i audytu administratora.</small>
+          <div className="admin-v4-field">
+            <Label>Nowy właściciel</Label>
+            <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
+              <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz nowe państwo" : "Najpierw wybierz region"} /></SelectTrigger>
+              <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+            </Select>
           </div>
-          <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry} onClick={() => setConfirm("occupation")}>Przekaż region <ChevronRight /></Button>
+          <div className="admin-v4-summary admin-v4-summary-danger">
+            <span>PRZEKAZANIE</span><strong>{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</strong><small>{occupationIsSameCountry ? "Nowy właściciel musi być innym państwem." : "Operacja trafi do historii okupacji i audytu administratora."}</small>
+          </div>
+          <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przekaż region <ChevronRight /></Button>
         </section>
       </div>
 
@@ -326,7 +335,7 @@ function Update4Tools() {
             <DialogDescription>
               {confirm === "building" ? `Dodasz ${BUILDING_LABELS[building] ?? building} do ${selectedCountry?.name ?? "wybranego państwa"}, region ${selectedRegion?.name ?? "—"}, slot ${slot}, ilość ×${qty}.` :
                confirm === "bonus" ? `Uruchomisz bonus +${percent}% dochodu na ${hours} godzin. Bonus wygaśnie automatycznie.` :
-               `Region ${selectedOccupationRegion?.name ?? "—"} zostanie przekazany państwu ${selectedTarget?.name ?? "—"}.`}
+               `Region ${selectedOccupationRegion?.name ?? "—"} z państwa ${selectedOccupationCountry?.name ?? "—"} zostanie przekazany państwu ${selectedOccupationTarget?.name ?? "—"}.`}
             </DialogDescription>
           </DialogHeader>
           <div className="admin-v4-confirm-actions">
@@ -336,7 +345,7 @@ function Update4Tools() {
               onClick={() => {
                 if (confirm === "building") void run("admin_grant_building", { p_country_id: country, p_region_id: region, p_slot_index: Number(slot), p_building: building, p_quantity: Number(qty) }, "Budynek dodany");
                 if (confirm === "bonus") void run("admin_start_income_bonus", { p_percent: Number(percent), p_hours: Number(hours) }, "Bonus dochodu uruchomiony");
-                if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: occupationRegion, p_new_country_id: occupationCountry }, "Region przekazany");
+                if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: occupationRegion, p_new_country_id: occupationTargetCountry }, "Region przekazany");
               }}
             >Potwierdź operację</Button>
           </div>
