@@ -112,40 +112,93 @@ function MyCountry() {
   const recentOccupations = occupationHistory?.slice(0, 3) ?? [];
 
   return (
-    <AppShell me={me} title={country.name} subtitle="Centrum zarządzania">
-      <div className="state-screen">
-        <header className="state-masthead">
-          <div className="state-identity"><div className="state-emblem"><Landmark className="size-6" /></div><div><p className="label-hud">NATION COMMAND / {country.name.toUpperCase()}</p><h1>Centrum zarządzania państwem</h1><p>Decyzje, zasoby i bezpieczeństwo w jednym miejscu.</p></div></div>
-          <div className="state-clock"><Timer className="size-4" /><div><span>Następne rozliczenie</span><strong>{countdown}</strong></div></div>
-        </header>
-        <div className="state-layout">
-          <main className="state-main">
-            <section className="state-finance">
-              <div className="state-finance-main"><p className="label-hud">TREASURY</p><strong>{kr(country.balance)}</strong><span>{fmtKR(country.balance)} dostępnych środków</span></div>
-              <div className="state-finance-stat"><span>PRZYCHÓD / DOBA</span><strong>{fmtKR(country.gross_income)}</strong></div>
-              <div className="state-finance-stat"><span>WARTOŚĆ ARMII</span><strong>{fmtKR(country.military_value)}</strong></div>
-            </section>
-            {economyBonus ? <section className="state-status state-status-positive"><div className="state-status-icon"><Activity className="size-4" /></div><div><span>EKONOMIA WZMOCNIONA</span><strong>+{economyBonus.percent}% do zarobków</strong><small>Aktywne do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</small></div></section> : null}
-            {shortage ? <section className="state-status state-status-warning"><div className="state-status-icon"><Flame className="size-4" /></div><div><span>ALERT OPERACYJNY</span><strong>Zapasy węgla są niewystarczające</strong><small>Uzupełnij zapasy, aby uniknąć problemów z fabrykami.</small></div><Link to="/sklep" className="state-status-action">Rynek <ArrowUpRight className="size-4" /></Link></section> : null}
-            <section className="state-module"><div className="state-module-head"><div><p className="label-hud">01 / ECONOMY</p><h2>Zasoby strategiczne</h2></div><Link to="/sklep" className="state-link">Otwórz rynek <ArrowUpRight className="size-3.5" /></Link></div>
-              <div className="state-resource-list">{resources.map((resource) => { const Icon=resource.icon; return <div key={resource.key} className="state-resource"><div className="state-resource-top"><Icon className="size-4 text-primary" /><span>{resource.label}</span></div><strong>{units(resource.value)}</strong><small><b>+{units(resource.prod)}</b> / doba</small></div>; })}</div>
-            </section>
-            <section className="state-module"><div className="state-module-head"><div><p className="label-hud">02 / DEFENSE</p><h2>Siły państwa</h2></div><Link to="/arsenal" className="state-link">Otwórz arsenał <ArrowUpRight className="size-3.5" /></Link></div>
-              <div className="state-force-list">{military.map((force) => { const Icon=force.icon; return <div key={force.label}><Icon className="size-4 text-primary" /><span>{force.label}</span><strong>{units(force.value)}</strong></div>; })}</div>
-            </section>
-            <section className="state-module"><div className="state-module-head"><div><p className="label-hud">03 / ACTIVITY</p><h2>Ostatnie operacje</h2></div></div><OperationsHistory rows={(history ?? []) as unknown as TxRow[]} /></section>
-          </main>
-          <aside className="state-side">
-            <section className="state-side-card state-territory-card"><div className="state-side-head"><span>TERYTORIUM</span><Link to="/regiony"><ArrowUpRight className="size-4" /></Link></div><strong className="state-territory-number">{regions?.length ?? 0}</strong><p>kontrolowanych regionów</p><div className="state-territory-meter"><span style={{width: Math.min(100,(regions?.length ?? 0)*10)+"%"}} /></div><Link to="/regiony" className="state-side-action"><Map className="size-4" /> Zarządzaj regionami</Link></section>
-            <section className="state-side-card"><div className="state-side-head"><span>SKRÓTY OPERACYJNE</span></div>
-              <Link to="/sklep" className="state-action-row"><div><Coins className="size-4" /><span>Rozbuduj państwo</span></div><ArrowUpRight className="size-4" /></Link>
-              <Link to="/transfer" className="state-action-row"><div><Droplet className="size-4" /><span>Wyślij zasoby</span></div><ArrowUpRight className="size-4" /></Link>
-              <Link to="/arsenal" className="state-action-row"><div><Shield className="size-4" /><span>Sprawdź obronę</span></div><ArrowUpRight className="size-4" /></Link>
-              <Link to="/swiat" className="state-action-row"><div><Map className="size-4" /><span>Przeglądaj świat</span></div><ArrowUpRight className="size-4" /></Link>
-            </section>
-            {recentOccupations.length > 0 ? <section className="state-side-card"><div className="state-side-head"><span>OSTATNIE ZMIANY TERYTORIALNE</span></div>{recentOccupations.map((event) => { const current=event.current_country_id===me.countryId; const otherId=current?event.previous_country_id:event.current_country_id; const other=countries?.find((item)=>item.country_id===otherId)?.name ?? "Nieznane państwo"; return <div key={event.id} className={current?"state-event state-event-positive":"state-event state-event-negative"}><span>{current?"PRZEJĘTY":"OKUPOWANY"}</span><strong>{event.region_name}</strong><small>{current?"Poprzedni: "+other:"Nowy właściciel: "+other}</small><time>{new Date(event.occupied_at).toLocaleString("pl-PL")}</time></div>; })}</section> : null}
+    <AppShell me={me} title={country.name} subtitle="Centrum dowodzenia">
+      <div className="command-v3">
+        <section className="command-v3-hero">
+          <div className="command-v3-hero-main">
+            <div className="command-v3-country-mark"><Landmark className="size-7" /></div>
+            <div className="command-v3-copy">
+              <div className="command-v3-eyebrow"><span>PAŃSTWO</span><i /> <span>AKTYWNE</span></div>
+              <h1>{country.name}</h1>
+              <p>Centrum dowodzenia państwem</p>
+            </div>
+          </div>
+          <div className="command-v3-treasury">
+            <span>SKARB PAŃSTWA</span>
+            <strong>{kr(country.balance)}</strong>
+            <small>{fmtKR(country.balance)} dostępnych środków</small>
+          </div>
+          <div className="command-v3-cycle">
+            <Timer className="size-4" />
+            <div><span>KOLEJNY CYKL</span><strong>{countdown}</strong></div>
+          </div>
+        </section>
+
+        <section className="command-v3-actions">
+          <Link to="/sklep" className="command-v3-action command-v3-action-primary"><div><Coins className="size-5" /><span>Rozbuduj gospodarkę</span></div><ArrowUpRight className="size-4" /></Link>
+          <Link to="/transfer" className="command-v3-action"><div><Droplet className="size-5" /><span>Transfer zasobów</span></div><ArrowUpRight className="size-4" /></Link>
+          <Link to="/arsenal" className="command-v3-action"><div><Shield className="size-5" /><span>Centrum obrony</span></div><ArrowUpRight className="size-4" /></Link>
+          <Link to="/regiony" className="command-v3-action"><div><Map className="size-5" /><span>Zarządzaj terytorium</span></div><ArrowUpRight className="size-4" /></Link>
+        </section>
+
+        {shortage || economyBonus ? (
+          <section className="command-v3-notices">
+            {shortage ? <div className="command-v3-notice command-v3-notice-warning"><Flame className="size-4" /><div><span>WYMAGA UWAGI</span><strong>Zapasy węgla nie pokrywają bieżącego utrzymania.</strong></div><Link to="/sklep">Uzupełnij →</Link></div> : null}
+            {economyBonus ? <div className="command-v3-notice"><Activity className="size-4" /><div><span>BONUS EKONOMICZNY</span><strong>+{economyBonus.percent}% do zarobków</strong><small>Do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</small></div></div> : null}
+          </section>
+        ) : null}
+
+        <section className="command-v3-grid">
+          <div className="command-v3-primary-column">
+            <div className="command-v3-section-title"><div><span>GOSPODARKA</span><h2>Przepływ zasobów</h2></div><Link to="/sklep">RYNEK <ArrowUpRight className="size-3.5" /></Link></div>
+            <div className="command-v3-economy">
+              <div className="command-v3-economy-head"><div><span>DOCHÓD DZIENNY</span><strong>{fmtKR(country.gross_income)}</strong></div><div><span>WARTOŚĆ ARMII</span><strong>{fmtKR(country.military_value)}</strong></div></div>
+              <div className="command-v3-resource-rows">
+                {resources.map((resource) => {
+                  const Icon = resource.icon;
+                  const current = Number(resource.value);
+                  const production = Number(resource.prod);
+                  const upkeep = resource.key === "coal" ? Number(country.coal_upkeep) : 0;
+                  const ratio = upkeep > 0 ? Math.min(100, (current / Math.max(1, upkeep)) * 100) : Math.min(100, production * 5);
+                  return <div key={resource.key} className="command-v3-resource-row">
+                    <div className="command-v3-resource-name"><span className="command-v3-resource-icon"><Icon className="size-4" /></span><div><strong>{resource.label}</strong><small>{production > 0 ? "+" + units(resource.prod) + " / doba" : "brak produkcji"}</small></div></div>
+                    <div className="command-v3-resource-track"><span style={{width: ratio + "%"}} /></div>
+                    <strong className="command-v3-resource-value">{units(resource.value)}</strong>
+                  </div>;
+                })}
+              </div>
+            </div>
+
+            <div className="command-v3-section-title command-v3-section-spaced"><div><span>TERYTORIUM</span><h2>Stan kontroli</h2></div><Link to="/regiony">WSZYSTKIE REGIONY <ArrowUpRight className="size-3.5" /></Link></div>
+            <div className="command-v3-territory">
+              <div className="command-v3-territory-overview">
+                <div className="command-v3-territory-count"><strong>{regions?.length ?? 0}</strong><span>regionów pod kontrolą</span></div>
+                <div className="command-v3-territory-strip"><span style={{width: Math.min(100,(regions?.length ?? 0)*10) + "%"}} /></div>
+                <small>Kontrola terytorialna państwa</small>
+              </div>
+              <div className="command-v3-region-list">
+                {topRegions.length ? topRegions.map((region) => <div key={region.region_id} className="command-v3-region"><div><Map className="size-4" /><strong>{region.name}</strong></div><span>AKTYWNY</span></div>) : <div className="command-v3-region-empty">Brak przypisanych regionów.</div>}
+              </div>
+            </div>
+
+            <div className="command-v3-section-title command-v3-section-spaced"><div><span>DZIENNIK</span><h2>Ostatnie operacje</h2></div></div>
+            <div className="command-v3-history"><OperationsHistory rows={(history ?? []) as unknown as TxRow[]} /></div>
+          </div>
+
+          <aside className="command-v3-rail">
+            <div className="command-v3-section-title"><div><span>OBRONA</span><h2>Gotowość sił</h2></div><Link to="/arsenal"><ArrowUpRight className="size-3.5" /></Link></div>
+            <div className="command-v3-readiness">
+              <div className="command-v3-readiness-ring"><div><strong>{Math.min(99, Math.round((Number(country.tank_packs) + Number(country.soldier_packs) + Number(country.region_aa_total)) / Math.max(1, (regions?.length ?? 1))))}</strong><span>READY</span></div></div>
+              <p>Potencjał operacyjny</p>
+              <small>Stan aktywnych zasobów wojskowych</small>
+            </div>
+            <div className="command-v3-force-list">
+              {military.map((force) => { const Icon=force.icon; return <div key={force.label}><span className="command-v3-force-icon"><Icon className="size-4" /></span><div><span>{force.label}</span><strong>{units(force.value)}</strong></div></div>; })}
+            </div>
+
+            {recentOccupations.length ? <div className="command-v3-rail-block"><div className="command-v3-rail-title">ZMIANY TERYTORIALNE</div>{recentOccupations.map((event) => { const current=event.current_country_id===me.countryId; const otherId=current?event.previous_country_id:event.current_country_id; const other=countries?.find((item)=>item.country_id===otherId)?.name ?? "Nieznane państwo"; return <div key={event.id} className={current?"command-v3-event command-v3-event-positive":"command-v3-event command-v3-event-negative"}><span>{current?"PRZEJĘTO REGION":"REGION OKUPOWANY"}</span><strong>{event.region_name}</strong><small>{current?"Poprzedni właściciel: "+other:"Nowy właściciel: "+other}</small></div>; })}</div> : null}
           </aside>
-        </div>
+        </section>
       </div>
     </AppShell>
   );
