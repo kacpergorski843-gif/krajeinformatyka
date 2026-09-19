@@ -245,39 +245,6 @@ function Shop() {
         </Panel>
       ) : null}
 
-      {country ? (
-        <Panel className="hud-frame mb-6 p-5">
-          <p className="label-hud">Bilans węgla</p>
-          <div className="mt-3 grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-muted-foreground text-xs uppercase">Węgiel</p>
-              <p className="num mt-1 text-lg">{units(coalHave)}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs uppercase">Dzisiaj zużyjesz</p>
-              <p className="num text-destructive mt-1 text-lg">{units(coalUse)}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs uppercase">Pozostanie</p>
-              <p
-                className={`num mt-1 text-lg ${coalLeft < 0 ? "text-destructive" : "text-success"}`}
-              >
-                {units(coalLeft)}
-              </p>
-            </div>
-          </div>
-          {coalLeft < 0 ? (
-            <p className="text-destructive mt-3 text-sm">
-              Brakuje węgla — fabryki IV–VI nie wypłacą przychodu. Dokup wytwórnie węgla.
-            </p>
-          ) : (
-            <p className="text-muted-foreground mt-3 text-sm">
-              Produkcja węgla: +{units(coalProd)} / doba.
-            </p>
-          )}
-        </Panel>
-      ) : null}
-
       <SectionTitle>Fabryki</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {factories.map((i) => (
