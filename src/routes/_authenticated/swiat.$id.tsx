@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
-import { countriesQuery, meQuery, regionsQuery } from "@/lib/api";
+import { publicCountriesQuery, meQuery, regionsQuery } from "@/lib/api";
 import { BUILDING_LABELS, kr, krShort, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/swiat/$id")({
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/swiat/$id")({
 function CountryDetail() {
   const { id } = Route.useParams();
   const { data: me } = useQuery(meQuery);
-  const { data: countries } = useQuery(countriesQuery);
+  const { data: countries } = useQuery(publicCountriesQuery);
   const { data: regions } = useQuery(regionsQuery(id));
   const c = countries?.find((x) => x.country_id === id);
 
