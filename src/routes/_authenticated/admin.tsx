@@ -198,10 +198,10 @@ function Update4Tools() {
     }
   };
 
-  const selectedRegions = (regions.data ?? []).filter((item) => item.country_id === country);
-  const selectedCountry = (countries.data ?? []).find((item) => item.country_id === country);
-  const selectedRegion = (regions.data ?? []).find((item) => item.id === region);
-  const selectedTarget = (countries.data ?? []).find((item) => item.country_id === country);
+  const selectedRegions = (regions ?? []).filter((item) => item.country_id === country);
+  const selectedCountry = (countries ?? []).find((item) => item.country_id === country);
+  const selectedRegion = (regions ?? []).find((item) => item.id === region);
+  const selectedTarget = (countries ?? []).find((item) => item.country_id === country);
 
   return (
     <div className="admin-v4-tools">
@@ -229,7 +229,7 @@ function Update4Tools() {
               <Label>Państwo</Label>
               <Select value={country} onValueChange={(value) => { setCountry(value); setRegion(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                <SelectContent>{(countries.data ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
@@ -296,14 +296,14 @@ function Update4Tools() {
               <Label>Region do przekazania</Label>
               <Select value={region} onValueChange={setRegion}>
                 <SelectTrigger><SelectValue placeholder="Wybierz region" /></SelectTrigger>
-                <SelectContent>{(regions.data ?? []).map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{(regions ?? []).map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
               <Label>Nowy właściciel</Label>
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                <SelectContent>{(countries.data ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
