@@ -14,7 +14,8 @@ const NAV = [
   { to: "/regiony", label: "Regiony", icon: Map },
   { to: "/arsenal", label: "Wojsko", icon: Rocket },
   { to: "/sklep", label: "Sklep", icon: ShoppingCart },
-  { to: "/ranking", label: "Ranking", icon: Trophy },\n  { to: "/transfer", label: "Transfery", icon: ArrowRightLeft },
+  { to: "/ranking", label: "Ranking", icon: Trophy },
+  { to: "/transfer", label: "Transfery", icon: ArrowRightLeft },
 ] as const;
 
 export function AppShell({ me, title, subtitle, children }: {
