@@ -114,7 +114,7 @@ function MyCountry() {
   return (
     <AppShell me={me} title={country.name} subtitle="Centrum dowodzenia">
       <div className="command-v3">
-        <section className="command-v3-hero">
+        <section className="command-v3-hero" data-tour="country-hero">
           <div className="command-v3-hero-main">
             <div className="command-v3-country-mark"><Landmark className="size-7" /></div>
             <div className="command-v3-copy">
