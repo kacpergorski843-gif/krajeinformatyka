@@ -53,7 +53,7 @@ function Ranking() {
       title="Ranking"
       subtitle="Zarobki dobowe i potencjał głosów wojennych"
     >
-      <div className="grid grid-cols-2 gap-2">
+      <div data-tour="tour-ranking-categories" className="grid grid-cols-2 gap-2">
         {(
           [
             ["income", "Największe zarobki", Coins],
