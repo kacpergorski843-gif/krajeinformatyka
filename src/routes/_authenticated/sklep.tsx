@@ -156,23 +156,37 @@ function Shop() {
         return { r, need, have, missing: have < need };
       })
     : [];
-  const blockReason =
-    item?.building && region ? buildBlockReason(region, item.building) : null;
-  const cannotBuy =
-    !country ||
-    krShort ||
-    resourceRows.some((x) => x.missing) ||
-    !!blockReason ||
-    !!(item?.building && levelLock(item)) ||
-    (isBuilding && !region) ||
-    (item?.code === "aa" && !regionId);
-
   function levelLock(i: ShopItem): string | null {
     if (!i.building?.startsWith("factory_")) return null;
     const level = Number(i.building.split("_")[1]);
     if (level <= 1) return null;
     const required = `factory_${level - 1}`;
-    if (!ownedByBuilding.has(required)) return `Poziom ${level} — ZABLOKOWANY · WYMAGANY: Fabryka poziom ${level - 1}`;
+    if (!ownedByBuilding.has(required)) {
+      return `Poziom ${level} — ZABLOKOWANY · WYMAGANY: Fabryka poziom ${level - 1}`;
+    }
+    return null;
+  }
+
+  const blockReason =
+    item?.building && region
+      ? buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
+      : null;
+  const cannotBuy =
+    !country ||
+    krShort ||
+    resourceRows.some((x) => x.missing) ||
+    !!blockReason ||
+    (isBuilding && !region) ||
+    (item?.code === "aa" && !regionId);
+
+  function levelLockForRegion(selectedRegion: RegionWithSlots, building: string): string | null {
+    if (!building.startsWith("factory_")) return null;
+    const level = Number(building.split("_")[1]);
+    if (level <= 1) return null;
+    const required = `factory_${level - 1}`;
+    if (!selectedRegion.slots.some((slot) => slot.building === required)) {
+      return `W tym regionie wymagany jest najpierw poziom ${level - 1}`;
+    }
     return null;
   }
 
@@ -207,7 +221,7 @@ function Shop() {
             <p className="text-info">Posiadasz: {units(owned)}</p>
           ) : null}
         </div>
-        <Button className="mt-4 w-full" disabled={!countryId || !!levelLock(i)} onClick={() => openItem(i)}>
+        <Button className="mt-4 w-full" disabled={!countryId} onClick={() => openItem(i)}>
           Kup
         </Button>
       </Panel>
