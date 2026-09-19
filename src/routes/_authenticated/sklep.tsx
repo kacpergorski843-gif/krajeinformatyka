@@ -290,7 +290,7 @@ function Shop() {
         </Panel>
       ) : null}
 
-      <div className="shop-hero"><div><p className="label-hud">LOGISTYKA / ZAOPATRZENIE</p><h2 className="mt-1 text-xl font-semibold sm:text-2xl">Rynek państwa</h2><p className="mt-1 text-sm text-muted-foreground">Inwestycje, przemysł i jednostki. Dostępność zakupu jest sprawdzana przed otwarciem zamówienia.</p></div><div className="shop-balance"><span>SKARBIEC</span><strong>{country ? fmtKR(country.balance) : "—"}</strong></div></div><SectionTitle>Fabryki</SectionTitle>
+      <div className="shop-hero"><div><p className="label-hud">LOGISTYKA / ZAOPATRZENIE</p><h2 className="mt-1 text-xl font-semibold sm:text-2xl">Rynek państwa</h2><p className="mt-1 text-sm text-muted-foreground">Inwestycje, przemysł i jednostki. Dostępność zakupu jest sprawdzana przed otwarciem zamówienia.</p></div><div className="shop-balance"><span>SKARBIEC</span><strong>{country ? fmtKR(country.balance) : "—"}</strong></div></div><div data-tour="tour-factories"><SectionTitle>Fabryki</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {factories.map((i) => (
           <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
