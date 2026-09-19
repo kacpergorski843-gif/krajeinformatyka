@@ -299,3 +299,19 @@ export const publicCountriesQuery = queryOptions({
     return (data ?? []) as unknown as CountryStats[];
   },
 });
+
+export const economyBonusQuery = queryOptions({
+  queryKey: ["economy_bonus"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("economy_bonuses")
+      .select("id,percent,starts_at,ends_at")
+      .lte("starts_at", new Date().toISOString())
+      .gt("ends_at", new Date().toISOString())
+      .order("ends_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data as { id: string; percent: number; starts_at: string; ends_at: string } | null;
+  },
+});
