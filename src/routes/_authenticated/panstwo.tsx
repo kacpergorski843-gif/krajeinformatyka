@@ -137,14 +137,14 @@ function MyCountry() {
 
       {/* Skarbiec + przychód */}
       <div className="grid gap-3 sm:grid-cols-3">
-        <Stat
+        <div data-tour="tour-treasury"><Stat
           label="Skarbiec"
           value={kr(country.balance)}
           hint={fmtKR(country.balance)}
           tone="primary"
           icon={<Coins className="size-4" strokeWidth={1.5} />}
-        />
-        <Stat label="Przychód / doba" value={fmtKR(country.gross_income)} tone="accent" />
+        /></div>
+        <div data-tour="tour-income"><Stat label="Przychód / doba" value={fmtKR(country.gross_income)} tone="accent" />
         <Stat
           label="Zużycie węgla / doba"
           value={units(country.coal_upkeep)}
@@ -175,7 +175,7 @@ function MyCountry() {
         </div>
       </Panel>
 
-      <SectionTitle
+      <div data-tour="tour-military"><SectionTitle
         action={
           <Link to="/arsenal" className="text-primary shrink-0 text-xs">
             Arsenał
@@ -198,6 +198,7 @@ function MyCountry() {
           ))}
         </div>
       </Panel>
+      </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <Stat
           label="Potencjał głosów"
@@ -210,7 +211,7 @@ function MyCountry() {
       </div>
 
       {/* Widget regionów */}
-      <SectionTitle
+      <div data-tour="tour-country-regions"><SectionTitle
         action={
           <Link to="/regiony" className="text-primary flex shrink-0 items-center gap-1 text-xs">
             Zarządzaj <ChevronRight className="size-3.5" strokeWidth={1.5} />
@@ -245,8 +246,9 @@ function MyCountry() {
           </Link>
         ) : null}
       </Panel>
+      </div>
 
-      <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
+      <div data-tour="tour-operations-history"><OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
       </div>\n\n      <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
         <Timer className="size-3.5" strokeWidth={1.5} /> Do rozliczenia dobowego:{" "}
