@@ -195,7 +195,7 @@ function Regions() {
                     SLOTY {r.slots.length}/9
                   </span>
                   <span
-                    className={`num block text-[11px] ${r.aa_defense === 0 ? "text-inactive" : "text-info"}`}
+                    data-tour="aa"\n                    className={`num block text-[11px] ${r.aa_defense === 0 ? "text-inactive" : "text-info"}`}
                   >
                     {units(r.aa_defense)} OPL
                   </span>
