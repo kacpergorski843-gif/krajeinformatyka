@@ -259,12 +259,12 @@ function AdminPanel() {
 
         <Tabs defaultValue="countries" className="min-w-0">
           <div className="admin-scrollbar w-full max-w-full overflow-x-auto pb-1">
-            <TabsList className="grid h-auto min-w-[42rem] grid-cols-5 border border-border/70 bg-card/80 p-1">
+            <TabsList className="grid h-auto min-w-[48rem] grid-cols-6 border border-border/70 bg-card/80 p-1">
               <AdminTab value="countries" icon={<Building2 />}>Państwa</AdminTab>
               <AdminTab value="users" icon={<UserCog />}>Użytkownicy</AdminTab>
               <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
               <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
-              <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
+              <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>\n              <AdminTab value="update4" icon={<PackagePlus />}>Update 4.0</AdminTab>
             </TabsList>
           </div>
           <TabsContent value="countries"><CountriesTab /></TabsContent>
