@@ -42,12 +42,14 @@ function World() {
             <Panel className="h-full border-border/80 bg-card/80 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-xl">
               <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                 <span className="shrink-0 text-xl">{c.flag}</span>
-                <div><p className="truncate text-base font-semibold">
-                  {c.name}
-                  {c.country_id === me?.countryId ? (
-                    <span className="text-primary ml-2 text-[10px] uppercase">Twoje</span>
-                  ) : null}
-                </p>
+                <div>
+                  <p className="truncate text-base font-semibold">
+                    {c.name}
+                    {c.country_id === me?.countryId ? (
+                      <span className="ml-2 text-[10px] uppercase text-primary">Twoje</span>
+                    ) : null}
+                  </p>
+                </div>
               </div>
               <dl className="mt-3 space-y-1 text-xs">
                 <div className="flex justify-between gap-2">
