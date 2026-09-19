@@ -54,7 +54,6 @@ export function AppShell({ me, title, subtitle, children }: {
               <div className="min-w-0"><p className="truncate text-sm font-semibold">{me?.displayName ?? me?.email ?? "Dowódca"}</p>
               <p className="text-primary text-[10px] tracking-[0.14em] uppercase">{me ? ROLE_LABELS[me.role] : ""}</p></div>
             </div>
-            <button type="button" onClick={() => { window.dispatchEvent(new Event("country-rp:restart-tutorial")); }} className="nav-item w-full">Uruchom samouczek ponownie</button>
             <button type="button" onClick={() => setConfirmOut(true)} className="nav-item w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
           </div>
         </div>
