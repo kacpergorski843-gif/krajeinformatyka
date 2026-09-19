@@ -188,6 +188,32 @@ export function regionsQuery(countryId: string | null | undefined) {
   });
 }
 
+export type RegionOccupation = {
+  id: string;
+  region_id: string;
+  previous_country_id: string;
+  current_country_id: string;
+  occupied_at: string;
+};
+
+export function regionOccupationsQuery(countryId: string | null | undefined) {
+  return queryOptions({
+    queryKey: ["region_occupations", countryId],
+    enabled: !!countryId,
+    queryFn: async (): Promise<RegionOccupation[]> => {
+      const rows = await unwrap(
+        supabase
+          .from("region_occupations")
+          .select("id, region_id, previous_country_id, current_country_id, occupied_at")
+          .or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`)
+          .order("occupied_at", { ascending: false })
+          .limit(50),
+      );
+      return (rows ?? []) as unknown as RegionOccupation[];
+    },
+  });
+}
+
 export function transactionsQuery(countryId: string | null | undefined, limit = 50) {
   return queryOptions({
     queryKey: ["transactions", countryId, limit],
