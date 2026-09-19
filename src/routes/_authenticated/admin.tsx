@@ -188,6 +188,8 @@ function Update4Tools() {
   const [slot, setSlot] = useState("1");
   const [qty, setQty] = useState("1");
   const [percent, setPercent] = useState("25");
+  const [bonusScope, setBonusScope] = useState<"global" | "country">("global");
+  const [bonusCountry, setBonusCountry] = useState("");
   const [hours, setHours] = useState("24");
   const [confirm, setConfirm] = useState<"building" | "bonus" | "occupation" | null>(null);
 
@@ -272,7 +274,7 @@ function Update4Tools() {
           </div>
           <div className="admin-v4-card-copy">
             <h3>Bonus dochodu</h3>
-            <p>Uruchom czasowy bonus do przychodu wszystkich państw. Po upływie czasu bonus wygasa automatycznie.</p>
+            <p>Uruchom czasowy bonus do przychodu wszystkich państw albo tylko wskazanego kraju. Po upływie czasu bonus wygasa automatycznie.</p>
           </div>
           <div className="admin-v4-bonus-display">
             <span>AKTYWACJA</span>
@@ -280,13 +282,32 @@ function Update4Tools() {
             <small>przez {hours || "0"} godzin</small>
           </div>
           <div className="admin-v4-fields">
+            <div className="admin-v4-field">
+              <Label>Zakres bonusu</Label>
+              <Select value={bonusScope} onValueChange={(value) => { setBonusScope(value as "global" | "country"); if (value === "global") setBonusCountry(""); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="global">Wszystkie państwa</SelectItem>
+                  <SelectItem value="country">Wybrane państwo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {bonusScope === "country" ? (
+              <div className="admin-v4-field">
+                <Label>Państwo</Label>
+                <Select value={bonusCountry} onValueChange={setBonusCountry}>
+                  <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
+                  <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            ) : null}
             <div className="admin-v4-field"><Label>Bonus procentowy</Label><div className="admin-v4-input-suffix"><Input type="number" min="1" max="1000" value={percent} onChange={(event) => setPercent(event.target.value)} /><span>%</span></div></div>
             <div className="admin-v4-field"><Label>Czas trwania</Label><div className="admin-v4-input-suffix"><Input type="number" min="1" max="720" value={hours} onChange={(event) => setHours(event.target.value)} /><span>h</span></div></div>
           </div>
           <div className="admin-v4-summary admin-v4-summary-accent">
-            <span>EFEKT</span><strong>Dochód +{percent || "0"}%</strong><small>Automatyczne wygaśnięcie po {hours || "0"} h</small>
+            <span>EFEKT</span><strong>Dochód +{percent || "0"}% · {bonusScope === "global" ? "wszystkie państwa" : (countries ?? []).find((item) => item.country_id === bonusCountry)?.name ?? "wybierz państwo"}</strong><small>Automatyczne wygaśnięcie po {hours || "0"} h</small>
           </div>
-          <Button className="admin-v4-submit" disabled={Number(percent) < 1 || Number(percent) > 1000 || Number(hours) < 1 || Number(hours) > 720} onClick={() => setConfirm("bonus")}>Uruchom bonus <ChevronRight /></Button>
+          <Button className="admin-v4-submit" disabled={Number(percent) < 1 || Number(percent) > 1000 || Number(hours) < 1 || Number(hours) > 720 || (bonusScope === "country" && !bonusCountry)} onClick={() => setConfirm("bonus")}>Uruchom bonus <ChevronRight /></Button>
         </section>
 
         <section className="admin-v4-card">
@@ -334,7 +355,7 @@ function Update4Tools() {
             <DialogTitle>{confirm === "building" ? "Potwierdź dodanie budynku" : confirm === "bonus" ? "Potwierdź bonus dochodu" : "Potwierdź przekazanie regionu"}</DialogTitle>
             <DialogDescription>
               {confirm === "building" ? `Dodasz ${BUILDING_LABELS[building] ?? building} do ${selectedCountry?.name ?? "wybranego państwa"}, region ${selectedRegion?.name ?? "—"}, slot ${slot}, ilość ×${qty}.` :
-               confirm === "bonus" ? `Uruchomisz bonus +${percent}% dochodu na ${hours} godzin. Bonus wygaśnie automatycznie.` :
+               confirm === "bonus" ? "Uruchomisz bonus +" + percent + "% dochodu na " + hours + " godzin " + (bonusScope === "global" ? "dla wszystkich państw" : "dla państwa " + ((countries ?? []).find((item) => item.country_id === bonusCountry)?.name ?? "—")) + ". Bonus wygaśnie automatycznie." :
                `Region ${selectedOccupationRegion?.name ?? "—"} z państwa ${selectedOccupationCountry?.name ?? "—"} zostanie przekazany państwu ${selectedOccupationTarget?.name ?? "—"}.`}
             </DialogDescription>
           </DialogHeader>
@@ -344,7 +365,7 @@ function Update4Tools() {
               variant={confirm === "occupation" ? "destructive" : "default"}
               onClick={() => {
                 if (confirm === "building") void run("admin_grant_building", { p_country_id: country, p_region_id: region, p_slot_index: Number(slot), p_building: building, p_quantity: Number(qty) }, "Budynek dodany");
-                if (confirm === "bonus") void run("admin_start_income_bonus", { p_percent: Number(percent), p_hours: Number(hours) }, "Bonus dochodu uruchomiony");
+                if (confirm === "bonus") void run("admin_start_income_bonus", { p_percent: Number(percent), p_hours: Number(hours), p_country_id: bonusScope === "country" ? bonusCountry : null }, "Bonus dochodu uruchomiony");
                 if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: occupationRegion, p_new_country_id: occupationTargetCountry }, "Region przekazany");
               }}
             >Potwierdź operację</Button>
