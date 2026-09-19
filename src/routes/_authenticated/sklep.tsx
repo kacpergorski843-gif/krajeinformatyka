@@ -140,11 +140,6 @@ function Shop() {
     }
   }
 
-  const coalHave = Number(country?.coal ?? 0);
-  const coalProd = Number(country?.coal_prod ?? 0);
-  const coalUse = Number(country?.coal_upkeep ?? 0);
-  const coalLeft = coalHave + coalProd - coalUse;
-
   // Braki dla aktualnie wybranego produktu i ilości
   const effectiveQty = isBuilding ? 1 : qty;
   const needKr = item ? Number(item.cost_kr) * effectiveQty : 0;
