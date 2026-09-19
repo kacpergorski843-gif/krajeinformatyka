@@ -179,33 +179,166 @@ const SHOP_NUMERIC = [
 function Update4Tools() {
   const { data: countries } = useQuery(countriesQuery);
   const { data: regions } = useQuery(allRegionsQuery);
-  const [country,setCountry]=useState(""); const [region,setRegion]=useState(""); const [building,setBuilding]=useState("factory_1");
-  const [slot,setSlot]=useState("1"); const [qty,setQty]=useState("1"); const [percent,setPercent]=useState("25"); const [hours,setHours]=useState("24");
-  const run=async(fn:string,args:Record<string,unknown>)=>{try{await rpc(fn,args);toast.success("Operacja wykonana");}catch(e){toast.error(e instanceof Error?e.message:"Błąd");}};
-  const selectedRegions=(regions.data??[]).filter((r)=>r.country_id===country);
-  return <Panel className="space-y-6">
-    <SectionTitle>Operacje Update 4.0</SectionTitle>
-    <div className="grid gap-4 lg:grid-cols-3">
-      <div className="space-y-3"><p className="label-hud">Dodaj budynek</p>
-        <Select value={country} onValueChange={setCountry}><SelectTrigger><SelectValue placeholder="Państwo"/></SelectTrigger><SelectContent>{(countries.data??[]).map(c=><SelectItem key={c.country_id} value={c.country_id}>{c.flag} {c.name}</SelectItem>)}</SelectContent></Select>
-        <Select value={region} onValueChange={setRegion}><SelectTrigger><SelectValue placeholder="Region"/></SelectTrigger><SelectContent>{selectedRegions.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
-        <Select value={building} onValueChange={setBuilding}><SelectTrigger><SelectValue placeholder="Budynek"/></SelectTrigger><SelectContent>{["factory_1","factory_2","factory_3","factory_4","factory_5","factory_6","fort_1","fort_2","fort_3"].map(b=><SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent></Select>
-        <Input type="number" min="1" value={slot} onChange={e=>setSlot(e.target.value)} placeholder="Slot"/>
-        <Input type="number" min="1" max="9" value={qty} onChange={e=>setQty(e.target.value)} placeholder="Ilość"/>
-        <Button className="w-full" onClick={()=>run("admin_grant_building",{p_country_id:country,p_region_id:region,p_slot_index:Number(slot),p_building:building,p_quantity:Number(qty)})}>Dodaj budynek</Button>
+  const [country, setCountry] = useState("");
+  const [region, setRegion] = useState("");
+  const [building, setBuilding] = useState("factory_1");
+  const [slot, setSlot] = useState("1");
+  const [qty, setQty] = useState("1");
+  const [percent, setPercent] = useState("25");
+  const [hours, setHours] = useState("24");
+  const [confirm, setConfirm] = useState<"building" | "bonus" | "occupation" | null>(null);
+
+  const run = async (fn: string, args: Record<string, unknown>, label: string) => {
+    try {
+      await rpc(fn, args);
+      toast.success(label);
+      setConfirm(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Operacja nie powiodła się");
+    }
+  };
+
+  const selectedRegions = (regions.data ?? []).filter((item) => item.country_id === country);
+  const selectedCountry = (countries.data ?? []).find((item) => item.country_id === country);
+  const selectedRegion = (regions.data ?? []).find((item) => item.id === region);
+  const selectedTarget = (countries.data ?? []).find((item) => item.country_id === country);
+
+  return (
+    <div className="admin-v4-tools">
+      <div className="admin-v4-intro">
+        <div>
+          <p className="label-hud">UPRAWNIENIA ADMINISTRATORA</p>
+          <h2>Operacje specjalne</h2>
+          <p>Trzy narzędzia Update 4.0 do zarządzania budynkami, ekonomią i granicami. Każda operacja jest zapisywana w audycie.</p>
+        </div>
+        <div className="admin-v4-intro-badge"><Shield /> ADMIN ONLY</div>
       </div>
-      <div className="space-y-3"><p className="label-hud">Bonus zarobków</p>
-        <Input type="number" min="1" max="1000" value={percent} onChange={e=>setPercent(e.target.value)} placeholder="%"/>
-        <Input type="number" min="1" max="720" value={hours} onChange={e=>setHours(e.target.value)} placeholder="Godziny"/>
-        <Button className="w-full" onClick={()=>run("admin_start_income_bonus",{p_percent:Number(percent),p_hours:Number(hours)})}>Uruchom +{percent}% / {hours}h</Button>
+
+      <div className="admin-v4-grid">
+        <section className="admin-v4-card">
+          <div className="admin-v4-card-top">
+            <span className="admin-v4-icon"><Building2 /></span>
+            <span className="admin-v4-step">01 / BUILD</span>
+          </div>
+          <div className="admin-v4-card-copy">
+            <h3>Dodaj budynek</h3>
+            <p>Wstaw budynek bez normalnych wymagań ekonomicznych i poziomowych. Zajętego slotu system nie nadpisze.</p>
+          </div>
+          <div className="admin-v4-fields">
+            <div className="admin-v4-field">
+              <Label>Państwo</Label>
+              <Select value={country} onValueChange={(value) => { setCountry(value); setRegion(""); }}>
+                <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
+                <SelectContent>{(countries.data ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="admin-v4-field">
+              <Label>Region</Label>
+              <Select value={region} onValueChange={setRegion} disabled={!country}>
+                <SelectTrigger><SelectValue placeholder={country ? "Wybierz region" : "Najpierw państwo"} /></SelectTrigger>
+                <SelectContent>{selectedRegions.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="admin-v4-field">
+              <Label>Budynek</Label>
+              <Select value={building} onValueChange={setBuilding}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{["factory_1","factory_2","factory_3","factory_4","factory_5","factory_6","fort_1","fort_2","fort_3"].map((item) => <SelectItem key={item} value={item}>{BUILDING_LABELS[item] ?? item}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="admin-v4-inline">
+              <div className="admin-v4-field"><Label>Slot</Label><Input type="number" min="1" max="9" value={slot} onChange={(event) => setSlot(event.target.value)} /></div>
+              <div className="admin-v4-field"><Label>Ilość</Label><Input type="number" min="1" max="9" value={qty} onChange={(event) => setQty(event.target.value)} /></div>
+            </div>
+          </div>
+          <div className="admin-v4-summary">
+            <span>CEL</span><strong>{selectedCountry?.name ?? "—"} · {selectedRegion?.name ?? "—"}</strong>
+            <small>{BUILDING_LABELS[building] ?? building} · slot {slot} · ×{qty}</small>
+          </div>
+          <Button className="admin-v4-submit" disabled={!country || !region || !building || Number(slot) < 1 || Number(slot) > 9 || Number(qty) < 1 || Number(qty) > 9} onClick={() => setConfirm("building")}>Dodaj budynek <ChevronRight /></Button>
+        </section>
+
+        <section className="admin-v4-card">
+          <div className="admin-v4-card-top">
+            <span className="admin-v4-icon"><CircleDollarSign /></span>
+            <span className="admin-v4-step">02 / ECONOMY</span>
+          </div>
+          <div className="admin-v4-card-copy">
+            <h3>Bonus dochodu</h3>
+            <p>Uruchom czasowy bonus do przychodu wszystkich państw. Po upływie czasu bonus wygasa automatycznie.</p>
+          </div>
+          <div className="admin-v4-bonus-display">
+            <span>AKTYWACJA</span>
+            <strong>+{percent || "0"}%</strong>
+            <small>przez {hours || "0"} godzin</small>
+          </div>
+          <div className="admin-v4-fields">
+            <div className="admin-v4-field"><Label>Bonus procentowy</Label><div className="admin-v4-input-suffix"><Input type="number" min="1" max="1000" value={percent} onChange={(event) => setPercent(event.target.value)} /><span>%</span></div></div>
+            <div className="admin-v4-field"><Label>Czas trwania</Label><div className="admin-v4-input-suffix"><Input type="number" min="1" max="720" value={hours} onChange={(event) => setHours(event.target.value)} /><span>h</span></div></div>
+          </div>
+          <div className="admin-v4-summary admin-v4-summary-accent">
+            <span>EFEKT</span><strong>Dochód +{percent || "0"}%</strong><small>Automatyczne wygaśnięcie po {hours || "0"} h</small>
+          </div>
+          <Button className="admin-v4-submit" disabled={Number(percent) < 1 || Number(percent) > 1000 || Number(hours) < 1 || Number(hours) > 720} onClick={() => setConfirm("bonus")}>Uruchom bonus <ChevronRight /></Button>
+        </section>
+
+        <section className="admin-v4-card">
+          <div className="admin-v4-card-top">
+            <span className="admin-v4-icon admin-v4-icon-danger"><Radar /></span>
+            <span className="admin-v4-step">03 / TERRITORY</span>
+          </div>
+          <div className="admin-v4-card-copy">
+            <h3>Przekaż region</h3>
+            <p>Zmień kontrolę nad regionem na wybrane państwo. Poprzedni właściciel pozostaje zapisany w historii operacji.</p>
+          </div>
+          <div className="admin-v4-fields">
+            <div className="admin-v4-field">
+              <Label>Region do przekazania</Label>
+              <Select value={region} onValueChange={setRegion}>
+                <SelectTrigger><SelectValue placeholder="Wybierz region" /></SelectTrigger>
+                <SelectContent>{(regions.data ?? []).map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="admin-v4-field">
+              <Label>Nowy właściciel</Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
+                <SelectContent>{(countries.data ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="admin-v4-summary admin-v4-summary-danger">
+            <span>PRZEKAZANIE</span><strong>{selectedRegion?.name ?? "—"} → {selectedTarget?.name ?? "—"}</strong><small>Operacja trafi do historii okupacji i audytu administratora.</small>
+          </div>
+          <Button variant="destructive" className="admin-v4-submit" disabled={!region || !country} onClick={() => setConfirm("occupation")}>Przekaż region <ChevronRight /></Button>
+        </section>
       </div>
-      <div className="space-y-3"><p className="label-hud">Przejęcie regionu</p>
-        <Select value={region} onValueChange={setRegion}><SelectTrigger><SelectValue placeholder="Region"/></SelectTrigger><SelectContent>{(regions.data??[]).map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
-        <Select value={country} onValueChange={setCountry}><SelectTrigger><SelectValue placeholder="Kraj przejmujący"/></SelectTrigger><SelectContent>{(countries.data??[]).map(c=><SelectItem key={c.country_id} value={c.country_id}>{c.flag} {c.name}</SelectItem>)}</SelectContent></Select>
-        <Button variant="destructive" className="w-full" onClick={()=>run("admin_occupy_region",{p_region_id:region,p_new_country_id:country})}>Przejmij region</Button>
-      </div>
+
+      <Dialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
+        <DialogContent className="admin-v4-confirm">
+          <DialogHeader>
+            <DialogTitle>{confirm === "building" ? "Potwierdź dodanie budynku" : confirm === "bonus" ? "Potwierdź bonus dochodu" : "Potwierdź przekazanie regionu"}</DialogTitle>
+            <DialogDescription>
+              {confirm === "building" ? `Dodasz ${BUILDING_LABELS[building] ?? building} do ${selectedCountry?.name ?? "wybranego państwa"}, region ${selectedRegion?.name ?? "—"}, slot ${slot}, ilość ×${qty}.` :
+               confirm === "bonus" ? `Uruchomisz bonus +${percent}% dochodu na ${hours} godzin. Bonus wygaśnie automatycznie.` :
+               `Region ${selectedRegion?.name ?? "—"} zostanie przekazany państwu ${selectedTarget?.name ?? "—"}.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="admin-v4-confirm-actions">
+            <Button variant="outline" onClick={() => setConfirm(null)}>Anuluj</Button>
+            <Button
+              variant={confirm === "occupation" ? "destructive" : "default"}
+              onClick={() => {
+                if (confirm === "building") void run("admin_grant_building", { p_country_id: country, p_region_id: region, p_slot_index: Number(slot), p_building: building, p_quantity: Number(qty) }, "Budynek dodany");
+                if (confirm === "bonus") void run("admin_start_income_bonus", { p_percent: Number(percent), p_hours: Number(hours) }, "Bonus dochodu uruchomiony");
+                if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: region, p_new_country_id: country }, "Region przekazany");
+              }}
+            >Potwierdź operację</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
-  </Panel>;
+  );
 }
 
 function AdminPanel() {
