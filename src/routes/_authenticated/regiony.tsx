@@ -177,7 +177,7 @@ function Regions() {
           const open = expanded === r.id;
           const free = 9 - r.slots.length;
           return (
-            <Panel key={r.id} className="hud-frame p-0">
+            <Panel key={r.id} className="hud-frame p-0" data-tour="region">
               <button
                 onClick={() => setExpanded(open ? null : r.id)}
                 className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left"
