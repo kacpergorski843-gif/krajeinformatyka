@@ -451,3 +451,102 @@ end;
 $function$;
 
 grant execute on function public.claim_main_admin() to authenticated;
+
+
+-- 4. Salvo targeting: keep the selected target list as a pool.
+-- Intercepted missiles may reuse the same target pool; after a successful
+-- impact, already-destroyed slots are automatically removed from the pool.
+-- This prevents a harmless "target disappeared" error from ending a salvo
+-- prematurely while preserving the existing missile/AA rules.
+create or replace function public.launch_salvo(
+  p_country_id uuid,
+  p_missile_code text,
+  p_region_id uuid,
+  p_slot_ids uuid[] default '{}'::uuid[],
+  p_mode text default 'factories',
+  p_count integer default 1
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = 'public'
+as $function$
+declare
+  i int;
+  v_res jsonb;
+  v_results jsonb := '[]'::jsonb;
+  v_intercepted int := 0;
+  v_impacts int := 0;
+  v_destroyed int := 0;
+  v_err text;
+  v_targets uuid[] := coalesce(p_slot_ids, '{}'::uuid[]);
+  v_available uuid[];
+begin
+  if p_count is null or p_count < 1 or p_count > 100 then
+    raise exception 'Nieprawidłowa liczba rakiet (1-100)';
+  end if;
+
+  for i in 1..p_count loop
+    -- Keep only targets that still exist in the selected region.
+    if p_missile_code <> 'missile_3' then
+      select coalesce(array_agg(s.id), '{}'::uuid[])
+      into v_available
+      from public.region_slots s
+      where s.region_id = p_region_id
+        and s.id = any(v_targets);
+
+      if coalesce(array_length(v_available, 1), 0) = 0 then
+        if i = 1 then
+          raise exception 'Wybierz cel w regionie';
+        end if;
+        exit;
+      end if;
+    else
+      v_available := '{}';
+    end if;
+
+    begin
+      v_res := public.launch_missile(
+        p_country_id,
+        p_missile_code,
+        p_region_id,
+        case when p_missile_code = 'missile_3' then '{}'::uuid[] else v_available end,
+        p_mode
+      );
+
+      if v_res->>'result' = 'PRZECHWYCONA' then
+        v_intercepted := v_intercepted + 1;
+      else
+        v_impacts := v_impacts + 1;
+        v_destroyed := v_destroyed +
+          coalesce(jsonb_array_length(v_res->'destroyed'), 0);
+      end if;
+
+      v_results := v_results || jsonb_build_object(
+        'index', i,
+        'result', v_res->>'result'
+      );
+
+    exception when others then
+      v_err := sqlerrm;
+      if i = 1 then
+        raise exception '%', v_err;
+      end if;
+      exit;
+    end;
+  end loop;
+
+  return jsonb_build_object(
+    'ok', true,
+    'launched', v_intercepted + v_impacts,
+    'intercepted', v_intercepted,
+    'impacts', v_impacts,
+    'destroyed', v_destroyed,
+    'results', v_results,
+    'stopped_reason', v_err
+  );
+end;
+$function$;
+
+grant execute on function public.launch_salvo(uuid, text, uuid, uuid[], text, integer)
+to authenticated;
