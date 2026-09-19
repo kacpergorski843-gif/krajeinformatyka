@@ -143,7 +143,7 @@ function MyCountry() {
           hint={fmtKR(country.balance)}
           tone="primary"
           icon={<Coins className="size-4" strokeWidth={1.5} />}
-        /></div>
+        />
         <Stat label="Przychód / doba" value={fmtKR(country.gross_income)} tone="accent" />
         <Stat
           label="Zużycie węgla / doba"
@@ -198,7 +198,6 @@ function MyCountry() {
           ))}
         </div>
       </Panel>
-      </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <Stat
           label="Potencjał głosów"
@@ -246,7 +245,6 @@ function MyCountry() {
           </Link>
         ) : null}
       </Panel>
-      </div>
 
       <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
