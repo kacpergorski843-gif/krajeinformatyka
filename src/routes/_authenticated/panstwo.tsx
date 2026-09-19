@@ -32,7 +32,8 @@ function MyCountry() {
   const { data: me } = useQuery(meQuery);
 
   const { data: countries } = useQuery(countriesQuery);
-  const country = countries?.find((c) => c.country_id === me?.countryId);\n  const { data: economyBonus } = useQuery(economyBonusQuery);
+  const country = countries?.find((c) => c.country_id === me?.countryId);
+  const { data: economyBonus } = useQuery(economyBonusQuery);
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 200));
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
@@ -111,7 +112,9 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
-      {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}\n\n      {/* Skarbiec + przychód */}
+      {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
+
+      {/* Skarbiec + przychód */}
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat
           label="Skarbiec"
