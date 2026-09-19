@@ -1,13 +1,12 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity, ArrowRightLeft, BookOpen } from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity, ArrowRightLeft } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
-import { CountryTutorial } from "@/components/CountryTutorial";
 
 const NAV = [
   { to: "/panstwo", label: "Państwo", icon: Landmark },
@@ -50,7 +49,6 @@ export function AppShell({ me, title, subtitle, children }: {
           </div>
           <div className="command-section"><p className="nav-caption">Centrum dowodzenia</p>{nav()}</div>
           <div className="mt-auto">
-            <button type="button" className="tutorial-menu-trigger" onClick={() => window.dispatchEvent(new Event("country-rp:start-tutorial"))}><BookOpen className="size-4" /> Samouczek</button>
             <div className="profile-strip mb-3">
               <div className="profile-avatar">{(me?.displayName ?? me?.email ?? "?").slice(0,1).toUpperCase()}</div>
               <div className="min-w-0"><p className="truncate text-sm font-semibold">{me?.displayName ?? me?.email ?? "Dowódca"}</p>
@@ -89,6 +87,5 @@ export function AppShell({ me, title, subtitle, children }: {
       <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setConfirmOut(false)}>Anuluj</Button>
       <Button variant="destructive" className="flex-1" onClick={() => { setConfirmOut(false); void signOut(); }}>Wyloguj</Button></div>
     </DialogContent></Dialog>
-    <CountryTutorial me={me} />
   </div>;
 }
