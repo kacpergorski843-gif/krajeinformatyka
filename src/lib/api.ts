@@ -322,15 +322,92 @@ export const publicRankingQuery = queryOptions({
     )) as unknown as PublicRankingRow[],
 });
 
+const COUNTRY_STATS_SELECT =
+  "country_id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,gross_income,coal_upkeep,coal_prod,oil_prod,copper_prod,iron_prod,uranium_prod,forts,military_value,vote_potential,region_aa_total";
+
+async function readCountryStats(view: "world_country_stats" | "country_stats") {
+  const { data, error } = await supabase.from(view).select(COUNTRY_STATS_SELECT).order("name");
+  if (error) throw error;
+  return (data ?? []) as unknown as CountryStats[];
+}
+
+async function readCountryStatsById(view: "world_country_stats" | "country_stats", countryId: string) {
+  const { data, error } = await supabase
+    .from(view)
+    .select(COUNTRY_STATS_SELECT)
+    .eq("country_id", countryId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data ?? null) as unknown as CountryStats | null;
+}
+
+async function readPublicCountryFallback(countryId?: string) {
+  const query = supabase
+    .from("countries")
+    .select("id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs");
+  const { data, error } = countryId
+    ? await query.eq("id", countryId).maybeSingle()
+    : await query.order("name");
+  if (error) throw error;
+
+  const rows = Array.isArray(data) ? data : data ? [data] : [];
+  const ids = rows.map((row) => row.id);
+  const regionCounts = new Map<string, number>();
+
+  if (ids.length) {
+    const { data: regions, error: regionsError } = await supabase.from("regions").select("country_id").in("country_id", ids);
+    if (regionsError) throw regionsError;
+    for (const region of regions ?? []) {
+      regionCounts.set(region.country_id, (regionCounts.get(region.country_id) ?? 0) + 1);
+    }
+  }
+
+  return rows.map((row) => ({
+    country_id: row.id,
+    name: row.name,
+    flag: row.flag,
+    balance: row.balance,
+    coal: row.coal,
+    oil: row.oil,
+    copper: row.copper,
+    iron: row.iron,
+    uranium: row.uranium,
+    aa_defense: row.aa_defense ?? 0,
+    missile_1: row.missile_1 ?? 0,
+    missile_2: row.missile_2 ?? 0,
+    missile_3: row.missile_3 ?? 0,
+    soldier_packs: row.soldier_packs ?? 0,
+    tank_packs: row.tank_packs ?? 0,
+    war_votes: 0,
+    fort_votes: 0,
+    total_votes: 0,
+    regions_count: regionCounts.get(row.id) ?? 0,
+    gross_income: "0",
+    coal_upkeep: "0",
+    coal_prod: "0",
+    oil_prod: "0",
+    copper_prod: "0",
+    iron_prod: "0",
+    uranium_prod: "0",
+    forts: 0,
+    military_value: "0",
+    vote_potential: 0,
+    region_aa_total: 0,
+  })) as CountryStats[];
+}
+
 export const publicCountriesQuery = queryOptions({
   queryKey: ["public_countries"],
   queryFn: async () => {
-    const { data, error } = await supabase
-      .from("world_country_stats")
-      .select("country_id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,gross_income,coal_upkeep,coal_prod,oil_prod,copper_prod,iron_prod,uranium_prod,forts,military_value,vote_potential,region_aa_total")
-      .order("name");
-    if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as CountryStats[];
+    try {
+      return await readCountryStats("world_country_stats");
+    } catch {
+      try {
+        return await readCountryStats("country_stats");
+      } catch {
+        return await readPublicCountryFallback();
+      }
+    }
   },
 });
 
@@ -339,13 +416,16 @@ export function publicCountryQuery(countryId: string | null | undefined) {
     queryKey: ["public_country", countryId],
     enabled: !!countryId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("world_country_stats")
-        .select("country_id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,gross_income,coal_upkeep,coal_prod,oil_prod,copper_prod,iron_prod,uranium_prod,forts,military_value,vote_potential,region_aa_total")
-        .eq("country_id", countryId!)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      return (data ?? null) as unknown as CountryStats | null;
+      try {
+        return await readCountryStatsById("world_country_stats", countryId!);
+      } catch {
+        try {
+          return await readCountryStatsById("country_stats", countryId!);
+        } catch {
+          const rows = await readPublicCountryFallback(countryId!);
+          return rows[0] ?? null;
+        }
+      }
     },
   });
 }
