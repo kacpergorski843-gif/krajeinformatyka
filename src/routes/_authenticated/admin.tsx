@@ -742,7 +742,6 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [search, setSearch] = useState("");
   const [newCountryFor, setNewCountryFor] = useState<AdminUser | null>(null);
   const [newCountryName, setNewCountryName] = useState("");
-  const [newCountryFlag, setNewCountryFlag] = useState("");
   const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(search.trim().toLowerCase()));
 
   const assign = useMutation({
@@ -761,7 +760,6 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
         ? rpc("admin_create_country_for_user", {
             p_user_id: newCountryFor.id,
             p_name: newCountryName.trim(),
-            p_flag: newCountryFlag.trim(),
           })
         : Promise.reject(new Error("Nie wybrano gracza")),
     onSuccess: () => {
@@ -840,7 +838,6 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
                     onClick={() => {
                       setNewCountryFor(user);
                       setNewCountryName("");
-                      setNewCountryFlag("");
                     }}
                   >
                     <PackagePlus /> Dodaj nowe państwo
@@ -879,14 +876,9 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
               Nowe państwo zostanie od razu przypisane do {newCountryFor?.display_name ?? "wybranego gracza"}.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem]">
-            <Field label="Nazwa państwa">
-              <Input value={newCountryName} onChange={(event) => setNewCountryName(event.target.value)} placeholder="Nazwa" />
-            </Field>
-            <Field label="Flaga">
-              <Input value={newCountryFlag} onChange={(event) => setNewCountryFlag(event.target.value)} placeholder="🇵🇱" />
-            </Field>
-          </div>
+          <Field label="Nazwa państwa">
+            <Input value={newCountryName} onChange={(event) => setNewCountryName(event.target.value)} placeholder="Nazwa" />
+          </Field>
           <div className="grid gap-2 sm:grid-cols-2">
             <Button variant="outline" onClick={() => setNewCountryFor(null)}>Anuluj</Button>
             <Button
