@@ -110,13 +110,6 @@ export type Database = {
             referencedRelation: "countries"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "region_occupations_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       economy_bonuses: {
