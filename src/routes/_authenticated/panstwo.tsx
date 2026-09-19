@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
-import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, rpc, transactionsQuery } from "@/lib/api";
+import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, transactionsQuery } from "@/lib/api";
 import { fmtKR, kr, timeToDailyCycle, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/panstwo")({
@@ -36,6 +36,7 @@ function MyCountry() {
   const { data: economyBonus } = useQuery(economyBonusQuery);
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 200));
+  const { data: occupationHistory } = useQuery(regionOccupationsQuery(me?.countryId));
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
 
   useEffect(() => {
@@ -113,6 +114,22 @@ function MyCountry() {
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
+      {occupationHistory?.slice(0, 3).map((occupation) => {
+        const isCurrent = occupation.current_country_id === me.countryId;
+        const label = isCurrent ? "REGION PRZEJĘTY" : "REGION OKUPOWANY";
+        return (
+          <Panel key={occupation.id} className={`mb-3 border-primary/30 ${isCurrent ? "bg-primary/5" : "bg-destructive/5"}`}>
+            <p className="label-hud">{label}</p>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+              <p className="font-semibold">{occupation.region_name}</p>
+              <p className="text-xs text-muted-foreground">{new Date(occupation.occupied_at).toLocaleString("pl-PL")}</p>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {isCurrent ? "Region został przejęty przez Twoje państwo." : "Region został przejęty przez inne państwo."}
+            </p>
+          </Panel>
+        );
+      })}
 
       {/* Skarbiec + przychód */}
       <div className="grid gap-3 sm:grid-cols-3">
