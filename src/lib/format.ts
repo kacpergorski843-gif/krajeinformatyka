@@ -14,8 +14,14 @@ export function groupDigits(v: string | number | null | undefined): string {
   return (neg ? "-" : "") + grouped;
 }
 
+const BILLION = 1_000_000_000;
+
+export function roundMoneyToBillion(v: string | number | null | undefined): number {
+  return Math.round(toNum(v) / BILLION) * BILLION;
+}
+
 export function kr(v: string | number | null | undefined): string {
-  return `${groupDigits(v)}${NBSP}KR`;
+  return `${fmtNum(v)}${NBSP}KR`;
 }
 
 const SCALES: { limit: number; unit: string }[] = [
