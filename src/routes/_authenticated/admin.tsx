@@ -740,15 +740,178 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const countryQuery = useQuery(countriesQuery);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [newCountryFor, setNewCountryFor] = useState<AdminUser | null>(null);
+  const [newCountryName, setNewCountryName] = useState("");
+  const [newCountryFlag, setNewCountryFlag] = useState("");
   const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(search.trim().toLowerCase()));
-  const assign = useMutation({ mutationFn: ({ userId, countryId }: { userId: string; countryId: string }) => rpc("admin_assign_country", { p_user_id: userId, p_country_id: countryId }), onSuccess: () => { toast.success("Państwo przypisane"); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
-  const setRole = useMutation({ mutationFn: ({ userId, role }: { userId: string; role: string }) => rpc("set_user_role", { p_user_id: userId, p_role: role }), onSuccess: () => { toast.success("Uprawnienia zmienione"); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
+
+  const assign = useMutation({
+    mutationFn: ({ userId, countryId }: { userId: string; countryId: string }) =>
+      rpc("admin_assign_country", { p_user_id: userId, p_country_id: countryId }),
+    onSuccess: () => {
+      toast.success("Państwo przypisane");
+      queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const createAndAssign = useMutation({
+    mutationFn: () =>
+      newCountryFor
+        ? rpc("admin_create_country_for_user", {
+            p_user_id: newCountryFor.id,
+            p_name: newCountryName.trim(),
+            p_flag: newCountryFlag.trim(),
+          })
+        : Promise.reject(new Error("Nie wybrano gracza")),
+    onSuccess: () => {
+      toast.success("Nowe państwo utworzone i przypisane graczowi");
+      setNewCountryFor(null);
+      setNewCountryName("");
+      setNewCountryFlag("");
+      queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const setRole = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      rpc("set_user_role", { p_user_id: userId, p_role: role }),
+    onSuccess: () => {
+      toast.success("Uprawnienia zmienione");
+      queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const [toDelete, setToDelete] = useState<AdminUser | null>(null);
   const deleteUser = useServerFn(deletePlayerAccount);
-  const removeUser = useMutation({ mutationFn: (userId: string) => deleteUser({ data: { userId } }), onSuccess: () => { toast.success("Konto gracza usunięte"); setToDelete(null); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
-  return <div className="space-y-4"><Panel className="hud-frame p-3"><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Szukaj użytkownika lub państwa…" value={search} onChange={(event) => setSearch(event.target.value)} /></div></Panel>{userQuery.isLoading ? <LoadingRows /> : users.length === 0 ? <HudState icon={<Users />} title="Brak użytkowników" description="Nie znaleziono użytkowników dla podanego wyszukiwania." /> : <div className="grid gap-3 xl:grid-cols-2">{users.map((user) => <Panel key={user.id} className="min-w-0 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3"><div className="min-w-0"><p className="truncate font-semibold">{user.display_name ?? "Użytkownik"}</p><p className="truncate text-xs text-muted-foreground">{user.country_name ?? "Bez przypisanego państwa"}</p></div><Badge variant="outline" className="shrink-0 border-primary/40 text-primary">{ROLE_LABELS[user.role ?? "PLAYER"]}</Badge></div><div className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Przypisane państwo"><Select value={user.country_id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate({ userId: user.id, countryId: value })}><SelectTrigger className="min-w-0"><SelectValue placeholder="Brak" /></SelectTrigger><SelectContent><SelectItem value="unassigned" disabled>Brak przypisania</SelectItem>{(countryQuery.data ?? []).map((country) => <SelectItem key={country.country_id} value={country.country_id}>{country.flag} {country.name}</SelectItem>)}</SelectContent></Select></Field>{isMainAdmin ? <Field label="Uprawnienia"><Select value={user.role ?? "PLAYER"} onValueChange={(role) => setRole.mutate({ userId: user.id, role })}><SelectTrigger className="min-w-0"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PLAYER">Gracz</SelectItem><SelectItem value="ADMIN">Administrator</SelectItem><SelectItem value="MAIN_ADMIN">Główny administrator</SelectItem></SelectContent></Select></Field> : null}</div><div className="mt-3 flex justify-end"><Button size="sm" variant="destructive" onClick={() => setToDelete(user)}><Trash2 />Usuń konto</Button></div></Panel>)}</div>}{!isMainAdmin ? <p className="text-xs text-muted-foreground">Zmiana uprawnień jest dostępna wyłącznie dla głównego administratora.</p> : null}<ConfirmDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)} title={`Usunąć konto ${toDelete?.display_name ?? "gracza"}?`} description="Operacja jest NIEODWRACALNA. Konto, profil i uprawnienia zostaną trwale usunięte, a państwo zwolnione. Operacja zostanie zapisana w audycie." confirmLabel="Usuń trwale" destructive pending={removeUser.isPending} onConfirm={() => toDelete && removeUser.mutate(toDelete.id)} /></div>;
-}
+  const removeUser = useMutation({
+    mutationFn: (userId: string) => deleteUser({ data: { userId } }),
+    onSuccess: () => {
+      toast.success("Konto gracza usunięte");
+      setToDelete(null);
+      queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
 
+  return (
+    <div className="space-y-4">
+      <Panel className="hud-frame p-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Szukaj użytkownika lub państwa…" value={search} onChange={(event) => setSearch(event.target.value)} />
+        </div>
+      </Panel>
+
+      {userQuery.isLoading ? <LoadingRows /> : users.length === 0 ? (
+        <HudState icon={<Users />} title="Brak użytkowników" description="Nie znaleziono użytkowników dla podanego wyszukiwania." />
+      ) : (
+        <div className="grid gap-3 xl:grid-cols-2">
+          {users.map((user) => (
+            <Panel key={user.id} className="min-w-0 p-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{user.display_name ?? "Użytkownik"}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.country_name ?? "Bez przypisanego państwa"}</p>
+                </div>
+                <Badge variant="outline" className="shrink-0 border-primary/40 text-primary">{ROLE_LABELS[user.role ?? "PLAYER"]}</Badge>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Field label="Przypisane państwo">
+                  <Select value={user.country_id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate({ userId: user.id, countryId: value })}>
+                    <SelectTrigger className="min-w-0"><SelectValue placeholder="Brak" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned" disabled>Brak przypisania</SelectItem>
+                      {(countryQuery.data ?? []).map((country) => (
+                        <SelectItem key={country.country_id} value={country.country_id}>{country.flag} {country.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setNewCountryFor(user);
+                      setNewCountryName("");
+                      setNewCountryFlag("");
+                    }}
+                  >
+                    <PackagePlus /> Dodaj nowe państwo
+                  </Button>
+                </div>
+
+                {isMainAdmin ? (
+                  <Field label="Uprawnienia">
+                    <Select value={user.role ?? "PLAYER"} onValueChange={(role) => setRole.mutate({ userId: user.id, role })}>
+                      <SelectTrigger className="min-w-0"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PLAYER">Gracz</SelectItem>
+                        <SelectItem value="ADMIN">Administrator</SelectItem>
+                        <SelectItem value="MAIN_ADMIN">Główny administrator</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex justify-end">
+                <Button size="sm" variant="destructive" onClick={() => setToDelete(user)}><Trash2 />Usuń konto</Button>
+              </div>
+            </Panel>
+          ))}
+        </div>
+      )}
+
+      {!isMainAdmin ? <p className="text-xs text-muted-foreground">Zmiana uprawnień jest dostępna wyłącznie dla głównego administratora.</p> : null}
+
+      <Dialog open={!!newCountryFor} onOpenChange={(open) => !open && setNewCountryFor(null)}>
+        <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-lg sm:w-[calc(100%-2rem)]">
+          <DialogHeader>
+            <DialogTitle>Dodaj nowe państwo dla gracza</DialogTitle>
+            <DialogDescription>
+              Nowe państwo zostanie od razu przypisane do {newCountryFor?.display_name ?? "wybranego gracza"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem]">
+            <Field label="Nazwa państwa">
+              <Input value={newCountryName} onChange={(event) => setNewCountryName(event.target.value)} placeholder="Nazwa" />
+            </Field>
+            <Field label="Flaga">
+              <Input value={newCountryFlag} onChange={(event) => setNewCountryFlag(event.target.value)} placeholder="🇵🇱" />
+            </Field>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button variant="outline" onClick={() => setNewCountryFor(null)}>Anuluj</Button>
+            <Button
+              disabled={!newCountryName.trim() || createAndAssign.isPending}
+              onClick={() => createAndAssign.mutate()}
+            >
+              {createAndAssign.isPending ? "Tworzenie…" : "Utwórz i przypisz"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!toDelete}
+        onOpenChange={(open) => !open && setToDelete(null)}
+        title={`Usunąć konto ${toDelete?.display_name ?? "gracza"}?`}
+        description="Operacja jest NIEODWRACALNA. Konto, profil i uprawnienia zostaną trwale usunięte, a państwo zwolnione. Operacja zostanie zapisana w audycie."
+        confirmLabel="Usuń trwale"
+        destructive
+        pending={removeUser.isPending}
+        onConfirm={() => toDelete && removeUser.mutate(toDelete.id)}
+      />
+    </div>
+  );
+}
 function ShopTab() {
   const itemQuery = useQuery(adminShopQuery);
   const queryClient = useQueryClient();
