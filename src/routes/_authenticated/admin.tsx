@@ -181,6 +181,8 @@ function Update4Tools() {
   const { data: regions } = useQuery(allRegionsQuery);
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
+  const [occupationCountry, setOccupationCountry] = useState("");
+  const [occupationRegion, setOccupationRegion] = useState("");
   const [building, setBuilding] = useState("factory_1");
   const [slot, setSlot] = useState("1");
   const [qty, setQty] = useState("1");
@@ -201,7 +203,10 @@ function Update4Tools() {
   const selectedRegions = (regions ?? []).filter((item) => item.country_id === country);
   const selectedCountry = (countries ?? []).find((item) => item.country_id === country);
   const selectedRegion = (regions ?? []).find((item) => item.id === region);
-  const selectedTarget = (countries ?? []).find((item) => item.country_id === country);
+  const occupationRegions = (regions ?? []).filter((item) => item.country_id === occupationCountry);
+  const selectedOccupationCountry = (countries ?? []).find((item) => item.country_id === occupationCountry);
+  const selectedOccupationRegion = (regions ?? []).find((item) => item.id === occupationRegion);
+  const selectedTarget = selectedOccupationCountry;
 
   return (
     <div className="admin-v4-tools">
@@ -209,7 +214,7 @@ function Update4Tools() {
         <div>
           <p className="label-hud">UPRAWNIENIA ADMINISTRATORA</p>
           <h2>Operacje specjalne</h2>
-          <p>Trzy narzędzia Update 4.0 do zarządzania budynkami, ekonomią i granicami. Każda operacja jest zapisywana w audycie.</p>
+          <p>Narzędzia administracyjne do zarządzania budynkami, ekonomią i granicami. Każda operacja jest zapisywana w audycie.</p>
         </div>
         <div className="admin-v4-intro-badge"><Shield /> ADMIN ONLY</div>
       </div>
@@ -308,9 +313,9 @@ function Update4Tools() {
             </div>
           </div>
           <div className="admin-v4-summary admin-v4-summary-danger">
-            <span>PRZEKAZANIE</span><strong>{selectedRegion?.name ?? "—"} → {selectedTarget?.name ?? "—"}</strong><small>Operacja trafi do historii okupacji i audytu administratora.</small>
+            <span>PRZEKAZANIE</span><strong>{selectedOccupationRegion?.name ?? "—"} → {selectedTarget?.name ?? "—"}</strong><small>Operacja trafi do historii okupacji i audytu administratora.</small>
           </div>
-          <Button variant="destructive" className="admin-v4-submit" disabled={!region || !country} onClick={() => setConfirm("occupation")}>Przekaż region <ChevronRight /></Button>
+          <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry} onClick={() => setConfirm("occupation")}>Przekaż region <ChevronRight /></Button>
         </section>
       </div>
 
@@ -321,7 +326,7 @@ function Update4Tools() {
             <DialogDescription>
               {confirm === "building" ? `Dodasz ${BUILDING_LABELS[building] ?? building} do ${selectedCountry?.name ?? "wybranego państwa"}, region ${selectedRegion?.name ?? "—"}, slot ${slot}, ilość ×${qty}.` :
                confirm === "bonus" ? `Uruchomisz bonus +${percent}% dochodu na ${hours} godzin. Bonus wygaśnie automatycznie.` :
-               `Region ${selectedRegion?.name ?? "—"} zostanie przekazany państwu ${selectedTarget?.name ?? "—"}.`}
+               `Region ${selectedOccupationRegion?.name ?? "—"} zostanie przekazany państwu ${selectedTarget?.name ?? "—"}.`}
             </DialogDescription>
           </DialogHeader>
           <div className="admin-v4-confirm-actions">
@@ -331,7 +336,7 @@ function Update4Tools() {
               onClick={() => {
                 if (confirm === "building") void run("admin_grant_building", { p_country_id: country, p_region_id: region, p_slot_index: Number(slot), p_building: building, p_quantity: Number(qty) }, "Budynek dodany");
                 if (confirm === "bonus") void run("admin_start_income_bonus", { p_percent: Number(percent), p_hours: Number(hours) }, "Bonus dochodu uruchomiony");
-                if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: region, p_new_country_id: country }, "Region przekazany");
+                if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: occupationRegion, p_new_country_id: occupationCountry }, "Region przekazany");
               }}
             >Potwierdź operację</Button>
           </div>
@@ -399,7 +404,7 @@ function AdminPanel() {
               <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
               <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
               <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
-              <AdminTab value="update4" icon={<PackagePlus />}>Update 4.0</AdminTab>
+              <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>
             </TabsList>
           </div>
           <TabsContent value="countries"><CountriesTab /></TabsContent>
