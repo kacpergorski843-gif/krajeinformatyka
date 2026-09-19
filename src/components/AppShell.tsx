@@ -1,6 +1,6 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity } from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity, ArrowRightLeft } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ const NAV = [
   { to: "/regiony", label: "Regiony", icon: Map },
   { to: "/arsenal", label: "Wojsko", icon: Rocket },
   { to: "/sklep", label: "Sklep", icon: ShoppingCart },
-  { to: "/ranking", label: "Ranking", icon: Trophy },
+  { to: "/ranking", label: "Ranking", icon: Trophy },\n  { to: "/transfer", label: "Transfery", icon: ArrowRightLeft },
 ] as const;
 
 export function AppShell({ me, title, subtitle, children }: {
