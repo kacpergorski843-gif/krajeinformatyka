@@ -190,7 +190,34 @@ function Shop() {
     return null;
   }
 
+  function itemCannotBuy(i: ShopItem): boolean {
+    if (!country) return true;
+
+    const itemKr = Number(i.cost_kr);
+    if (haveKr < itemKr) return true;
+
+    const missingResource = RESOURCES.some((r) => {
+      const need = unitCost(i, r);
+      return need > 0 && Number((country[r] as string) ?? 0) < need;
+    });
+    if (missingResource) return true;
+
+    if (i.code === "aa") {
+      return !(regions ?? []).some((r) => !buildBlockReason(r, "aa"));
+    }
+
+    if (i.building) {
+      return !(regions ?? []).some(
+        (r) => !buildBlockReason(r, i.building!) && !levelLockForRegion(r, i.building!),
+      );
+    }
+
+    return false;
+  }
+
   function ItemCard({ i, owned }: { i: ShopItem; owned?: number }) {
+    const cannotBuyItem = itemCannotBuy(i);
+
     return (
       <Panel className="hud-frame flex h-full flex-col p-5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
@@ -221,8 +248,12 @@ function Shop() {
             <p className="text-info">Posiadasz: {units(owned)}</p>
           ) : null}
         </div>
-        <Button className="mt-4 w-full" disabled={!countryId} onClick={() => openItem(i)}>
-          Kup
+        <Button
+          className="mt-4 w-full"
+          disabled={!countryId || cannotBuyItem}
+          onClick={() => openItem(i)}
+        >
+          {cannotBuyItem ? "Niedostępne" : "Kup"}
         </Button>
       </Panel>
     );
