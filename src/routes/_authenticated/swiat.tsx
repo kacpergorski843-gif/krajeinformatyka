@@ -44,10 +44,10 @@ function World() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((country) => (
-          <Link
+          <a
             key={country.country_id}
-            to="/swiat/$id"
-            params={{ id: country.country_id }}
+            href={`/swiat/${country.country_id}`}
+            className="block"
           >
             <Panel className="h-full border-border/80 bg-card/80 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-xl">
               <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ function World() {
                 </div>
               </dl>
             </Panel>
-          </Link>
+          </a>
         ))}
       </div>
 
