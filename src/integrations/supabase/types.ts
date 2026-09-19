@@ -611,6 +611,41 @@ export type Database = {
         }
         Relationships: []
       }
+      world_country_stats: {
+        Row: {
+          aa_defense: number | null
+          balance: number | null
+          coal: number | null
+          coal_prod: number | null
+          coal_upkeep: number | null
+          copper: number | null
+          copper_prod: number | null
+          country_id: string | null
+          flag: string | null
+          fort_votes: number | null
+          forts: number | null
+          gross_income: number | null
+          iron: number | null
+          iron_prod: number | null
+          military_value: number | null
+          missile_1: number | null
+          missile_2: number | null
+          missile_3: number | null
+          name: string | null
+          oil: number | null
+          oil_prod: number | null
+          region_aa_total: number | null
+          regions_count: number | null
+          soldier_packs: number | null
+          tank_packs: number | null
+          total_votes: number | null
+          uranium: number | null
+          uranium_prod: number | null
+          vote_potential: number | null
+          war_votes: number | null
+        }
+        Relationships: []
+      }
       public_ranking: {
         Row: {
           country_id: string | null
