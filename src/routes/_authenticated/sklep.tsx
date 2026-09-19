@@ -162,6 +162,15 @@ function Shop() {
     (isBuilding && !region) ||
     (item?.code === "aa" && !regionId);
 
+  function levelLock(i: ShopItem): string | null {
+    if (!i.building?.startsWith("factory_")) return null;
+    const level = Number(i.building.split("_")[1]);
+    if (level <= 1) return null;
+    const required = `factory_${level - 1}`;
+    if (!ownedByBuilding.has(required)) return `Poziom ${level} — ZABLOKOWANY · WYMAGANY: Fabryka poziom ${level - 1}`;
+    return null;
+  }
+
   function ItemCard({ i, owned }: { i: ShopItem; owned?: number }) {
     return (
       <Panel className="hud-frame flex h-full flex-col p-5">
