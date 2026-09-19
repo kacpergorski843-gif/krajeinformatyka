@@ -151,7 +151,7 @@ function MyCountry() {
         <section className="command-v3-grid">
           <div className="command-v3-primary-column">
             <div className="command-v3-section-title"><div><span>GOSPODARKA</span><h2>Przepływ zasobów</h2></div><Link to="/sklep">RYNEK <ArrowUpRight className="size-3.5" /></Link></div>
-            <div className="command-v3-economy">
+            <div className="command-v3-economy" data-tour="economy">
               <div className="command-v3-economy-head"><div><span>DOCHÓD DZIENNY</span><strong>{fmtKR(country.gross_income)}</strong></div><div><span>WARTOŚĆ ARMII</span><strong>{fmtKR(country.military_value)}</strong></div></div>
               <div className="command-v3-resource-rows">
                 {resources.map((resource) => {
