@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { Panel } from "@/components/stat";
+import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { Input } from "@/components/ui/input";
 import { meQuery, publicCountriesQuery, publicCountryQuery, regionsQuery } from "@/lib/api";
 import { BUILDING_LABELS, kr, krShort, units } from "@/lib/format";
