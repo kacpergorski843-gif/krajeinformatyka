@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Coins, Flame, Droplet, CircleDot, Magnet, Atom } from "lucide-react";
+import { ArrowRightLeft, Coins, Flame, Droplet, CircleDot, Magnet, Atom, Shield, Users, Truck, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle } from "@/components/stat";
@@ -19,6 +19,9 @@ export const Route = createFileRoute("/_authenticated/transfer")({
 const resources = [
   ["balance","KR",Coins], ["coal","Węgiel",Flame], ["oil","Ropa",Droplet],
   ["copper","Miedź",CircleDot], ["iron","Żelazo",Magnet], ["uranium","Uran",Atom],
+  ["aa_defense","OPL",Shield], ["soldier_packs","Żołnierze",Users],
+  ["tank_packs","Czołgi",Truck], ["missile_1","Rakiety I",Rocket],
+  ["missile_2","Rakiety II",Rocket], ["missile_3","Rakiety III",Rocket],
 ] as const;
 
 function Transfers() {
@@ -64,7 +67,7 @@ function Transfers() {
             </SelectContent></Select>
           </div>
           <div><p className="label-hud mb-2">2. Wybierz zasób</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {resources.map(([key,label,I]) => <button key={key} type="button" onClick={() => setResource(key)} className={`flex items-center gap-2 rounded-lg border p-3 text-left text-sm ${resource===key ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/40 text-muted-foreground"}`}><I className="size-4"/>{label}</button>)}
             </div>
           </div>
