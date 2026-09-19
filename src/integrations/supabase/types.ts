@@ -63,6 +63,33 @@ export type Database = {
           },
         ]
       }
+      economy_bonuses: {
+        Row: {
+          id: string
+          percent: number
+          starts_at: string
+          ends_at: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          percent: number
+          starts_at?: string
+          ends_at: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          percent?: number
+          starts_at?: string
+          ends_at?: string
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       countries: {
         Row: {
           aa_defense: number
@@ -662,6 +689,7 @@ export type Database = {
         | "factory_3"
         | "factory_4"
         | "factory_5"
+        | "factory_6"
         | "mine_coal"
         | "mine_oil"
         | "mine_copper"
@@ -804,6 +832,7 @@ export const Constants = {
         "factory_3",
         "factory_4",
         "factory_5",
+        "factory_6",
         "mine_coal",
         "mine_oil",
         "mine_copper",
