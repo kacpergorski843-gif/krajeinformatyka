@@ -298,17 +298,17 @@ function Update4Tools() {
           </div>
           <div className="admin-v4-fields">
             <div className="admin-v4-field">
-              <Label>Region do przekazania</Label>
-              <Select value={region} onValueChange={setRegion}>
-                <SelectTrigger><SelectValue placeholder="Wybierz region" /></SelectTrigger>
-                <SelectContent>{(regions ?? []).map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
+              <Label>Kraj</Label>
+              <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); }}>
+                <SelectTrigger><SelectValue placeholder="Wybierz kraj" /></SelectTrigger>
+                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
-              <Label>Nowy właściciel</Label>
-              <Select value={country} onValueChange={setCountry}>
-                <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+              <Label>Region</Label>
+              <Select value={occupationRegion} onValueChange={setOccupationRegion} disabled={!occupationCountry}>
+                <SelectTrigger><SelectValue placeholder={occupationCountry ? "Wybierz region" : "Najpierw wybierz kraj"} /></SelectTrigger>
+                <SelectContent>{occupationRegions.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
