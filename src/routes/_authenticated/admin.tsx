@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  adminActionsQuery,
+  adminActionsQuery,\n  allRegionsQuery,
   adminShopQuery,
   adminUsersQuery,
   countriesQuery,
@@ -177,7 +177,7 @@ const SHOP_NUMERIC = [
 
 function Update4Tools() {
   const { data: countries } = useQuery(countriesQuery);
-  const { data: regions } = useQuery(require("@/lib/api").allRegionsQuery);
+  const { data: regions } = useQuery(allRegionsQuery);
   const [country,setCountry]=useState(""); const [region,setRegion]=useState(""); const [building,setBuilding]=useState("factory_1");
   const [slot,setSlot]=useState("1"); const [qty,setQty]=useState("1"); const [percent,setPercent]=useState("25"); const [hours,setHours]=useState("24");
   const run=async(fn:string,args:Record<string,unknown>)=>{try{await rpc(fn,args);toast.success("Operacja wykonana");}catch(e){toast.error(e instanceof Error?e.message:"Błąd");}};
