@@ -13,7 +13,7 @@ import {
   countriesQuery, economyBonusQuery, meQuery, regionsQuery,
   regionOccupationsQuery, rpc, transactionsQuery,
 } from "@/lib/api";
-import { fmtKR, kr, timeToDailyCycle, units } from "@/lib/format";
+import { fmtKR, timeToDailyCycle, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/panstwo")({
   head: () => ({
@@ -125,7 +125,7 @@ function MyCountry() {
           </div>
           <div className="command-v3-treasury">
             <span>SKARB PAŃSTWA</span>
-            <strong>{kr(country.balance)}</strong>
+            <strong>{fmtKR(country.balance)}</strong>
             <small>{fmtKR(country.balance)} dostępnych środków</small>
           </div>
           <div className="command-v3-cycle">
