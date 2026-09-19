@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
-import { countriesQuery, meQuery, regionsQuery, rpc, transactionsQuery } from "@/lib/api";
+import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, rpc, transactionsQuery } from "@/lib/api";
 import { fmtKR, kr, timeToDailyCycle, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/panstwo")({
@@ -32,7 +32,7 @@ function MyCountry() {
   const { data: me } = useQuery(meQuery);
 
   const { data: countries } = useQuery(countriesQuery);
-  const country = countries?.find((c) => c.country_id === me?.countryId);
+  const country = countries?.find((c) => c.country_id === me?.countryId);\n  const { data: economyBonus } = useQuery(economyBonusQuery);
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 200));
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
@@ -111,7 +111,7 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
-      {/* Skarbiec + przychód */}
+      {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}\n\n      {/* Skarbiec + przychód */}
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat
           label="Skarbiec"
