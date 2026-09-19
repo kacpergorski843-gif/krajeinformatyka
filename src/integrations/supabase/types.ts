@@ -63,6 +63,62 @@ export type Database = {
           },
         ]
       }
+      region_occupations: {
+        Row: {
+          id: string
+          region_id: string
+          previous_country_id: string
+          current_country_id: string
+          occupied_at: string
+          actor_id: string
+        }
+        Insert: {
+          id?: string
+          region_id: string
+          previous_country_id: string
+          current_country_id: string
+          occupied_at?: string
+          actor_id: string
+        }
+        Update: {
+          id?: string
+          region_id?: string
+          previous_country_id?: string
+          current_country_id?: string
+          occupied_at?: string
+          actor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "region_occupations_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "region_occupations_previous_country_id_fkey"
+            columns: ["previous_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "region_occupations_current_country_id_fkey"
+            columns: ["current_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "region_occupations_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       economy_bonuses: {
         Row: {
           id: string
