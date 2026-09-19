@@ -1,54 +1,27 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function Panel({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return <div className={cn("panel p-4", className)}>{children}</div>;
+export function Panel({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn("panel p-5 sm:p-6", className)}>{children}</div>;
 }
 
-export function Stat({
-  label,
-  value,
-  hint,
-  tone = "default",
-  icon,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "default" | "primary" | "accent";
-  icon?: ReactNode;
+export function Stat({ label, value, hint, tone = "default", icon }: {
+  label: string; value: string; hint?: string; tone?: "default" | "primary" | "accent"; icon?: ReactNode;
 }) {
-  return (
-    <Panel>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-muted-foreground text-[11px] tracking-wider uppercase">{label}</p>
-        {icon ? <span className="text-muted-foreground shrink-0">{icon}</span> : null}
-      </div>
-      <p
-        className={cn(
-          "num mt-2 text-lg leading-tight break-words sm:text-xl",
-          tone === "primary" && "text-primary",
-          tone === "accent" && "text-accent",
-        )}
-      >
-        {value}
-      </p>
-      {hint ? <p className="text-muted-foreground mt-1 text-xs">{hint}</p> : null}
-    </Panel>
-  );
+  return <Panel className="stat-card">
+    <div className="flex items-start justify-between gap-3">
+      <p className="stat-label">{label}</p>
+      {icon ? <span className="stat-icon">{icon}</span> : null}
+    </div>
+    <p className={cn("num mt-3 break-words text-2xl font-semibold leading-none sm:text-3xl",
+      tone === "primary" && "text-primary", tone === "accent" && "text-accent")}>{value}</p>
+    {hint ? <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p> : null}
+  </Panel>;
 }
 
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
-  return (
-    <div className="mt-6 mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-      <h2 className="truncate text-sm font-semibold tracking-[0.15em] uppercase">{children}</h2>
-      {action}
-    </div>
-  );
+  return <div className="section-heading">
+    <div className="min-w-0"><p className="label-hud">Operations</p><h2>{children}</h2></div>
+    {action}
+  </div>;
 }
