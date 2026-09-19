@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
-import { publicCountriesQuery, meQuery, regionsQuery } from "@/lib/api";
+import { meQuery, publicCountryQuery, regionsQuery } from "@/lib/api";
 import { BUILDING_LABELS, kr, krShort, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/swiat/$id")({
@@ -22,9 +22,20 @@ export const Route = createFileRoute("/_authenticated/swiat/$id")({
 function CountryDetail() {
   const { id } = Route.useParams();
   const { data: me } = useQuery(meQuery);
-  const { data: countries } = useQuery(publicCountriesQuery);
-  const { data: regions } = useQuery(regionsQuery(id));
-  const c = countries?.find((x) => x.country_id === id);
+  const countryQuery = useQuery(publicCountryQuery(id));
+  const { data: regions, isError: regionsError, error: regionsQueryError } = useQuery(regionsQuery(id));
+  const c = countryQuery.data;
+
+  if (countryQuery.isError) {
+    return (
+      <AppShell me={me ?? null} title="Państwo">
+        <Panel>
+          <p className="text-destructive text-sm">Nie udało się wczytać państwa: {countryQuery.error instanceof Error ? countryQuery.error.message : "nieznany błąd"}.</p>
+          <Link to="/swiat" className="text-primary mt-3 inline-block text-xs">← Wróć do listy państw</Link>
+        </Panel>
+      </AppShell>
+    );
+  }
 
   if (!c) {
     return (
@@ -74,6 +85,7 @@ function CountryDetail() {
       </div>
 
       <SectionTitle>Regiony ({regions?.length ?? 0})</SectionTitle>
+      {regionsError ? <Panel><p className="text-destructive text-sm">Nie udało się wczytać regionów: {regionsQueryError instanceof Error ? regionsQueryError.message : "nieznany błąd"}.</p></Panel> : null}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(regions ?? []).map((r) => (
           <Panel key={r.id}>
