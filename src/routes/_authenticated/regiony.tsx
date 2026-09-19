@@ -177,7 +177,7 @@ function Regions() {
           const open = expanded === r.id;
           const free = 9 - r.slots.length;
           return (
-            <Panel key={r.id} className="hud-frame p-0">
+            <Panel key={r.id} data-tour="tour-region" className="hud-frame p-0">
               <button
                 onClick={() => setExpanded(open ? null : r.id)}
                 className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left"
@@ -188,14 +188,14 @@ function Regions() {
                     {free === 0 ? "brak wolnych slotów" : `${free} wolnych slotów`}
                   </p>
                 </div>
-                <span className="shrink-0 text-right">
+                <span data-tour="tour-region-slots" className="shrink-0 text-right">
                   <span
                     className={`num block text-sm ${r.slots.length === 0 ? "text-inactive" : "text-primary"}`}
                   >
                     SLOTY {r.slots.length}/9
                   </span>
                   <span
-                    className={`num block text-[11px] ${r.aa_defense === 0 ? "text-inactive" : "text-info"}`}
+                    data-tour="tour-region-opl"\n                    className={`num block text-[11px] ${r.aa_defense === 0 ? "text-inactive" : "text-info"}`}
                   >
                     {units(r.aa_defense)} OPL
                   </span>
