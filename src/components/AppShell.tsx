@@ -41,13 +41,13 @@ export function AppShell({ me, title, subtitle, children }: {
 
   return <div className="app-shell min-h-screen pb-20 lg:pb-0">
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
-      <aside className="sidebar hidden w-64 shrink-0 lg:flex">
-        <div className="sticky top-0 flex h-screen w-full flex-col px-4 py-5">
+      <aside className="sidebar hidden w-[17rem] shrink-0 lg:flex">
+        <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
           <div className="brand-block mb-7">
             <div className="brand-mark"><Activity className="size-5" /></div>
             <div><p className="font-display text-sm font-bold tracking-[0.2em]">COUNTRY RP</p><p className="label-hud mt-1">Strategic command</p></div>
           </div>
-          <p className="nav-caption">Główne</p>{nav()}
+          <div className="command-section"><p className="nav-caption">Centrum dowodzenia</p>{nav()}</div>
           <div className="mt-auto">
             <div className="profile-strip mb-3">
               <div className="profile-avatar">{(me?.displayName ?? me?.email ?? "?").slice(0,1).toUpperCase()}</div>
@@ -58,15 +58,15 @@ export function AppShell({ me, title, subtitle, children }: {
           </div>
         </div>
       </aside>
-      <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 lg:px-9 lg:py-7">
-        <header className="page-header">
-          <div className="min-w-0"><p className="label-hud mb-1">COMMAND CENTER / {title.toUpperCase()}</p>
+      <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 lg:px-10 lg:py-8">
+        <header className="page-header command-header">
+          <div className="min-w-0"><div className="flex items-center gap-2"><span className="command-pulse" /><p className="label-hud">SYSTEM / {title.toUpperCase()}</p></div>
           <h1 className="page-title truncate">{title}</h1>{subtitle ? <p className="page-subtitle truncate">{subtitle}</p> : null}</div>
-          <div className="flex items-center gap-2"><div className="system-status hidden sm:flex"><span /> SYSTEM ONLINE</div>
+          <div className="flex items-center gap-2"><div className="system-status hidden sm:flex"><span /> ONLINE</div>
             <button className="mobile-menu-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Otwórz menu"><Menu className="size-5" /></button>
           </div>
         </header>
-        <div className="content-area">{children}</div>
+        <div className="content-area"><div className="page-intro"><span>LIVE OPERATIONS</span><span className="page-intro-line" /></div>{children}</div>
       </main>
     </div>
     <nav className="mobile-nav lg:hidden">
