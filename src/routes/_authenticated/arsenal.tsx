@@ -183,7 +183,7 @@ function Arsenal() {
       </div>
 
       <SectionTitle>Wystrzel rakietę</SectionTitle>
-      <Panel className="hud-frame p-5">
+      <Panel className="hud-frame p-5" data-tour="missiles">
         <div className="flex items-center justify-between gap-3">
           <p className="label-hud">
             Krok {step}/6 — {STEP_TITLES[step - 1]}
