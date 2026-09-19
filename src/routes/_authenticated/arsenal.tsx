@@ -176,14 +176,14 @@ function Arsenal() {
 
   return (
     <AppShell me={me ?? null} title="Arsenał" subtitle="Rakiety i obrona OPL">
-      <div className="grid gap-4 sm:grid-cols-3" data-tour="military">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Rakiety I" value={units(country?.missile_1 ?? 0)} tone="primary" />
         <Stat label="Rakiety II" value={units(country?.missile_2 ?? 0)} tone="primary" />
         <Stat label="Rakiety III" value={units(country?.missile_3 ?? 0)} tone="primary" />
       </div>
 
       <SectionTitle>Wystrzel rakietę</SectionTitle>
-      <Panel className="hud-frame p-5" data-tour="missiles">
+      <Panel className="hud-frame p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="label-hud">
             Krok {step}/6 — {STEP_TITLES[step - 1]}
