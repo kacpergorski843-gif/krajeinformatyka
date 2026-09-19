@@ -112,7 +112,7 @@ function MyCountry() {
   ];
 
   return (
-    <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
+    <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia"><div className="command-overview"><div><p className="label-hud">STATUS PAŃSTWA</p><h2 className="mt-1 text-xl font-semibold sm:text-2xl">Centrum operacyjne</h2><p className="mt-1 text-sm text-muted-foreground">Finanse, gospodarka, obrona i terytorium w jednym widoku.</p></div><div className="command-overview-metrics"><div><span>REGIONY</span><strong>{regions?.length ?? 0}</strong></div><div><span>PRZYCHÓD</span><strong>{fmtKR(country.gross_income)}</strong></div></div></div>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
       {occupationHistory?.slice(0, 3).map((occupation) => {
         const isCurrent = occupation.current_country_id === me.countryId;
@@ -134,7 +134,7 @@ function MyCountry() {
       })}
 
       {/* Skarbiec + przychód */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Stat
           label="Skarbiec"
           value={kr(country.balance)}
@@ -151,7 +151,7 @@ function MyCountry() {
       </div>
 
       {/* Poziomy pasek zasobów */}
-      <Panel className="hud-frame mt-3 overflow-x-auto p-0">
+      <Panel className="hud-frame mt-4 overflow-x-auto p-0 resource-command">
         <div className="divide-border grid min-w-max grid-cols-5 divide-x">
           {resources.map((r) => {
             const zero = Number(r.value) === 0;
