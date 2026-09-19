@@ -134,6 +134,15 @@ function Regions() {
         </div>
       ) : null}
 
+      <div className="region-overview">
+        <div>
+          <p className="label-hud">TERRITORY CONTROL</p>
+          <h2 className="mt-1 text-xl font-semibold">Zarządzanie regionami</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Rozbudowuj infrastrukturę, kontroluj sloty i utrzymuj obronę każdego regionu.</p>
+        </div>
+        <div className="region-overview-count"><span>REGIONY</span><strong>{regions?.length ?? 0}</strong></div>
+      </div>
+
       {country ? (
         <Panel className="hud-frame mb-4 overflow-x-auto p-0">
           <div className="divide-border grid min-w-max grid-cols-6 divide-x text-xs">
