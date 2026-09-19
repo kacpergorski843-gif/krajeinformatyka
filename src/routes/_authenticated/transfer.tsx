@@ -35,9 +35,11 @@ function Transfers() {
   const mine = countries?.find((c) => c.country_id === me?.countryId);
   const recipient = countries?.find((c) => c.country_id === target);
   const amountNumber = Math.max(0, Number(amount) || 0);
+  const isMoney = resource === "balance";
+  const validMoneyAmount = !isMoney || (amountNumber >= 1_000_000_000 && amountNumber % 1_000_000_000 === 0);
   const available = mine ? Number(mine[resource as keyof typeof mine] ?? 0) : 0;
   const remaining = Math.max(0, available - amountNumber);
-  const canSend = !!mine && !!recipient && amountNumber > 0 && amountNumber <= available;
+  const canSend = !!mine && !!recipient && amountNumber > 0 && amountNumber <= available && validMoneyAmount;
 
   const transfer = useMutation({
     mutationFn: () => rpc("transfer_resource", {
@@ -78,7 +80,7 @@ function Transfers() {
               {resources.map(([key,label,I]) => <button key={key} type="button" onClick={() => setResource(key)} className={`flex items-center gap-2 rounded-lg border p-3 text-left text-sm ${resource===key ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/40 text-muted-foreground"}`}><I className="size-4"/>{label}</button>)}
             </div>
           </div>
-          <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="decimal" type="number" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0"/></div>
+          <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="numeric" type="number" min={isMoney ? "1000000000" : "0"} step={isMoney ? "1000000000" : "any"} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={isMoney ? "1 000 000 000" : "0"}/></div>
         </div>
       </Panel>
 
