@@ -82,13 +82,21 @@ export function CountryTutorial({ me }: { me: Me | null }) {
       return;
     }
     setTargetReady(false);
+    setTargetRect(null);
     let cancelled = false;
     let attempts = 0;
     const locate = () => {
       if (cancelled) return;
       const el = document.querySelector(current.target!);
       if (el) {
+        const rect = (el as HTMLElement).getBoundingClientRect();
+        setTargetRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
         (el as HTMLElement).scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => {
+          if (cancelled) return;
+          const nextRect = (el as HTMLElement).getBoundingClientRect();
+          setTargetRect({ top: nextRect.top, left: nextRect.left, width: nextRect.width, height: nextRect.height });
+        }, 260);
         setTargetReady(true);
         return;
       }
@@ -136,7 +144,7 @@ export function CountryTutorial({ me }: { me: Me | null }) {
           <h2>WITAMY W COUNTRY RP</h2>
           <p>Zarządzaj własnym państwem, rozwijaj gospodarkę, buduj armię i rywalizuj z innymi państwami.</p>
           <div className="tutorial-welcome-actions">
-            <Button onClick={() => { setWelcome(false); setStep(0); setActive(true); saveStep(me.userId, 0); void router.navigate({ to: STEPS[0].route }); }}>ROZPOCZNIJ SAMOUCZEK</Button>
+            <Button onClick={() => { setWelcome(false); setStep(0); setActive(true); saveStep(me.userId, 0); void router.navigate({ to: STEPS[0].route as any }); }}>ROZPOCZNIJ SAMOUCZEK</Button>
             <Button variant="ghost" onClick={() => finish("skipped")}>POMIŃ</Button>
           </div>
         </section>
