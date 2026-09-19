@@ -327,12 +327,28 @@ export const publicCountriesQuery = queryOptions({
   queryFn: async () => {
     const { data, error } = await supabase
       .from("country_stats")
-      .select("country_id,name,flag,balance,gross_income,coal,oil,copper,iron,uranium,aa_defense,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,forts,military_value,vote_potential,region_aa_total")
+      .select("country_id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,gross_income,coal_upkeep,coal_prod,oil_prod,copper_prod,iron_prod,uranium_prod,forts,military_value,vote_potential,region_aa_total")
       .order("name");
     if (error) throw new Error(error.message);
     return (data ?? []) as unknown as CountryStats[];
   },
 });
+
+export function publicCountryQuery(countryId: string | null | undefined) {
+  return queryOptions({
+    queryKey: ["public_country", countryId],
+    enabled: !!countryId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("country_stats")
+        .select("country_id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,gross_income,coal_upkeep,coal_prod,oil_prod,copper_prod,iron_prod,uranium_prod,forts,military_value,vote_potential,region_aa_total")
+        .eq("country_id", countryId!)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return (data ?? null) as unknown as CountryStats | null;
+    },
+  });
+}
 
 export const economyBonusQuery = queryOptions({
   queryKey: ["economy_bonus"],
