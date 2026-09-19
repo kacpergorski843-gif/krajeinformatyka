@@ -140,11 +140,6 @@ function Shop() {
     }
   }
 
-  const coalHave = Number(country?.coal ?? 0);
-  const coalProd = Number(country?.coal_prod ?? 0);
-  const coalUse = Number(country?.coal_upkeep ?? 0);
-  const coalLeft = coalHave + coalProd - coalUse;
-
   // Braki dla aktualnie wybranego produktu i ilości
   const effectiveQty = isBuilding ? 1 : qty;
   const needKr = item ? Number(item.cost_kr) * effectiveQty : 0;
@@ -167,6 +162,15 @@ function Shop() {
     (isBuilding && !region) ||
     (item?.code === "aa" && !regionId);
 
+  function levelLock(i: ShopItem): string | null {
+    if (!i.building?.startsWith("factory_")) return null;
+    const level = Number(i.building.split("_")[1]);
+    if (level <= 1) return null;
+    const required = `factory_${level - 1}`;
+    if (!ownedByBuilding.has(required)) return `Poziom ${level} — ZABLOKOWANY · WYMAGANY: Fabryka poziom ${level - 1}`;
+    return null;
+  }
+
   function ItemCard({ i, owned }: { i: ShopItem; owned?: number }) {
     return (
       <Panel className="hud-frame flex h-full flex-col p-5">
@@ -175,7 +179,7 @@ function Shop() {
           <p className="num text-primary shrink-0 text-sm">{fmtKR(i.cost_kr)}</p>
         </div>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{i.description}</p>
-        <div className="mt-3 space-y-1 text-xs">
+        {locked ? <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-destructive">{locked}</p> : null}\n        <div className="mt-3 space-y-1 text-xs">
           {RESOURCES.filter((r) => unitCost(i, r) > 0).map((r) => (
             <p key={r} className="text-muted-foreground uppercase">
               {RESOURCE_LABELS[r]}:{" "}

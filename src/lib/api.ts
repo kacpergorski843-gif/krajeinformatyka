@@ -287,3 +287,31 @@ export const publicRankingQuery = queryOptions({
       (supabase.from as any)("public_ranking").select("*"),
     )) as unknown as PublicRankingRow[],
 });
+
+export const publicCountriesQuery = queryOptions({
+  queryKey: ["public_countries"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("country_stats")
+      .select("country_id,name,flag,balance,gross_income,coal,oil,copper,iron,uranium,aa_defense,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,forts,military_value,vote_potential,region_aa_total")
+      .order("name");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as CountryStats[];
+  },
+});
+
+export const economyBonusQuery = queryOptions({
+  queryKey: ["economy_bonus"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("economy_bonuses")
+      .select("id,percent,starts_at,ends_at")
+      .lte("starts_at", new Date().toISOString())
+      .gt("ends_at", new Date().toISOString())
+      .order("ends_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data as { id: string; percent: number; starts_at: string; ends_at: string } | null;
+  },
+});

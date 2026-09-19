@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Panel } from "@/components/stat";
 import { Input } from "@/components/ui/input";
-import { countriesQuery, meQuery } from "@/lib/api";
+import { publicCountriesQuery, meQuery } from "@/lib/api";
 import { krShort, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/swiat")({
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/swiat")({
 
 function World() {
   const { data: me } = useQuery(meQuery);
-  const { data: countries } = useQuery(countriesQuery);
+  const { data: countries } = useQuery(publicCountriesQuery);
   const [q, setQ] = useState("");
 
   const list = (countries ?? []).filter((c) => c.name.toLowerCase().includes(q.toLowerCase()));
@@ -36,13 +36,13 @@ function World() {
         onChange={(e) => setQ(e.target.value)}
         className="mb-4"
       />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((c) => (
           <Link key={c.country_id} to="/swiat/$id" params={{ id: c.country_id }}>
-            <Panel className="h-full transition-colors hover:border-primary/50">
+            <Panel className="h-full border-border/80 bg-card/80 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-xl">
               <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                 <span className="shrink-0 text-xl">{c.flag}</span>
-                <p className="truncate text-sm font-semibold">
+                <div><p className="truncate text-base font-semibold">
                   {c.name}
                   {c.country_id === me?.countryId ? (
                     <span className="text-primary ml-2 text-[10px] uppercase">Twoje</span>

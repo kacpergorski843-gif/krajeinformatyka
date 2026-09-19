@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  adminActionsQuery,
+  adminActionsQuery,\n  allRegionsQuery,
   adminShopQuery,
   adminUsersQuery,
   countriesQuery,
@@ -174,6 +174,39 @@ const SHOP_NUMERIC = [
   ["sort_order", "Kolejność"],
 ] as const;
 
+
+function Update4Tools() {
+  const { data: countries } = useQuery(countriesQuery);
+  const { data: regions } = useQuery(allRegionsQuery);
+  const [country,setCountry]=useState(""); const [region,setRegion]=useState(""); const [building,setBuilding]=useState("factory_1");
+  const [slot,setSlot]=useState("1"); const [qty,setQty]=useState("1"); const [percent,setPercent]=useState("25"); const [hours,setHours]=useState("24");
+  const run=async(fn:string,args:Record<string,unknown>)=>{try{await rpc(fn,args);toast.success("Operacja wykonana");}catch(e){toast.error(e instanceof Error?e.message:"Błąd");}};
+  const selectedRegions=(regions.data??[]).filter((r)=>r.country_id===country);
+  return <Panel className="space-y-6">
+    <SectionTitle>Operacje Update 4.0</SectionTitle>
+    <div className="grid gap-4 lg:grid-cols-3">
+      <div className="space-y-3"><p className="label-hud">Dodaj budynek</p>
+        <Select value={country} onValueChange={setCountry}><SelectTrigger><SelectValue placeholder="Państwo"/></SelectTrigger><SelectContent>{(countries.data??[]).map(c=><SelectItem key={c.country_id} value={c.country_id}>{c.flag} {c.name}</SelectItem>)}</SelectContent></Select>
+        <Select value={region} onValueChange={setRegion}><SelectTrigger><SelectValue placeholder="Region"/></SelectTrigger><SelectContent>{selectedRegions.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
+        <Select value={building} onValueChange={setBuilding}><SelectTrigger><SelectValue placeholder="Budynek"/></SelectTrigger><SelectContent>{["factory_1","factory_2","factory_3","factory_4","factory_5","factory_6","fort_1","fort_2","fort_3"].map(b=><SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent></Select>
+        <Input type="number" min="1" value={slot} onChange={e=>setSlot(e.target.value)} placeholder="Slot"/>
+        <Input type="number" min="1" max="9" value={qty} onChange={e=>setQty(e.target.value)} placeholder="Ilość"/>
+        <Button className="w-full" onClick={()=>run("admin_grant_building",{p_country_id:country,p_region_id:region,p_slot_index:Number(slot),p_building:building,p_quantity:Number(qty)})}>Dodaj budynek</Button>
+      </div>
+      <div className="space-y-3"><p className="label-hud">Bonus zarobków</p>
+        <Input type="number" min="1" max="1000" value={percent} onChange={e=>setPercent(e.target.value)} placeholder="%"/>
+        <Input type="number" min="1" max="720" value={hours} onChange={e=>setHours(e.target.value)} placeholder="Godziny"/>
+        <Button className="w-full" onClick={()=>run("admin_start_income_bonus",{p_percent:Number(percent),p_hours:Number(hours)})}>Uruchom +{percent}% / {hours}h</Button>
+      </div>
+      <div className="space-y-3"><p className="label-hud">Przejęcie regionu</p>
+        <Select value={region} onValueChange={setRegion}><SelectTrigger><SelectValue placeholder="Region"/></SelectTrigger><SelectContent>{(regions.data??[]).map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
+        <Select value={country} onValueChange={setCountry}><SelectTrigger><SelectValue placeholder="Kraj przejmujący"/></SelectTrigger><SelectContent>{(countries.data??[]).map(c=><SelectItem key={c.country_id} value={c.country_id}>{c.flag} {c.name}</SelectItem>)}</SelectContent></Select>
+        <Button variant="destructive" className="w-full" onClick={()=>run("admin_occupy_region",{p_region_id:region,p_new_country_id:country})}>Przejmij region</Button>
+      </div>
+    </div>
+  </Panel>;
+}
+
 function AdminPanel() {
   const { data: me } = useQuery(meQuery);
   const countries = useQuery(countriesQuery);
@@ -226,19 +259,19 @@ function AdminPanel() {
 
         <Tabs defaultValue="countries" className="min-w-0">
           <div className="admin-scrollbar w-full max-w-full overflow-x-auto pb-1">
-            <TabsList className="grid h-auto min-w-[42rem] grid-cols-5 border border-border/70 bg-card/80 p-1">
+            <TabsList className="grid h-auto min-w-[48rem] grid-cols-6 border border-border/70 bg-card/80 p-1">
               <AdminTab value="countries" icon={<Building2 />}>Państwa</AdminTab>
               <AdminTab value="users" icon={<UserCog />}>Użytkownicy</AdminTab>
               <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
               <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
-              <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
+              <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>\n              <AdminTab value="update4" icon={<PackagePlus />}>Update 4.0</AdminTab>
             </TabsList>
           </div>
           <TabsContent value="countries"><CountriesTab /></TabsContent>
           <TabsContent value="users"><UsersTab isMainAdmin={!!me?.isMainAdmin} /></TabsContent>
           <TabsContent value="shop"><ShopTab /></TabsContent>
           <TabsContent value="economy"><EconomyTab countdown={countdown} /></TabsContent>
-          <TabsContent value="history"><HistoryTab /></TabsContent>
+          <TabsContent value="history"><HistoryTab /></TabsContent>\n          <TabsContent value="update4"><Update4Tools /></TabsContent>
         </Tabs>
       </div>
     </AppShell>
