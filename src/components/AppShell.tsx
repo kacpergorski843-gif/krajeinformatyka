@@ -1,160 +1,90 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Landmark,
-  Globe2,
-  Map,
-  ShoppingCart,
-  Trophy,
-  ShieldHalf,
-  Rocket,
-  LogOut,
-} from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
 
 const NAV = [
-  { to: "/panstwo", label: "Moje", icon: Landmark },
+  { to: "/panstwo", label: "Państwo", icon: Landmark },
   { to: "/swiat", label: "Świat", icon: Globe2 },
   { to: "/regiony", label: "Regiony", icon: Map },
-  { to: "/arsenal", label: "Arsenał", icon: Rocket },
+  { to: "/arsenal", label: "Wojsko", icon: Rocket },
   { to: "/sklep", label: "Sklep", icon: ShoppingCart },
   { to: "/ranking", label: "Ranking", icon: Trophy },
 ] as const;
 
-export function AppShell({
-  me,
-  title,
-  subtitle,
-  children,
-}: {
-  me: Me | null;
-  title: string;
-  subtitle?: string | undefined;
-  children: ReactNode;
+export function AppShell({ me, title, subtitle, children }: {
+  me: Me | null; title: string; subtitle?: string; children: ReactNode;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [confirmOut, setConfirmOut] = useState(false);
-
+  const [mobileOpen, setMobileOpen] = useState(false);
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
     router.navigate({ to: "/auth", replace: true });
   }
+  const items = me?.isAdmin ? [...NAV, { to: "/admin", label: "Administracja", icon: ShieldHalf } as const] : NAV;
+  const nav = (mobile = false) => <div className={mobile ? "grid gap-1" : "space-y-1"}>
+    {items.map((item) => <Link key={item.to} to={item.to} onClick={() => mobile && setMobileOpen(false)}
+      activeProps={{ className: "nav-active" }} className="nav-item">
+      <item.icon className="size-[18px] shrink-0" strokeWidth={1.8} /><span className="truncate">{item.label}</span>
+    </Link>)}
+  </div>;
 
-  const items = me?.isAdmin
-    ? [...NAV, { to: "/admin", label: "Panel", icon: ShieldHalf } as const]
-    : NAV;
-
-  return (
-    <div className="tactical-bg min-h-screen pb-24 lg:pb-0">
-      <div className="mx-auto flex w-full max-w-6xl gap-6 px-3 py-4 sm:px-4 lg:px-8 lg:py-5">
-        <aside className="hidden w-52 shrink-0 lg:block">
-          <div className="sticky top-6 space-y-0.5">
-            <div className="border-border/70 mb-5 border-b px-2 pb-3">
-              <p className="font-display text-primary text-sm tracking-[0.24em] uppercase">
-                Country RP
-              </p>
-              <p className="label-hud">Sztab dowodzenia</p>
-            </div>
-            {items.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                activeProps={{
-                  className: "bg-secondary text-foreground border-primary/60",
-                }}
-                className="text-muted-foreground hover:text-foreground hover:bg-secondary/50 flex items-center gap-3 rounded-sm border-l-2 border-transparent px-3 py-2 text-sm transition-colors"
-              >
-                <item.icon className="size-4 shrink-0" strokeWidth={1.5} />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            ))}
-            <button
-              type="button"
-              onClick={() => setConfirmOut(true)}
-              className="text-inactive hover:text-foreground mt-2 flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm"
-            >
-              <LogOut className="size-4 shrink-0" strokeWidth={1.5} />
-              Wyloguj
-            </button>
+  return <div className="app-shell min-h-screen pb-20 lg:pb-0">
+    <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
+      <aside className="sidebar hidden w-64 shrink-0 lg:flex">
+        <div className="sticky top-0 flex h-screen w-full flex-col px-4 py-5">
+          <div className="brand-block mb-7">
+            <div className="brand-mark"><Activity className="size-5" /></div>
+            <div><p className="font-display text-sm font-bold tracking-[0.2em]">COUNTRY RP</p><p className="label-hud mt-1">Strategic command</p></div>
           </div>
-        </aside>
-
-        <main className="min-w-0 flex-1">
-          <header className="border-border/70 mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b pb-3">
-            <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold tracking-tight sm:text-2xl">{title}</h1>
-              {subtitle ? <p className="label-hud truncate">{subtitle}</p> : null}
+          <p className="nav-caption">Główne</p>{nav()}
+          <div className="mt-auto">
+            <div className="profile-strip mb-3">
+              <div className="profile-avatar">{(me?.displayName ?? me?.email ?? "?").slice(0,1).toUpperCase()}</div>
+              <div className="min-w-0"><p className="truncate text-sm font-semibold">{me?.displayName ?? me?.email ?? "Dowódca"}</p>
+              <p className="text-primary text-[10px] tracking-[0.14em] uppercase">{me ? ROLE_LABELS[me.role] : ""}</p></div>
             </div>
-            <div className="shrink-0 text-right">
-              <p className="max-w-[9rem] truncate text-xs font-medium sm:max-w-none">
-                {me?.displayName ?? me?.email ?? ""}
-              </p>
-              <p className="text-primary text-[10px] tracking-[0.16em] uppercase">
-                {me ? ROLE_LABELS[me.role] : ""}
-              </p>
-            </div>
-          </header>
-          {children}
-        </main>
-      </div>
-
-      <nav className="border-border bg-card/95 fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur lg:hidden">
-        <div
-          className="admin-scrollbar mx-auto flex max-w-full overflow-x-auto px-1"
-        >
-          {items.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeProps={{ className: "text-primary" }}
-              className="text-inactive flex min-w-14 flex-1 flex-col items-center gap-1 py-2.5 text-[10px]"
-            >
-              <item.icon className="size-5" strokeWidth={1.5} />
-              <span className="max-w-full truncate px-0.5">{item.label}</span>
-            </Link>
-          ))}
+            <button type="button" onClick={() => setConfirmOut(true)} className="nav-item w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
+          </div>
         </div>
-      </nav>
-
-      <Dialog open={confirmOut} onOpenChange={setConfirmOut}>
-        <DialogContent className="admin-dialog">
-          <DialogHeader>
-            <DialogTitle className="tracking-[0.14em] uppercase">Wyloguj się</DialogTitle>
-            <DialogDescription>
-              Zamkniesz sesję dowodzenia. Panele państwa będą dostępne po ponownym zalogowaniu.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setConfirmOut(false)}>
-              Anuluj
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1"
-              onClick={() => {
-                setConfirmOut(false);
-                void signOut();
-              }}
-            >
-              Wyloguj się
-            </Button>
+      </aside>
+      <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 lg:px-9 lg:py-7">
+        <header className="page-header">
+          <div className="min-w-0"><p className="label-hud mb-1">COMMAND CENTER / {title.toUpperCase()}</p>
+          <h1 className="page-title truncate">{title}</h1>{subtitle ? <p className="page-subtitle truncate">{subtitle}</p> : null}</div>
+          <div className="flex items-center gap-2"><div className="system-status hidden sm:flex"><span /> SYSTEM ONLINE</div>
+            <button className="mobile-menu-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Otwórz menu"><Menu className="size-5" /></button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </header>
+        <div className="content-area">{children}</div>
+      </main>
     </div>
-  );
+    <nav className="mobile-nav lg:hidden">
+      {items.slice(0, 5).map((item) => <Link key={item.to} to={item.to} activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
+        <item.icon className="size-5" strokeWidth={1.8}/><span>{item.label}</span>
+      </Link>)}
+      <button className="mobile-nav-item" onClick={() => setMobileOpen(true)}><Menu className="size-5"/><span>Menu</span></button>
+    </nav>
+    {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" onClick={() => setMobileOpen(false)}>
+      <aside className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Activity className="size-5"/></div><span className="font-display font-bold tracking-[0.18em]">COUNTRY RP</span></div>
+        <button onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button></div>
+        <div className="mt-5">{nav(true)}</div>
+      </aside>
+    </div> : null}
+    <Dialog open={confirmOut} onOpenChange={setConfirmOut}><DialogContent className="admin-dialog">
+      <DialogHeader><DialogTitle>Wylogować się?</DialogTitle><DialogDescription>Zamkniesz bieżącą sesję dowodzenia. Dane gry pozostają bez zmian.</DialogDescription></DialogHeader>
+      <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setConfirmOut(false)}>Anuluj</Button>
+      <Button variant="destructive" className="flex-1" onClick={() => { setConfirmOut(false); void signOut(); }}>Wyloguj</Button></div>
+    </DialogContent></Dialog>
+  </div>;
 }
