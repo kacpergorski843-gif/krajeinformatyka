@@ -76,7 +76,7 @@ function Transfers() {
       </Panel>
 
       <Panel className="h-fit">
-        <SectionTitle>Podsumowanie</SectionTitle>
+        <div className="transfer-hero"><div><p className="label-hud">LOGISTICS COMMAND</p><h2 className="mt-1 text-xl font-semibold">Transfer zasobów</h2><p className="mt-1 text-sm text-muted-foreground">Przekazuj zasoby między państwami w kontrolowanym, atomowym transferze.</p></div></div><SectionTitle>Podsumowanie</SectionTitle>
         <div className="rounded-xl border border-border bg-secondary/30 p-4">
           <div className="flex items-center gap-3"><Icon className="size-5 text-primary"/><div><p className="text-xs text-muted-foreground uppercase">Wysyłasz</p><p className="num text-xl font-semibold">{fmtNum(amountNumber)} {resources.find(x=>x[0]===resource)?.[1]}</p></div></div>
           <div className="my-5 border-l border-dashed border-primary/40 pl-4"><p className="text-xs text-muted-foreground uppercase">Do</p><p className="font-semibold">{recipient?.name ?? "Nie wybrano państwa"}</p></div>
