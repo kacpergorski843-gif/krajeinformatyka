@@ -182,7 +182,7 @@ function MyCountry() {
             </div>
 
             <div className="command-v3-section-title command-v3-section-spaced"><div><span>DZIENNIK</span><h2>Ostatnie operacje</h2></div></div>
-            <div className="command-v3-history"><OperationsHistory rows={(history ?? []) as unknown as TxRow[]} /></div>
+            <div className="command-v3-history" data-tour="history"><OperationsHistory rows={(history ?? []) as unknown as TxRow[]} /></div>
           </div>
 
           <aside className="command-v3-rail">
