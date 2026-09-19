@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, ChevronRight, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { CountryFlag } from "@/components/CountryFlag";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
 import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, transactionsQuery } from "@/lib/api";
@@ -113,6 +114,7 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
+      <Panel className="mb-4 flex items-center gap-3 p-3"><CountryFlag flag={country.flag} alt={"Flaga państwa " + country.name} className="h-12 w-20 rounded-sm text-2xl" /><div><p className="label-hud">PAŃSTWO</p><p className="font-display text-lg font-semibold">{country.name}</p></div></Panel>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
       {occupationHistory?.slice(0, 3).map((occupation) => {
         const isCurrent = occupation.current_country_id === me.countryId;
