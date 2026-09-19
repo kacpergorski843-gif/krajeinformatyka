@@ -89,5 +89,6 @@ export function AppShell({ me, title, subtitle, children }: {
       <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setConfirmOut(false)}>Anuluj</Button>
       <Button variant="destructive" className="flex-1" onClick={() => { setConfirmOut(false); void signOut(); }}>Wyloguj</Button></div>
     </DialogContent></Dialog>
+    <CountryTutorial me={me} />
   </div>;
 }
