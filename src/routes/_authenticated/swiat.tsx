@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { CountryFlag } from "@/components/CountryFlag";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { Input } from "@/components/ui/input";
 import { meQuery, publicCountriesQuery, publicCountryQuery, regionsQuery } from "@/lib/api";
@@ -57,7 +58,7 @@ function World() {
     return (
       <AppShell
         me={me ?? null}
-        title={c ? c.flag + " " + c.name : "Państwo"}
+        title={c ? c.name : "Państwo"}
         subtitle={c?.country_id === me?.countryId ? "Twoje państwo" : "Podgląd — tylko do odczytu"}
       >
         <button type="button" onClick={closeCountry} className="mb-4 text-xs text-primary hover:underline">
@@ -75,6 +76,7 @@ function World() {
           <Panel><p className="text-sm text-muted-foreground">Wczytywanie danych państwa…</p></Panel>
         ) : (
           <>
+            <div className="mb-4 flex items-center gap-3"><CountryFlag flag={c.flag} alt={"Flaga państwa " + c.name} className="h-10 w-16 rounded-sm" /><span className="text-lg font-semibold">{c.name}</span></div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Stat label="Skarbiec" value={kr(c.balance)} tone="primary" />
               <Stat label="Przychód dobowy" value={kr(c.gross_income)} tone="accent" />
@@ -160,7 +162,7 @@ function World() {
           >
             <Panel className="h-full border-border/80 bg-card/80 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-xl">
               <div className="flex items-center gap-3">
-                <span className="shrink-0 text-xl">{country.flag}</span>
+                <CountryFlag flag={country.flag} alt={"Flaga państwa " + country.name} className="h-7 w-11 shrink-0 rounded-sm text-xl" />
                 <p className="truncate text-base font-semibold">
                   {country.name}
                   {country.country_id === me?.countryId && (
