@@ -125,7 +125,9 @@ function MyCountry() {
               <p className="text-xs text-muted-foreground">{new Date(occupation.occupied_at).toLocaleString("pl-PL")}</p>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {isCurrent ? "Region został przejęty przez Twoje państwo." : "Region został przejęty przez inne państwo."}
+              {isCurrent
+                ? `Poprzedni właściciel: ${countries?.find((countryRow) => countryRow.country_id === occupation.previous_country_id)?.name ?? "Nieznane państwo"}`
+                : `Nowy właściciel: ${countries?.find((countryRow) => countryRow.country_id === occupation.current_country_id)?.name ?? "Nieznane państwo"}`}
             </p>
           </Panel>
         );
