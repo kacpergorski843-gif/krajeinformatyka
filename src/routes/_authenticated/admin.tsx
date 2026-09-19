@@ -48,7 +48,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  adminActionsQuery,\n  allRegionsQuery,
+  adminActionsQuery,
+  allRegionsQuery,
   adminShopQuery,
   adminUsersQuery,
   countriesQuery,
@@ -264,14 +265,16 @@ function AdminPanel() {
               <AdminTab value="users" icon={<UserCog />}>Użytkownicy</AdminTab>
               <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
               <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
-              <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>\n              <AdminTab value="update4" icon={<PackagePlus />}>Update 4.0</AdminTab>
+              <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
+              <AdminTab value="update4" icon={<PackagePlus />}>Update 4.0</AdminTab>
             </TabsList>
           </div>
           <TabsContent value="countries"><CountriesTab /></TabsContent>
           <TabsContent value="users"><UsersTab isMainAdmin={!!me?.isMainAdmin} /></TabsContent>
           <TabsContent value="shop"><ShopTab /></TabsContent>
           <TabsContent value="economy"><EconomyTab countdown={countdown} /></TabsContent>
-          <TabsContent value="history"><HistoryTab /></TabsContent>\n          <TabsContent value="update4"><Update4Tools /></TabsContent>
+          <TabsContent value="history"><HistoryTab /></TabsContent>
+          <TabsContent value="update4"><Update4Tools /></TabsContent>
         </Tabs>
       </div>
     </AppShell>
