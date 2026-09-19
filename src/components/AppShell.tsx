@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
+import { CountryTutorial } from "@/components/CountryTutorial";
 
 const NAV = [
   { to: "/panstwo", label: "Państwo", icon: Landmark },
@@ -54,7 +55,7 @@ export function AppShell({ me, title, subtitle, children }: {
               <div className="min-w-0"><p className="truncate text-sm font-semibold">{me?.displayName ?? me?.email ?? "Dowódca"}</p>
               <p className="text-primary text-[10px] tracking-[0.14em] uppercase">{me ? ROLE_LABELS[me.role] : ""}</p></div>
             </div>
-            <button type="button" onClick={() => setConfirmOut(true)} className="nav-item w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
+            <button type="button" onClick={() => { window.dispatchEvent(new Event("country-rp:restart-tutorial")); }} className="nav-item w-full">Uruchom samouczek ponownie</button>\n            <button type="button" onClick={() => setConfirmOut(true)} className="nav-item w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
           </div>
         </div>
       </aside>
@@ -82,7 +83,7 @@ export function AppShell({ me, title, subtitle, children }: {
         <div className="mt-5">{nav(true)}</div>
       </aside>
     </div> : null}
-    <Dialog open={confirmOut} onOpenChange={setConfirmOut}><DialogContent className="admin-dialog">
+    <CountryTutorial me={me} />\n    <Dialog open={confirmOut} onOpenChange={setConfirmOut}><DialogContent className="admin-dialog">
       <DialogHeader><DialogTitle>Wylogować się?</DialogTitle><DialogDescription>Zamkniesz bieżącą sesję dowodzenia. Dane gry pozostają bez zmian.</DialogDescription></DialogHeader>
       <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setConfirmOut(false)}>Anuluj</Button>
       <Button variant="destructive" className="flex-1" onClick={() => { setConfirmOut(false); void signOut(); }}>Wyloguj</Button></div>
