@@ -5,7 +5,7 @@
 create or replace function public.admin_create_country_for_user(
   p_user_id uuid,
   p_name text,
-  p_flag text default '🏳️'
+  p_flag text default null
 )
 returns uuid
 language plpgsql
@@ -32,7 +32,7 @@ begin
   end if;
 
   insert into public.countries (name, flag)
-  values (trim(p_name), coalesce(nullif(trim(p_flag), ''), '🏳️'))
+  values (trim(p_name), nullif(trim(p_flag), ''))
   returning id into v_country_id;
 
   update public.profiles
