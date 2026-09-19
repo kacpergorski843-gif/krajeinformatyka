@@ -248,8 +248,6 @@ function MyCountry() {
 
       <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
-      </div>
-
       <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
         <Timer className="size-3.5" strokeWidth={1.5} /> Do rozliczenia dobowego:{" "}
         <span className="num text-primary">{countdown}</span>
