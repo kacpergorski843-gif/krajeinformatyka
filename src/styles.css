@@ -1025,3 +1025,123 @@
     font-size: .78rem;
   }
 }
+
+
+/* 2026 mobile-first redesign: calmer hierarchy, tighter rhythm, clearer actions. */
+.mobile-content {
+  width: 100%;
+  max-width: 1180px;
+}
+
+.mobile-content .panel {
+  border-radius: .8rem;
+}
+
+.mobile-content button:not(.mobile-nav-item):not(.mobile-menu-button),
+.mobile-content a[role="button"] {
+  min-height: 44px;
+}
+
+@media (max-width: 767px) {
+  .content-area {
+    max-width: none;
+  }
+
+  .mobile-content .panel {
+    background: linear-gradient(145deg, color-mix(in oklab, var(--color-card) 98%, transparent), var(--color-card));
+  }
+
+  .mobile-content .grid {
+    min-width: 0;
+  }
+
+  .mobile-content [class*="grid-cols-3"],
+  .mobile-content [class*="grid-cols-4"],
+  .mobile-content [class*="grid-cols-5"],
+  .mobile-content [class*="grid-cols-6"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobile-content .grid-cols-1 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mobile-content .command-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .mobile-content .command-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .9rem;
+  }
+
+  .mobile-content .command-resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobile-content .command-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .8rem;
+  }
+
+  .mobile-content .command-overview {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .8rem;
+    padding: 1rem;
+  }
+
+  .mobile-content .command-overview-metrics {
+    width: 100%;
+  }
+
+  .mobile-content .command-alert {
+    align-items: flex-start;
+    padding: .75rem .85rem;
+  }
+
+  .mobile-content .page-intro {
+    display: none;
+  }
+
+  .mobile-content .label-hud {
+    font-size: .58rem;
+    letter-spacing: .14em;
+  }
+
+  .mobile-content .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mobile-content .shop-card {
+    padding: .9rem;
+  }
+
+  .mobile-content .transfer-hero {
+    display: none;
+  }
+
+  .mobile-content .transfer-hero + .grid {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 390px) {
+  .mobile-content .command-kpi-grid,
+  .mobile-content .command-resource-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mobile-content [class*="grid-cols-2"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mobile-content .command-kpi {
+    min-height: 104px;
+  }
+
+  .mobile-command-header .page-title {
+    font-size: 1.2rem;
+  }
+}
