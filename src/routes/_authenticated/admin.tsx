@@ -609,6 +609,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const owner = country ? users.find((user) => user.country_id === country.country_id) : undefined;
   const patch = { ...identity, ...changes };
   const changedFields = Object.entries(patch).filter(([key, value]) => String(country?.[key as keyof CountryStats] ?? "") !== value);
+  const hasChanges = changedFields.length > 0 || !!flagFile;
   const destructive = changedFields.some(([key, value]) => key in FIELD_LABELS && Number(value) < Number(country?.[key as keyof CountryStats] ?? 0));
 
   const save = useMutation({
@@ -700,7 +701,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
             <TabsContent value="history" className="m-0 space-y-4"><CountryHistory transactions={(history.data ?? []) as unknown as TransactionRow[]} strikes={countryStrikes} countryId={country.country_id} loading={history.isLoading || strikes.isLoading} /></TabsContent>
           </div>
         </Tabs>
-        <div className="grid shrink-0 gap-2 border-t border-border bg-card p-3 sm:grid-cols-[1fr_auto_auto] sm:p-4"><p className="self-center text-xs text-muted-foreground">{changedFields.length ? `${changedFields.length} niezapisane zmiany` : "Brak niezapisanych zmian"}</p><Button variant="destructive" onClick={() => setConfirmDelete(true)}><Trash2 />Usuń państwo</Button><Button disabled={!changedFields.length} onClick={() => setConfirmChanges(true)}>Zapisz zmiany</Button></div>
+        <div className="grid shrink-0 gap-2 border-t border-border bg-card p-3 sm:grid-cols-[1fr_auto_auto] sm:p-4"><p className="self-center text-xs text-muted-foreground">{changedFields.length ? `${changedFields.length} niezapisane zmiany` : "Brak niezapisanych zmian"}</p><Button variant="destructive" onClick={() => setConfirmDelete(true)}><Trash2 />Usuń państwo</Button><Button disabled={!hasChanges} onClick={() => setConfirmChanges(true)}>Zapisz zmiany</Button></div>
 
         <ConfirmDialog open={confirmChanges} onOpenChange={setConfirmChanges} title={destructive ? "Potwierdź operację zmniejszającą wartości" : "Potwierdź korektę państwa"} description={`Państwo: ${country.name}. Zmiana zostanie zapisana w dzienniku audytowym.`} confirmLabel="Zatwierdź korektę" destructive={destructive} pending={save.isPending} onConfirm={() => save.mutate()}>
           <div className="space-y-2">{changedFields.map(([key,value]) => <ChangePreview key={key} label={FIELD_LABELS[key as FieldKey] ?? (key === "name" ? "Nazwa" : "Flaga")} current={String(country[key as keyof CountryStats] ?? "")} next={String(value ?? "")} currency={key === "balance"} />)}</div>
