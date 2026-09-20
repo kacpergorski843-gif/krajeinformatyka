@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Coins, Flame, Droplet, CircleDot, Magnet, Atom, Shield, Users, Truck, Rocket } from "lucide-react";
+import { ArrowRightLeft, Coins, Flame, Droplet, CircleDot, Magnet, Atom } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle } from "@/components/stat";
@@ -19,9 +19,6 @@ export const Route = createFileRoute("/_authenticated/transfer")({
 const resources = [
   ["balance","KR",Coins], ["coal","Węgiel",Flame], ["oil","Ropa",Droplet],
   ["copper","Miedź",CircleDot], ["iron","Żelazo",Magnet], ["uranium","Uran",Atom],
-  ["aa_defense","OPL",Shield], ["soldier_packs","Żołnierze",Users],
-  ["tank_packs","Czołgi",Truck], ["missile_1","Rakiety I",Rocket],
-  ["missile_2","Rakiety II",Rocket], ["missile_3","Rakiety III",Rocket],
 ] as const;
 
 function Transfers() {
@@ -58,12 +55,12 @@ function Transfers() {
 
   const Icon = useMemo(() => resources.find((x) => x[0] === resource)?.[2] ?? Coins, [resource]);
 
-  return <AppShell me={me ?? null} title="Transfery" subtitle="Przekazuj zasoby innym państwom">
+  return <AppShell me={me ?? null} title="Transfery" subtitle="Przekazuj pieniądze i surowce innym państwom">
     <div className="transfer-hero">
       <div>
         <p className="label-hud">LOGISTICS COMMAND</p>
         <h2 className="mt-1 text-xl font-semibold">Centrum transferów</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Przekazuj zasoby między państwami w kontrolowanym, atomowym transferze.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Przekazuj pieniądze i surowce między państwami w kontrolowanym, atomowym transferze.</p>
       </div>
     </div>
     <div className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
@@ -85,7 +82,7 @@ function Transfers() {
       </Panel>
 
       <Panel className="h-fit">
-        <div className="transfer-hero"><div><p className="label-hud">LOGISTICS COMMAND</p><h2 className="mt-1 text-xl font-semibold">Transfer zasobów</h2><p className="mt-1 text-sm text-muted-foreground">Przekazuj zasoby między państwami w kontrolowanym, atomowym transferze.</p></div></div><SectionTitle>Podsumowanie</SectionTitle>
+        <div className="transfer-hero"><div><p className="label-hud">LOGISTICS COMMAND</p><h2 className="mt-1 text-xl font-semibold">Transfer zasobów</h2><p className="mt-1 text-sm text-muted-foreground">Przekazuj pieniądze i surowce między państwami w kontrolowanym, atomowym transferze.</p></div></div><SectionTitle>Podsumowanie</SectionTitle>
         <div className="rounded-xl border border-border bg-secondary/30 p-4">
           <div className="flex items-center gap-3"><Icon className="size-5 text-primary"/><div><p className="text-xs text-muted-foreground uppercase">Wysyłasz</p><p className="num text-xl font-semibold">{fmtNum(amountNumber)} {resources.find(x=>x[0]===resource)?.[1]}</p></div></div>
           <div className="my-5 border-l border-dashed border-primary/40 pl-4"><p className="text-xs text-muted-foreground uppercase">Do</p><p className="font-semibold">{recipient?.name ?? "Nie wybrano państwa"}</p></div>
