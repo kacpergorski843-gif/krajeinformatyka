@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, ChevronRight, Timer } from "lucide-react";
+import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, ChevronRight, Timer, Map as MapIcon, Shield as ShieldIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { CountryFlag } from "@/components/CountryFlag";
@@ -114,11 +114,11 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
-      <Panel className="mb-4 flex items-center gap-3 p-3">
+      <Panel className="mb-3 flex items-center gap-3 p-3 sm:mb-4">
         <CountryFlag
           flag={country.flag}
           alt={"Flaga państwa " + country.name}
-          className="h-12 w-20 rounded-sm text-2xl"
+          className="h-12 w-20 shrink-0 rounded-sm text-2xl"
         />
         <div>
           <p className="label-hud">PAŃSTWO</p>
@@ -126,6 +126,14 @@ function MyCountry() {
         </div>
       </Panel>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        <Link to="/regiony" className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-secondary/45 px-3 text-sm font-semibold transition-colors hover:border-primary/40 hover:bg-secondary">
+          <MapIcon className="size-4 text-primary" /> Regiony
+        </Link>
+        <Link to="/arsenal" className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-secondary/45 px-3 text-sm font-semibold transition-colors hover:border-primary/40 hover:bg-secondary">
+          <ShieldIcon className="size-4 text-primary" /> Arsenał
+        </Link>
+      </div>
       {occupationHistory?.slice(0, 3).map((occupation) => {
         const isCurrent = occupation.current_country_id === me.countryId;
         const label = isCurrent ? "REGION PRZEJĘTY" : "REGION OKUPOWANY";
@@ -146,7 +154,7 @@ function MyCountry() {
       })}
 
       {/* Skarbiec + przychód */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2.5 min-[380px]:grid-cols-2 sm:grid-cols-3">
         <Stat
           label="Skarbiec"
           value={kr(country.balance)}
@@ -163,12 +171,12 @@ function MyCountry() {
       </div>
 
       {/* Poziomy pasek zasobów */}
-      <Panel className="hud-frame mt-3 overflow-x-auto p-0">
-        <div className="divide-border grid min-w-max grid-cols-5 divide-x">
+      <Panel className="hud-frame mt-3 overflow-hidden p-0">
+        <div className="divide-border grid grid-cols-2 divide-x divide-y sm:grid-cols-5 sm:divide-y-0">
           {resources.map((r) => {
             const zero = Number(r.value) === 0;
             return (
-              <div key={r.key} className="min-w-28 px-3 py-2.5">
+              <div key={r.key} className="min-w-0 px-3 py-2.5 sm:px-3">
                 <div className="text-muted-foreground flex items-center gap-1.5">
                   <r.icon className="size-3.5" strokeWidth={1.5} />
                   <span className="text-[10px] tracking-[0.14em] uppercase">{r.label}</span>
@@ -195,7 +203,7 @@ function MyCountry() {
         Wojsko i obrona
       </SectionTitle>
       <Panel className="p-0">
-        <div className="divide-border grid grid-cols-3 divide-x divide-y sm:grid-cols-6 sm:divide-y-0">
+        <div className="divide-border grid grid-cols-2 divide-x divide-y sm:grid-cols-6 sm:divide-y-0">
           {military.map((m) => (
             <div key={m.label} className="px-3 py-2.5">
               <p className="text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
