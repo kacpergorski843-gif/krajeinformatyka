@@ -61,7 +61,7 @@ function World() {
         title={c ? c.name : "Państwo"}
         subtitle={c?.country_id === me?.countryId ? "Twoje państwo" : "Podgląd — tylko do odczytu"}
       >
-        <button type="button" onClick={closeCountry} className="mb-4 text-xs text-primary hover:underline">
+        <button type="button" onClick={closeCountry} className="mb-4 inline-flex min-h-11 items-center rounded-lg px-2 text-sm text-primary hover:bg-primary/10 hover:underline">
           ← Wróć do listy państw
         </button>
 
@@ -76,7 +76,7 @@ function World() {
           <Panel><p className="text-sm text-muted-foreground">Wczytywanie danych państwa…</p></Panel>
         ) : (
           <>
-            <div className="mb-4 flex items-center gap-3"><CountryFlag flag={c.flag} alt={"Flaga państwa " + c.name} className="h-10 w-16 rounded-sm" /><span className="text-lg font-semibold">{c.name}</span></div>
+            <div className="mb-3 flex items-center gap-3 sm:mb-4"><CountryFlag flag={c.flag} alt={"Flaga państwa " + c.name} className="h-10 w-16 rounded-sm" /><span className="text-lg font-semibold">{c.name}</span></div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Stat label="Skarbiec" value={kr(c.balance)} tone="primary" />
               <Stat label="Przychód dobowy" value={kr(c.gross_income)} tone="accent" />
@@ -152,7 +152,7 @@ function World() {
         className="mb-4"
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((country) => (
           <button
             key={country.country_id}
