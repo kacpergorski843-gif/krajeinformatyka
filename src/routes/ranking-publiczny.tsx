@@ -42,11 +42,11 @@ function PublicRanking() {
 
   return (
     <div className="tactical-bg min-h-screen">
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
         <Link to="/" className="text-muted-foreground inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm hover:bg-secondary/50">
           <ArrowLeft className="size-3.5" strokeWidth={1.5} /> Strona główna
         </Link>
-        <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Ranking państw</h1>
+        <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Ranking państw</h1>
         <p className="label-hud">Podgląd publiczny, tylko do odczytu</p>
 
         <div className="mt-5 grid grid-cols-2 gap-2">
