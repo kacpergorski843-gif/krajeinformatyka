@@ -1001,3 +1001,27 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Mobile command header: keep the primary title readable and remove decorative truncation. */
+@media (max-width: 640px) {
+  .page-system-label {
+    display: none;
+  }
+
+  .command-header {
+    min-height: 56px;
+    padding: .65rem 0 .75rem;
+    margin-bottom: 1rem;
+  }
+
+  .command-header .page-title {
+    font-size: 1.35rem;
+    line-height: 1.15;
+    letter-spacing: -.02em;
+  }
+
+  .command-header .page-subtitle {
+    margin-top: .2rem;
+    font-size: .78rem;
+  }
+}
