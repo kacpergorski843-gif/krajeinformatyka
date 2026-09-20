@@ -34,7 +34,7 @@ function MyCountry() {
 
   const { data: countries } = useQuery(countriesQuery);
   const country = countries?.find((c) => c.country_id === me?.countryId);
-  const { data: economyBonus } = useQuery(economyBonusQuery);
+  const { data: economyBonus } = useQuery(economyBonusQuery(me?.countryId));
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 200));
   const { data: occupationHistory } = useQuery(regionOccupationsQuery(me?.countryId));
