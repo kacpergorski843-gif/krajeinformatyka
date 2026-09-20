@@ -36,7 +36,8 @@ const FEATURES = [
 function Landing() {
   return (
     <div className="tactical-bg min-h-screen">
-      <div className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-5 py-16">
+      <div className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
+        <div className="landing-shell">
         <p className="text-primary font-display text-xs tracking-[0.3em] uppercase">
           Nation Dynamics
         </p>
@@ -48,7 +49,7 @@ function Landing() {
           po stronie serwera. Start każdego państwa to 1 500 000 000 000 KR.
         </p>
 
-        <div className="mt-8 grid gap-3">
+        <div className="mt-7 grid gap-2.5 sm:max-w-xl">
           <a
             href="/auth?mode=signup"
             className="bg-primary text-primary-foreground flex min-h-12 items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase"
@@ -69,7 +70,7 @@ function Landing() {
           </Link>
         </div>
 
-        <div className="mt-12 grid gap-3 sm:grid-cols-2">
+        <div className="mt-10 grid gap-2.5 sm:grid-cols-2">
           {FEATURES.map((f) => (
             <div key={f.title} className="panel hud-frame p-4">
               <f.icon className="text-primary size-5" strokeWidth={1.5} />
@@ -77,6 +78,7 @@ function Landing() {
               <p className="text-muted-foreground mt-1 text-xs">{f.text}</p>
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>
