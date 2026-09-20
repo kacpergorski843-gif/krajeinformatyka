@@ -396,15 +396,24 @@ async function readPublicCountryFallback(countryId?: string) {
   })) as CountryStats[];
 }
 
+function isMissingRelationError(error: unknown): boolean {
+  const value = error as { code?: string; message?: string } | null;
+  return value?.code === "42P01" ||
+    value?.code === "PGRST205" ||
+    /relation .* does not exist|could not find the table|could not find the relation/i.test(value?.message ?? "");
+}
+
 export const publicCountriesQuery = queryOptions({
   queryKey: ["public_countries"],
   queryFn: async () => {
     try {
       return await readCountryStats("world_country_stats");
-    } catch {
+    } catch (error) {
+      if (!isMissingRelationError(error)) throw error;
       try {
         return await readCountryStats("country_stats");
-      } catch {
+      } catch (fallbackError) {
+        if (!isMissingRelationError(fallbackError)) throw fallbackError;
         return await readPublicCountryFallback();
       }
     }
@@ -418,10 +427,12 @@ export function publicCountryQuery(countryId: string | null | undefined) {
     queryFn: async () => {
       try {
         return await readCountryStatsById("world_country_stats", countryId!);
-      } catch {
+      } catch (error) {
+        if (!isMissingRelationError(error)) throw error;
         try {
           return await readCountryStatsById("country_stats", countryId!);
-        } catch {
+        } catch (fallbackError) {
+          if (!isMissingRelationError(fallbackError)) throw fallbackError;
           const rows = await readPublicCountryFallback(countryId!);
           return rows[0] ?? null;
         }
