@@ -66,6 +66,7 @@ export const BUILDING_LABELS: Record<string, string> = {
   factory_3: "Fabryka III",
   factory_4: "Fabryka IV",
   factory_5: "Fabryka V",
+  factory_6: "Fabryka VI",
   mine_coal: "Wytwórnia węgla",
   mine_oil: "Wytwórnia ropy",
   mine_copper: "Wytwórnia miedzi",
