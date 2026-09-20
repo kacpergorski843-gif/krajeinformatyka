@@ -558,7 +558,7 @@ function CountriesTab() {
                 const owner = users.find((user) => user.country_id === country.country_id);
                 return (
                   <Button key={country.country_id} variant="ghost" className="grid h-auto w-full grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] items-center gap-3 rounded-none border-b border-border/70 px-4 py-3 text-left last:border-b-0 hover:bg-secondary/40" onClick={() => setOpenId(country.country_id)}>
-                    <span className="flex min-w-0 items-center gap-3"><span className="grid size-9 shrink-0 place-items-center border border-border bg-secondary text-lg">{country.flag || "—"}</span><span className="min-w-0"><span className="block truncate font-semibold">{country.name}</span><span className="block truncate text-[11px] font-normal text-muted-foreground">+{fmtKR(country.gross_income)} / doba</span></span></span>
+                    <span className="flex min-w-0 items-center gap-3"><span className="grid size-9 shrink-0 place-items-center border border-border bg-secondary text-lg"><CountryFlag flag={country.flag} alt={`Flaga ${country.name}`} className="size-full rounded-sm" /></span><span className="min-w-0"><span className="block truncate font-semibold">{country.name}</span><span className="block truncate text-[11px] font-normal text-muted-foreground">+{fmtKR(country.gross_income)} / doba</span></span></span>
                     <span className="num text-primary">{fmtKR(country.balance)}</span>
                     <span className="num">{country.regions_count} / regiony</span>
                     <Badge variant={owner ? "outline" : "secondary"} className={owner ? "border-success/40 text-success" : "text-inactive"}>{owner ? "Przypisane" : "Wolne"}</Badge>
@@ -647,7 +647,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
       <DialogContent className="admin-dialog flex max-h-[94dvh] w-[calc(100%-1rem)] max-w-5xl min-w-0 flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100%-2rem)]">
         <div className="border-b border-border bg-secondary/30 p-4 pr-12 sm:p-5 sm:pr-12">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-            <div className="flex min-w-0 items-center gap-3"><span className="grid size-11 shrink-0 place-items-center border border-primary/30 bg-primary/10 text-xl">{country.flag}</span><div className="min-w-0"><DialogTitle className="truncate text-lg uppercase sm:text-xl">{country.name}</DialogTitle><DialogDescription className="truncate">{owner?.display_name ?? "Państwo bez właściciela"}</DialogDescription></div></div>
+            <div className="flex min-w-0 items-center gap-3"><span className="grid size-11 shrink-0 place-items-center border border-primary/30 bg-primary/10 text-xl"><CountryFlag flag={country.flag} alt={`Flaga ${country.name}`} className="size-full rounded-sm" /></span><div className="min-w-0"><DialogTitle className="truncate text-lg uppercase sm:text-xl">{country.name}</DialogTitle><DialogDescription className="truncate">{owner?.display_name ?? "Państwo bez właściciela"}</DialogDescription></div></div>
             <Badge variant="outline" className="shrink-0 border-primary/40 text-primary">{country.regions_count} regionów</Badge>
           </div>
         </div>
