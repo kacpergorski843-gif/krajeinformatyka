@@ -396,15 +396,24 @@ async function readPublicCountryFallback(countryId?: string) {
   })) as CountryStats[];
 }
 
+function isMissingRelationError(error: unknown): boolean {
+  const value = error as { code?: string; message?: string } | null;
+  return value?.code === "42P01" ||
+    value?.code === "PGRST205" ||
+    /relation .* does not exist|could not find the table|could not find the relation/i.test(value?.message ?? "");
+}
+
 export const publicCountriesQuery = queryOptions({
   queryKey: ["public_countries"],
   queryFn: async () => {
     try {
       return await readCountryStats("world_country_stats");
-    } catch {
+    } catch (error) {
+      if (!isMissingRelationError(error)) throw error;
       try {
         return await readCountryStats("country_stats");
-      } catch {
+      } catch (fallbackError) {
+        if (!isMissingRelationError(fallbackError)) throw fallbackError;
         return await readPublicCountryFallback();
       }
     }
@@ -418,10 +427,12 @@ export function publicCountryQuery(countryId: string | null | undefined) {
     queryFn: async () => {
       try {
         return await readCountryStatsById("world_country_stats", countryId!);
-      } catch {
+      } catch (error) {
+        if (!isMissingRelationError(error)) throw error;
         try {
           return await readCountryStatsById("country_stats", countryId!);
-        } catch {
+        } catch (fallbackError) {
+          if (!isMissingRelationError(fallbackError)) throw fallbackError;
           const rows = await readPublicCountryFallback(countryId!);
           return rows[0] ?? null;
         }
@@ -430,18 +441,35 @@ export function publicCountryQuery(countryId: string | null | undefined) {
   });
 }
 
-export const economyBonusQuery = queryOptions({
-  queryKey: ["economy_bonus"],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from("economy_bonuses")
-      .select("id,percent,starts_at,ends_at")
-      .lte("starts_at", new Date().toISOString())
-      .gt("ends_at", new Date().toISOString())
-      .order("ends_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    return data as { id: string; percent: number; starts_at: string; ends_at: string } | null;
-  },
-});
+export function economyBonusQuery(countryId: string | null | undefined) {
+  return queryOptions({
+    queryKey: ["economy_bonus", countryId],
+    enabled: !!countryId,
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("economy_bonuses")
+        .select("id,percent,country_id,starts_at,ends_at")
+        .lte("starts_at", now)
+        .gt("ends_at", now)
+        .or(`country_id.eq.${countryId},country_id.is.null`)
+        .order("ends_at", { ascending: true });
+      if (error) throw new Error(error.message);
+
+      const rows = (data ?? []) as Array<{
+        id: string;
+        percent: number;
+        country_id: string | null;
+        starts_at: string;
+        ends_at: string;
+      }>;
+
+      return rows.sort((a, b) => {
+        const aSpecific = a.country_id === countryId ? 0 : 1;
+        const bSpecific = b.country_id === countryId ? 0 : 1;
+        if (aSpecific !== bSpecific) return aSpecific - bSpecific;
+        return a.ends_at.localeCompare(b.ends_at);
+      })[0] ?? null;
+    },
+  });
+}
