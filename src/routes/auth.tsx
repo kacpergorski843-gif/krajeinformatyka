@@ -93,11 +93,17 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-5 py-12">
-      <div className="panel w-full max-w-sm p-5 sm:p-6">
-        <Link to="/" className="text-primary font-display text-xs tracking-[0.3em] uppercase">
-          Sztab
-        </Link>
+    <div className="auth-screen tactical-bg flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+      <div className="auth-card panel w-full max-w-md overflow-hidden p-0">
+        <div className="auth-card-top">
+          <div className="brand-mark"><span className="font-display text-sm font-bold">RP</span></div>
+          <div>
+            <p className="label-hud">NATION DYNAMICS</p>
+            <p className="font-display text-sm font-semibold">Panel dowodzenia</p>
+          </div>
+        </div>
+        <div className="p-5 sm:p-7">
+        <Link to="/" className="text-muted-foreground inline-flex min-h-10 items-center text-xs hover:text-primary">← Strona główna</Link>
         <h1 className="mt-2 text-xl font-bold">
           {mode === "login" ? "Zaloguj się" : "Utwórz konto"}
         </h1>
@@ -135,10 +141,11 @@ function AuthPage() {
         <button
           type="button"
           onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          className="text-muted-foreground hover:text-foreground mt-3 min-h-11 w-full text-center text-sm"
+          className="text-muted-foreground hover:text-foreground mt-3 min-h-11 w-full rounded-lg text-center text-sm transition-colors"
         >
           {mode === "login" ? "Nie masz konta? Zarejestruj się" : "Masz już konto? Zaloguj się"}
         </button>
+        </div>
       </div>
     </div>
   );
