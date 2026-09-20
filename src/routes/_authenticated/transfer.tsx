@@ -74,7 +74,7 @@ function Transfers() {
           </div>
           <div><p className="label-hud mb-2">2. Wybierz zasób</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-              {resources.map(([key,label,I]) => <button key={key} type="button" onClick={() => setResource(key)} className={`flex items-center gap-2 rounded-lg border p-3 text-left text-sm ${resource===key ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/40 text-muted-foreground"}`}><I className="size-4"/>{label}</button>)}
+              {resources.map(([key,label,I]) => <button key={key} type="button" onClick={() => setResource(key)} className={`flex min-h-12 items-center gap-2 rounded-lg border p-3 text-left text-sm transition-colors ${resource===key ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/40 text-muted-foreground"}`}><I className="size-4"/>{label}</button>)}
             </div>
           </div>
           <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="numeric" type="number" min={isMoney ? "1000000000" : "0"} step={isMoney ? "1000000000" : "any"} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={isMoney ? "1 000 000 000" : "0"}/></div>
@@ -82,13 +82,13 @@ function Transfers() {
       </Panel>
 
       <Panel className="h-fit">
-        <div className="transfer-hero"><div><p className="label-hud">LOGISTICS COMMAND</p><h2 className="mt-1 text-xl font-semibold">Transfer zasobów</h2><p className="mt-1 text-sm text-muted-foreground">Przekazuj pieniądze i surowce między państwami w kontrolowanym, atomowym transferze.</p></div></div><SectionTitle>Podsumowanie</SectionTitle>
+        <SectionTitle>Podsumowanie</SectionTitle>
         <div className="rounded-xl border border-border bg-secondary/30 p-4">
           <div className="flex items-center gap-3"><Icon className="size-5 text-primary"/><div><p className="text-xs text-muted-foreground uppercase">Wysyłasz</p><p className="num text-xl font-semibold">{fmtNum(amountNumber)} {resources.find(x=>x[0]===resource)?.[1]}</p></div></div>
           <div className="my-5 border-l border-dashed border-primary/40 pl-4"><p className="text-xs text-muted-foreground uppercase">Do</p><p className="font-semibold">{recipient?.name ?? "Nie wybrano państwa"}</p></div>
           <div className="border-t border-border pt-4"><p className="text-xs text-muted-foreground uppercase">Pozostanie u nadawcy</p><p className={`num mt-1 text-xl font-semibold ${canSend ? "text-success" : "text-foreground"}`}>{fmtNum(remaining)}</p></div>
         </div>
-        <Button className="mt-4 w-full" disabled={!canSend || transfer.isPending} onClick={() => transfer.mutate()}>{transfer.isPending ? "Wysyłam…" : "Wyślij transfer"}</Button>
+        <Button className="mt-4 min-h-12 w-full" disabled={!canSend || transfer.isPending} onClick={() => transfer.mutate()}>{transfer.isPending ? "Wysyłam…" : "Wyślij transfer"}</Button>
         {mine ? <p className="mt-3 text-xs text-muted-foreground">Dostępne: <span className="num">{units(available)}</span></p> : null}
       </Panel>
     </div>
