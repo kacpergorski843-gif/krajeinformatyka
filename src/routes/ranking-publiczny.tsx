@@ -43,7 +43,7 @@ function PublicRanking() {
   return (
     <div className="tactical-bg min-h-screen">
       <div className="mx-auto w-full max-w-3xl px-4 py-8">
-        <Link to="/" className="text-muted-foreground inline-flex items-center gap-2 text-xs">
+        <Link to="/" className="text-muted-foreground inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm hover:bg-secondary/50">
           <ArrowLeft className="size-3.5" strokeWidth={1.5} /> Strona główna
         </Link>
         <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Ranking państw</h1>
@@ -60,7 +60,7 @@ function PublicRanking() {
               key={key}
               type="button"
               onClick={() => setMode(key)}
-              className={`flex min-w-0 items-center justify-center gap-2 rounded-sm border px-3 py-2.5 text-xs tracking-[0.12em] uppercase ${
+              className={`flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs tracking-[0.1em] uppercase ${
                 mode === key
                   ? "border-primary/70 text-primary bg-secondary"
                   : "border-border text-muted-foreground"
