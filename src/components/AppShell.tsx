@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import "@/mobile.css";
 import {
   Dialog,
   DialogContent,
