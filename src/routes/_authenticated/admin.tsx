@@ -590,13 +590,21 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const shop = useQuery(adminShopQuery);
   const [changes, setChanges] = useState<Partial<Record<FieldKey, string>>>({});
   const [identity, setIdentity] = useState<{ name?: string; flag?: string }>({});
+  const [flagFile, setFlagFile] = useState<File | null>(null);
+  const [flagPreview, setFlagPreview] = useState<string | null>(null);
   const [confirmChanges, setConfirmChanges] = useState(false);
   const [regionName, setRegionName] = useState("");
   const [regionToRemove, setRegionToRemove] = useState<RegionWithSlots | null>(null);
   const [slotToRemove, setSlotToRemove] = useState<{ id: string; building: string; region: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  useEffect(() => { setChanges({}); setIdentity({}); setRegionName(""); }, [country?.country_id]);
+  useEffect(() => {
+    setChanges({});
+    setIdentity({});
+    setFlagFile(null);
+    setFlagPreview(null);
+    setRegionName("");
+  }, [country?.country_id]);
 
   const owner = country ? users.find((user) => user.country_id === country.country_id) : undefined;
   const patch = { ...identity, ...changes };
@@ -604,8 +612,23 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const destructive = changedFields.some(([key, value]) => key in FIELD_LABELS && Number(value) < Number(country?.[key as keyof CountryStats] ?? 0));
 
   const save = useMutation({
-    mutationFn: () => country ? rpc("admin_adjust_country", { p_country_id: country.country_id, p_patch: patch, p_note: "Korekta z panelu administratora" }) : Promise.reject(new Error("Nie wybrano państwa")),
-    onSuccess: () => { toast.success("Zapisano korektę"); setChanges({}); setIdentity({}); setConfirmChanges(false); queryClient.invalidateQueries(); },
+    mutationFn: async () => {
+      if (!country) throw new Error("Nie wybrano państwa");
+      let nextPatch = patch;
+      if (flagFile) {
+        const extension = flagFile.name.split(".").pop()?.toLowerCase() || "png";
+        const path = country.country_id + "/flag-" + Date.now() + "." + extension;
+        const upload = await supabase.storage.from("country-flags").upload(path, flagFile, {
+          upsert: true,
+          contentType: flagFile.type,
+        });
+        if (upload.error) throw upload.error;
+        const { data } = supabase.storage.from("country-flags").getPublicUrl(path);
+        nextPatch = { ...nextPatch, flag: data.publicUrl };
+      }
+      return rpc("admin_adjust_country", { p_country_id: country.country_id, p_patch: nextPatch, p_note: "Korekta z panelu administratora" });
+    },
+    onSuccess: () => { toast.success("Zapisano korektę"); setChanges({}); setIdentity({}); setFlagFile(null); setFlagPreview(null); setConfirmChanges(false); queryClient.invalidateQueries(); },
     onError: (error: Error) => toast.error(error.message),
   });
   const assign = useMutation({ mutationFn: (userId: string) => country ? rpc("admin_assign_country", { p_user_id: userId, p_country_id: country.country_id }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Właściciel państwa został zmieniony"); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
@@ -636,7 +659,34 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
           <div className="admin-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5">
             <TabsContent value="info" className="m-0 space-y-4">
               <SectionHeading icon={<Building2 />} title="Dane podstawowe" description="Nazwa, flaga i właściciel państwa" />
-              <div className="grid gap-3 sm:grid-cols-2"><Field label="Nazwa"><Input value={identity.name ?? country.name} onChange={(event) => setIdentity((current) => ({ ...current, name: event.target.value }))} /></Field><Field label="Flaga"><Input value={identity.flag ?? country.flag} onChange={(event) => setIdentity((current) => ({ ...current, flag: event.target.value }))} /></Field></div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Nazwa"><Input value={identity.name ?? country.name} onChange={(event) => setIdentity((current) => ({ ...current, name: event.target.value }))} /></Field>
+                <Field label="Zdjęcie flagi">
+                  <Input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      if (!file) return;
+                      if (file.size > 2 * 1024 * 1024) {
+                        toast.error("Flaga może mieć maksymalnie 2 MB");
+                        event.target.value = "";
+                        return;
+                      }
+                      setFlagFile(file);
+                      setFlagPreview(URL.createObjectURL(file));
+                    }}
+                  />
+                  {flagPreview ? (
+                    <div className="mt-2 flex items-center gap-3 border border-border p-2">
+                      <img src={flagPreview} alt="Podgląd flagi" className="h-12 w-20 rounded-sm object-cover" />
+                      <span className="truncate text-xs text-muted-foreground">{flagFile?.name}</span>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-muted-foreground">Wybierz zdjęcie z telefonu · PNG, JPG lub WebP · maks. 2 MB</p>
+                  )}
+                </Field>
+              </div>
               <Panel className="p-4"><Label className="label-hud mb-2 block">Właściciel</Label><Select value={owner?.id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate(value)}><SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Wybierz gracza" /></SelectTrigger><SelectContent><SelectItem value="unassigned" disabled>Brak właściciela</SelectItem>{users.map((user) => <SelectItem key={user.id} value={user.id}>{user.display_name ?? "Użytkownik"}{user.country_name ? ` — ${user.country_name}` : ""}</SelectItem>)}</SelectContent></Select><p className="mt-2 text-xs text-muted-foreground">Wybranie gracza przypisze mu to państwo przez bezpieczną operację administracyjną.</p></Panel>
               <div className="grid gap-3 sm:grid-cols-3"><MiniStat label="Przychód dobowy" value={`+${fmtKR(country.gross_income)}`} tone="success" /><MiniStat label="Głosy wojenne" value={`${country.total_votes}`} /><MiniStat label="Wartość militarna" value={fmtKR(country.military_value)} tone="primary" /></div>
             </TabsContent>
