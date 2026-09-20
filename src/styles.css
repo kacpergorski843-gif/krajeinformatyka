@@ -855,3 +855,130 @@
     min-height: 44px;
   }
 }
+
+
+/* Mobile UX polish — preserves the existing design system and desktop layout. */
+@media (max-width: 640px) {
+  html {
+    scroll-padding-top: 1rem;
+    scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    gap: .75rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .page-title,
+  .page-subtitle {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .page-subtitle {
+    line-height: 1.45;
+  }
+
+  .content-area {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .section-heading {
+    align-items: center;
+    gap: .75rem;
+    margin-top: 2rem;
+  }
+
+  .section-heading h2 {
+    min-width: 0;
+  }
+
+  .mobile-menu-button {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .mobile-nav {
+    min-height: 64px;
+    padding-top: .3rem;
+  }
+
+  .mobile-nav-item {
+    min-height: 52px;
+    padding: .35rem .1rem;
+    gap: .25rem;
+    touch-action: manipulation;
+  }
+
+  .mobile-nav-item svg {
+    flex: 0 0 auto;
+  }
+
+  .mobile-drawer {
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-drawer .nav-item {
+    min-height: 44px;
+    padding-block: .65rem;
+    touch-action: manipulation;
+  }
+
+  .shop-hero,
+  .region-overview,
+  .transfer-hero,
+  .command-hero,
+  .command-overview {
+    min-width: 0;
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .shop-hero > *,
+  .region-overview > *,
+  .transfer-hero > *,
+  .command-hero > *,
+  .command-overview > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .shop-card,
+  .stat-card,
+  .panel {
+    min-width: 0;
+  }
+
+  [class*="overflow-x-auto"] {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 380px) {
+  .mobile-nav-item {
+    font-size: .54rem;
+  }
+
+  .mobile-nav-item svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .main-grid,
+  .command-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
