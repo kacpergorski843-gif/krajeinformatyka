@@ -39,6 +39,17 @@
     backdrop-filter: none !important;
   }
 
+  .page-header > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .page-header .label-hud {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+
   .stat-card:hover,
   .shop-card:hover,
   .command-kpi:hover {
