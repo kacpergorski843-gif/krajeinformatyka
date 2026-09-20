@@ -144,9 +144,9 @@ function Regions() {
       </div>
 
       {country ? (
-        <Panel className="hud-frame mb-4 overflow-hidden p-0">
-          <div className="divide-border grid grid-cols-2 divide-x divide-y text-xs sm:grid-cols-6 sm:divide-y-0">
-            <div className="min-w-0 px-3 py-2.5">
+        <Panel className="hud-frame mb-4 overflow-x-auto p-0">
+          <div className="divide-border grid min-w-max grid-cols-6 divide-x text-xs">
+            <div className="min-w-24 px-3 py-2.5">
               <p className="label-hud">Skarbiec</p>
               <p className="num text-primary mt-1">{fmtKR(country.balance)}</p>
             </div>
@@ -180,7 +180,7 @@ function Regions() {
             <Panel key={r.id} className="hud-frame p-0">
               <button
                 onClick={() => setExpanded(open ? null : r.id)}
-                className="grid min-h-14 w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left"
+                className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{r.name}</p>
@@ -217,7 +217,7 @@ function Regions() {
                         <span className="num text-inactive text-xs">{s.slot_index}</span>
                         <p className="truncate text-sm">{BUILDING_LABELS[s.building]}</p>
                         <button
-                          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-inactive hover:bg-destructive/10 hover:text-destructive shrink-0"
+                          className="text-inactive hover:text-destructive shrink-0"
                           onClick={() =>
                             setOccupied({ id: s.id, building: s.building, region: r.name })
                           }
