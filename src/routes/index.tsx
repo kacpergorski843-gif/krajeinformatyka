@@ -51,19 +51,19 @@ function Landing() {
         <div className="mt-8 grid gap-3">
           <a
             href="/auth?mode=signup"
-            className="bg-primary text-primary-foreground flex items-center justify-center gap-2 rounded-sm px-5 py-3.5 text-sm font-semibold tracking-[0.14em] uppercase"
+            className="bg-primary text-primary-foreground flex min-h-12 items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase"
           >
             <UserPlus className="size-4" strokeWidth={1.5} /> Nowy użytkownik? Zarejestruj się
           </a>
           <Link
             to="/auth"
-            className="border-primary/60 text-primary flex items-center justify-center gap-2 rounded-sm border px-5 py-3.5 text-sm font-semibold tracking-[0.14em] uppercase"
+            className="border-primary/60 text-primary flex min-h-12 items-center justify-center gap-2 rounded-lg border px-5 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase"
           >
             <LogIn className="size-4" strokeWidth={1.5} /> Masz już konto? Zaloguj się
           </Link>
           <Link
             to="/ranking-publiczny"
-            className="border-border text-muted-foreground flex items-center justify-center gap-2 rounded-sm border px-5 py-3.5 text-sm font-semibold tracking-[0.14em] uppercase"
+            className="border-border text-muted-foreground flex min-h-12 items-center justify-center gap-2 rounded-lg border px-5 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase"
           >
             <Trophy className="size-4" strokeWidth={1.5} /> Ranking
           </Link>
