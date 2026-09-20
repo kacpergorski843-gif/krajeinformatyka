@@ -135,7 +135,7 @@ export function AppShell({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="command-pulse" />
-                <p className="label-hud break-words leading-relaxed">SYSTEM / {title.toUpperCase()}</p>
+                <p className="label-hud page-system-label">SYSTEM / {title.toUpperCase()}</p>
               </div>
               <h1 className="page-title break-words">{title}</h1>
               {subtitle ? <p className="page-subtitle break-words">{subtitle}</p> : null}
