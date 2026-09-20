@@ -130,10 +130,10 @@ export function AppShell({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 px-3 pt-3 sm:px-6 sm:py-4 lg:px-10 lg:py-8">
-          <header className="page-header command-header sticky top-0 z-30 -mx-3 mb-4 bg-background/95 px-3 backdrop-blur-md sm:static sm:mx-0 sm:mb-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
+        <main className="min-w-0 flex-1 px-3 pt-2 sm:px-6 sm:py-4 lg:px-10 lg:py-8">
+          <header className="page-header command-header mobile-command-header sticky top-0 z-30 -mx-3 mb-3 bg-background/96 px-3 backdrop-blur-md sm:static sm:mx-0 sm:mb-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="mobile-page-kicker">
                 <span className="command-pulse" />
                 <p className="label-hud page-system-label">SYSTEM / {title.toUpperCase()}</p>
               </div>
@@ -157,7 +157,7 @@ export function AppShell({
             </div>
           </header>
 
-          <div className="content-area">
+          <div className="content-area mobile-content">
             <div className="page-intro hidden sm:flex">
               <span>LIVE OPERATIONS</span>
               <span className="page-intro-line" />
@@ -167,10 +167,7 @@ export function AppShell({
         </main>
       </div>
 
-      <nav
-        aria-label="Główna nawigacja"
-        className="mobile-nav !grid-cols-5 lg:hidden"
-      >
+      <nav aria-label="Główna nawigacja" className="mobile-nav !grid-cols-5 lg:hidden">
         {MOBILE_PRIMARY.map((path) => {
           const item = items.find((entry) => entry.to === path);
           if (!item) return null;
@@ -183,7 +180,7 @@ export function AppShell({
               className="mobile-nav-item min-h-12"
             >
               <item.icon className="size-[21px]" strokeWidth={1.8} />
-              <span>{item.mobileLabel}</span>
+              <span className="mobile-nav-label">{item.mobileLabel}</span>
             </Link>
           );
         })}
@@ -195,7 +192,7 @@ export function AppShell({
           aria-expanded={mobileOpen}
         >
           <Menu className="size-[21px]" />
-          <span>Więcej</span>
+          <span className="mobile-nav-label">Więcej</span>
         </button>
       </nav>
 
