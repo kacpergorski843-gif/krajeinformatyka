@@ -135,10 +135,10 @@ export function AppShell({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="command-pulse" />
-                <p className="label-hud truncate">SYSTEM / {title.toUpperCase()}</p>
+                <p className="label-hud break-words leading-relaxed">SYSTEM / {title.toUpperCase()}</p>
               </div>
-              <h1 className="page-title truncate">{title}</h1>
-              {subtitle ? <p className="page-subtitle truncate">{subtitle}</p> : null}
+              <h1 className="page-title break-words">{title}</h1>
+              {subtitle ? <p className="page-subtitle break-words">{subtitle}</p> : null}
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <div className="system-status hidden sm:flex">
