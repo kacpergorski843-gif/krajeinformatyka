@@ -94,7 +94,7 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-5 py-12">
-      <div className="panel w-full max-w-sm p-6">
+      <div className="panel w-full max-w-sm p-5 sm:p-6">
         <Link to="/" className="text-primary font-display text-xs tracking-[0.3em] uppercase">
           Sztab
         </Link>
@@ -128,14 +128,14 @@ function AuthPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button type="submit" disabled={busy} className="w-full">
+          <Button type="submit" disabled={busy} className="min-h-11 w-full">
             {busy ? "Chwila…" : mode === "login" ? "Zaloguj" : "Zarejestruj"}
           </Button>
         </form>
         <button
           type="button"
           onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          className="text-muted-foreground hover:text-foreground mt-4 w-full text-center text-xs"
+          className="text-muted-foreground hover:text-foreground mt-3 min-h-11 w-full text-center text-sm"
         >
           {mode === "login" ? "Nie masz konta? Zarejestruj się" : "Masz już konto? Zaloguj się"}
         </button>
