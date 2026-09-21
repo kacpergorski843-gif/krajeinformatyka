@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
-import { env as cloudflareEnv } from "cloudflare:workers";
 
 const SYSTEM = `Jesteś Doradcą AI w grze COUNTRY RP. Jesteś prawdziwym analitykiem strategicznym, nie generatorem gotowych odpowiedzi.
 Analizuj wyłącznie dane przekazane przez backend i zasady gry. Nie wymyślaj liczb, cen ani mechanik. Jeśli czegoś nie ma w danych, powiedz to.
@@ -87,7 +86,7 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       if (result.error) throw new Error(result.error.message);
     }
 
-    const ai = (cloudflareEnv as unknown as { AI?: WorkersAi }).AI;
+    const ai = (globalThis as { __env__?: { AI?: WorkersAi } }).__env__?.AI;
     if (!ai) {
       throw new Error("Doradca AI nie ma dostępu do Workers AI. Brakuje bindingu AI.");
     }
