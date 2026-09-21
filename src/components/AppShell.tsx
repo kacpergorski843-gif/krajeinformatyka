@@ -1,6 +1,6 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity, ArrowRightLeft } from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity, ArrowRightLeft, Bot } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { ROLE_LABELS } from "@/lib/format";
 
 const NAV = [
   { to: "/panstwo", label: "Państwo", icon: Landmark },
+  { to: "/doradca", label: "Doradca AI", icon: Bot },
   { to: "/swiat", label: "Świat", icon: Globe2 },
   { to: "/regiony", label: "Regiony", icon: Map },
   { to: "/arsenal", label: "Wojsko", icon: Rocket },
