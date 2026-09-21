@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("OpenAI error", errorText);
+      console.error("Lovable AI error", errorText);
       return json({ error: "Model AI chwilowo nie odpowiada." }, 502);
     }
 
