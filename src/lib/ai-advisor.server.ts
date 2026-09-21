@@ -66,15 +66,31 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
     if (!profile?.country_id) throw new Error("Nie masz jeszcze przypisanego państwa.");
 
     const countryId = profile.country_id;
-    const [countryRes, regionsRes, shopRes, occupationsRes, historyRes] = await Promise.all([
+    const [
+      countryRes,
+      regionsRes,
+      shopRes,
+      occupationsRes,
+      historyRes,
+      worldCountriesRes,
+      worldRegionsRes,
+      strikesRes,
+      economyRunsRes,
+      bonusesRes,
+    ] = await Promise.all([
       supabase.from("country_stats").select("*").eq("country_id", countryId).maybeSingle(),
       supabase.from("regions").select("id,name,country_id,aa_defense,region_slots(id,slot_index,building)").eq("country_id", countryId).order("created_at"),
       supabase.from("shop_items").select("*").eq("active", true).order("sort_order"),
-      supabase.from("region_occupations").select("region_id,previous_country_id,current_country_id,occupied_at,regions(name)").or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`).order("occupied_at", { ascending: false }).limit(30),
-      supabase.from("transactions").select("*").eq("country_id", countryId).order("created_at", { ascending: false }).limit(40),
+      supabase.from("region_occupations").select("region_id,previous_country_id,current_country_id,occupied_at,regions(name)").or(\`previous_country_id.eq.\${countryId},current_country_id.eq.\${countryId}\`).order("occupied_at", { ascending: false }).limit(200),
+      supabase.from("transactions").select("*").eq("country_id", countryId).order("created_at", { ascending: false }).limit(200),
+      supabase.from("country_stats").select("*").order("gross_income", { ascending: false }),
+      supabase.from("regions").select("id,name,country_id,aa_defense,region_slots(id,slot_index,building)").order("created_at"),
+      supabase.from("missile_strikes").select("*").order("created_at", { ascending: false }).limit(100),
+      supabase.from("economy_runs").select("*").order("run_date", { ascending: false }).limit(30),
+      supabase.from("economy_bonuses").select("id,percent,starts_at,ends_at,country_id,created_at").order("starts_at", { ascending: false }).limit(100),
     ]);
 
-    for (const result of [countryRes, regionsRes, shopRes, occupationsRes, historyRes]) {
+    for (const result of [countryRes, regionsRes, shopRes, occupationsRes, historyRes, worldCountriesRes, worldRegionsRes, strikesRes, economyRunsRes, bonusesRes]) {
       if (result.error) throw new Error(result.error.message);
     }
 
@@ -85,6 +101,13 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       sklep: shopRes.data,
       okupacje: occupationsRes.data,
       historia_transakcji: historyRes.data,
+      swiat: {
+        panstwa: worldCountriesRes.data,
+        regiony: worldRegionsRes.data,
+        uderzenia_rakietowe: strikesRes.data,
+        cykle_gospodarcze: economyRunsRes.data,
+        bonusy_gospodarcze: bonusesRes.data,
+      },
     };
 
     const lovableKey = runtimeEnv("LOVABLE_API_KEY");
@@ -114,7 +137,7 @@ ${message}`,
           },
         ],
         temperature: 0.3,
-        max_tokens: 16384,
+        max_tokens: 32768,
       }),
     });
 
