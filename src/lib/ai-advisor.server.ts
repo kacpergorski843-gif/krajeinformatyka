@@ -81,7 +81,7 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       supabase.from("country_stats").select("*").eq("country_id", countryId).maybeSingle(),
       supabase.from("regions").select("id,name,country_id,aa_defense,region_slots(id,slot_index,building)").eq("country_id", countryId).order("created_at"),
       supabase.from("shop_items").select("*").eq("active", true).order("sort_order"),
-      supabase.from("region_occupations").select("region_id,previous_country_id,current_country_id,occupied_at,regions(name)").or(\`previous_country_id.eq.\${countryId},current_country_id.eq.\${countryId}\`).order("occupied_at", { ascending: false }).limit(200),
+      supabase.from("region_occupations").select("region_id,previous_country_id,current_country_id,occupied_at,regions(name)").or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`).order("occupied_at", { ascending: false }).limit(200),
       supabase.from("transactions").select("*").eq("country_id", countryId).order("created_at", { ascending: false }).limit(200),
       supabase.from("country_stats").select("*").order("gross_income", { ascending: false }),
       supabase.from("regions").select("id,name,country_id,aa_defense,region_slots(id,slot_index,building)").order("created_at"),
