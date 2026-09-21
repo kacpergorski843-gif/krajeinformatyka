@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  activeIncomeBonusesQuery,
   adminActionsQuery,
   allRegionsQuery,
   adminShopQuery,
@@ -180,6 +181,8 @@ const SHOP_NUMERIC = [
 
 function Update4Tools() {
   const { data: countries } = useQuery(countriesQuery);
+  const activeBonuses = useQuery(activeIncomeBonusesQuery);
+  const queryClient = useQueryClient();
   const { data: regions } = useQuery(allRegionsQuery);
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
@@ -310,6 +313,32 @@ function Update4Tools() {
             <span>EFEKT</span><strong>Dochód +{percent || "0"}% · {bonusScope === "global" ? "wszystkie państwa" : (countries ?? []).find((item) => item.country_id === bonusCountry)?.name ?? "wybierz państwo"}</strong><small>Automatyczne wygaśnięcie po {hours || "0"} h</small>
           </div>
           <Button className="admin-v4-submit" disabled={Number(percent) < 1 || Number(percent) > 1000 || Number(hours) < 1 || Number(hours) > 720 || (bonusScope === "country" && !bonusCountry)} onClick={() => setConfirm("bonus")}>Uruchom bonus <ChevronRight /></Button>
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="label-hud mb-2">AKTYWNE BONUSY</p>
+            {activeBonuses.isLoading ? <LoadingRows /> : activeBonuses.data?.length ? (
+              <div className="space-y-2">
+                {activeBonuses.data.map((bonus) => (
+                  <div key={bonus.id} className="grid gap-2 border border-border bg-secondary/30 p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">+{bonus.percent}% dochodu · {bonus.country_name ?? "Wszystkie państwa"}</p>
+                      <p className="text-xs text-muted-foreground">Aktywny do {dateTime(bonus.ends_at)}</p>
+                    </div>
+                    <Badge variant="outline" className="w-fit border-success/30 text-success">AKTYWNY</Badge>
+                    <Button size="sm" variant="destructive" onClick={async () => {
+                      try {
+                        await rpc("admin_remove_income_bonus", { p_bonus_id: bonus.id });
+                        toast.success("Bonus został usunięty");
+                        queryClient.invalidateQueries({ queryKey: ["active_income_bonuses"] });
+                        queryClient.invalidateQueries();
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Nie udało się usunąć bonusu");
+                      }
+                    }}>Usuń bonus</Button>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-xs text-muted-foreground">Brak aktywnych bonusów.</p>}
+          </div>
         </section>
 
         <section className="admin-v4-card">
