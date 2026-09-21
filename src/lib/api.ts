@@ -260,7 +260,39 @@ export type ActiveIncomeBonus = {
 
 export const activeIncomeBonusesQuery = queryOptions({
   queryKey: ["active_income_bonuses"],
-  queryFn: async () => await unwrap(supabase.rpc("admin_list_active_income_bonuses")) as unknown as ActiveIncomeBonus[],
+  queryFn: async (): Promise<ActiveIncomeBonus[]> => {
+    const now = new Date().toISOString();
+    const rows = await unwrap(
+      supabase
+        .from("economy_bonuses")
+        .select("id,percent,starts_at,ends_at,country_id,created_at")
+        .lte("starts_at", now)
+        .gt("ends_at", now)
+        .order("ends_at", { ascending: true }),
+    ) as Array<{
+      id: string;
+      percent: number;
+      starts_at: string;
+      ends_at: string;
+      country_id: string | null;
+      created_at: string;
+    }>;
+
+    const countryIds = [...new Set(rows.map((row) => row.country_id).filter((id): id is string => !!id))];
+    const countryNames = new Map<string, string>();
+
+    if (countryIds.length) {
+      const countries = await unwrap(
+        supabase.from("countries").select("id,name").in("id", countryIds),
+      ) as Array<{ id: string; name: string }>;
+      for (const country of countries) countryNames.set(country.id, country.name);
+    }
+
+    return rows.map((row) => ({
+      ...row,
+      country_name: row.country_id ? countryNames.get(row.country_id) ?? null : null,
+    }));
+  },
 });
 
 export const adminActionsQuery = queryOptions({
