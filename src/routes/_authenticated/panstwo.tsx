@@ -39,7 +39,12 @@ function MyCountry() {
   const { data: shop } = useQuery(shopQuery);
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 200));
   const { data: occupationHistory } = useQuery(regionOccupationsQuery(me?.countryId));
-  const occupiedByMe = (occupationHistory ?? []).filter((occupation) => occupation.current_country_id === me?.countryId);
+  const occupiedByMe = [...(occupationHistory ?? []).reduce((map, occupation) => {
+    if (!map.has(occupation.region_id)) map.set(occupation.region_id, occupation);
+    return map;
+  }, new Map<string, NonNullable<typeof occupationHistory>[number]>()).values()].filter(
+    (occupation) => occupation.current_country_id === me?.countryId,
+  );
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
 
   useEffect(() => {
