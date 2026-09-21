@@ -25,12 +25,51 @@ export function AiAdvisor() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("ai-advisor", {
-        body: { message },
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+      }
+
+      const supabaseUrl =
+        import.meta.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
+      const supabaseKey =
+        import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+        process.env["SUPABASE_PUBLISHABLE_KEY"];
+
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error("Brak konfiguracji połączenia z backendem.");
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/ai-advisor`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseKey,
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ message }),
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setMessages((current) => [...current, { role: "assistant", content: data.answer }]);
+
+      const raw = await response.text();
+      let data: { answer?: string; error?: string } = {};
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        // Keep the raw HTTP status below when the backend returns non-JSON.
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            `Doradca AI zwrócił błąd HTTP ${response.status}. Spróbuj ponownie za chwilę.`,
+        );
+      }
+
+      if (!data.answer) throw new Error(data.error || "AI nie zwróciło odpowiedzi.");
+      setMessages((current) => [...current, { role: "assistant", content: data.answer! }]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udało się połączyć z doradcą AI");
       setMessages((current) => current.slice(0, -1));
