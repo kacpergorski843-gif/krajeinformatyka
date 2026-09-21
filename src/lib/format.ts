@@ -27,29 +27,32 @@ export function kr(v: string | number | null | undefined): string {
 const SCALES: { limit: number; unit: string }[] = [
   { limit: 1e12, unit: "bln" },
   { limit: 1e9, unit: "mld" },
-  { limit: 1e6, unit: "mln" },
-  { limit: 1e3, unit: "tys." },
 ];
 
-/** Globalny skrót liczby: 1,5 bln / 250 mld / 12,4 tys. */
+/** Skrót kwoty: pełne miliardy albo biliony z 3 miejscami po przecinku. */
 export function fmtNum(v: string | number | null | undefined): string {
   const n = toNum(v);
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
-  for (const s of SCALES) {
-    if (abs >= s.limit) {
-      const x = abs / s.limit;
-      const str = (x >= 100 || x % 1 === 0 ? x.toFixed(0) : x.toFixed(1)).replace(".", ",");
-      return `${sign}${str}${NBSP}${s.unit}`;
-    }
+
+  if (abs >= 1e12) {
+    const x = abs / 1e12;
+    return `${sign}${x.toFixed(3).replace(".", ",")}${NBSP}bln`;
   }
+
+  if (abs >= 1e9) {
+    const x = Math.round(abs / 1e9);
+    return `${sign}${x}${NBSP}mld`;
+  }
+
   return groupDigits(n);
 }
 
-/** Globalny skrót kwoty: 1,5 bln KR */
+/** Globalny skrót kwoty: 1,500 bln KR / 850 mld KR */
 export function fmtKR(v: string | number | null | undefined): string {
   return `${fmtNum(v)}${NBSP}KR`;
 }
+
 
 /** Alias historyczny */
 export function krShort(v: string | number | null | undefined): string {
