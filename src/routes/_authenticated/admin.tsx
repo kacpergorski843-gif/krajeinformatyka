@@ -778,6 +778,15 @@ function RegionManagement({ country, regions, shopItems, regionName, onRegionNam
   const [building, setBuilding] = useState("");
   const buildableItems = shopItems.filter((item) => item.building && item.active);
   const itemByBuilding = new Map(shopItems.filter((item) => item.building).map((item) => [item.building, item]));
+  const buildingCounts = regions.flatMap((region) => region.slots).reduce<Record<string, number>>((counts, slot) => {
+    counts[slot.building] = (counts[slot.building] ?? 0) + 1;
+    return counts;
+  }, {});
+  const buildingSummary = Object.keys(BUILDING_LABELS).map((building) => ({
+    building,
+    label: BUILDING_LABELS[building],
+    count: buildingCounts[building] ?? 0,
+  }));
 
   const addBuilding = useMutation({
     mutationFn: async () => {
@@ -801,6 +810,17 @@ function RegionManagement({ country, regions, shopItems, regionName, onRegionNam
 
   return <div className="space-y-4">
     <SectionHeading icon={<Warehouse />} title="Regiony i terytorium" description={`${country.regions_count} regionów · po 9 slotów w każdym`} />
+    <Panel className="p-3">
+      <p className="label-hud mb-2">PODSUMOWANIE BUDYNKÓW</p>
+      <div className="grid grid-cols-2 gap-2 min-[430px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
+        {buildingSummary.map(({ building, label, count }) => (
+          <div key={building} className="min-w-0 border border-border/70 bg-secondary/30 p-2">
+            <span className="block truncate text-[10px] uppercase text-muted-foreground">{label}</span>
+            <span className="num mt-1 block text-lg font-semibold text-primary">{count}</span>
+          </div>
+        ))}
+      </div>
+    </Panel>
     <Panel className="p-3"><div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"><Input value={regionName} onChange={(event) => onRegionName(event.target.value)} placeholder="Nazwa nowego regionu" /><Button disabled={!regionName.trim() || adding} onClick={onAdd}><PackagePlus />Dodaj region</Button></div></Panel>
     {loading ? <LoadingRows /> : regions.length === 0 ? <HudState icon={<Warehouse />} title="Brak regionów" description="Dodaj pierwszy region tego państwa." /> : <div className="space-y-3">{regions.map((region) => {
       const income = region.slots.reduce((sum, slot) => sum + Number(itemByBuilding.get(slot.building)?.income_kr ?? 0), 0);
