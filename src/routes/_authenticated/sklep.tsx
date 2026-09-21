@@ -192,6 +192,16 @@ function Shop() {
     return null;
   }
 
+  const selectedBuildingIncome = item?.building ? Number(item.income_kr ?? 0) : 0;
+  const replacedBuilding = upgradeTarget?.building
+    ? (shop ?? []).find((shopItem) => shopItem.building === upgradeTarget.building)
+    : null;
+  const replacedBuildingIncome = Number(replacedBuilding?.income_kr ?? 0);
+  const currentIncome = Number(country?.gross_income ?? 0);
+  const incomeAfterPurchase = item?.building
+    ? currentIncome - replacedBuildingIncome + selectedBuildingIncome
+    : currentIncome;
+
   const upgradeTarget = item?.building && region
     ? (() => {
         const level = item.building.startsWith("factory_") ? Number(item.building.split("_")[1]) : 0;
@@ -432,6 +442,21 @@ function Shop() {
                   ) : blockReason ? (
                     <p className="text-destructive text-xs">{blockReason}</p>
                   ) : null}
+                </div>
+              ) : null}
+
+              {isBuilding && item && selectedBuildingIncome > 0 ? (
+                <div className="panel hud-frame space-y-2 p-4 text-xs">
+                  <p className="label-hud">ZAROBKI PAŃSTWA</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Teraz</span>
+                    <span className="num">{fmtKR(currentIncome)} / doba</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 border-t pt-2">
+                    <span className="text-muted-foreground">Po zakupie</span>
+                    <span className="num text-success">{fmtKR(incomeAfterPurchase)} / doba</span>
+                  </div>
+                  <div className="text-center text-primary">↑ +{fmtKR(incomeAfterPurchase - currentIncome)} / doba</div>
                 </div>
               ) : null}
 
