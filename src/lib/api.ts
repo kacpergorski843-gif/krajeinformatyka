@@ -228,6 +228,60 @@ export type OccupiedRegion = RegionWithSlots & {
   occupier_country_name: string;
 };
 
+export type AdminActiveRegionOccupation = {
+  region_id: string;
+  region_name: string;
+  occupier_country_id: string;
+  occupier_country_name: string;
+  previous_country_id: string;
+  previous_country_name: string;
+  occupied_at: string;
+};
+
+export function adminActiveRegionOccupationsQuery() {
+  return queryOptions({
+    queryKey: ["admin_active_region_occupations"],
+    queryFn: async (): Promise<AdminActiveRegionOccupation[]> => {
+      const rows = await unwrap(
+        supabase
+          .from("region_occupations")
+          .select("region_id, previous_country_id, current_country_id, occupied_at, regions(name)")
+          .order("occupied_at", { ascending: false })
+          .limit(500),
+      ) as unknown as Array<{
+        region_id: string;
+        previous_country_id: string;
+        current_country_id: string;
+        occupied_at: string;
+        regions?: { name?: string } | null;
+      }>;
+
+      const latestByRegion = new Map<string, (typeof rows)[number]>();
+      for (const row of rows) {
+        if (!latestByRegion.has(row.region_id)) latestByRegion.set(row.region_id, row);
+      }
+      const latest = [...latestByRegion.values()].filter((row) => row.previous_country_id !== row.current_country_id);
+      if (!latest.length) return [];
+
+      const countryIds = [...new Set(latest.flatMap((row) => [row.previous_country_id, row.current_country_id]))];
+      const countryRows = await unwrap(
+        supabase.from("countries").select("id,name").in("id", countryIds),
+      ) as Array<{ id: string; name: string }>;
+      const names = new Map(countryRows.map((row) => [row.id, row.name]));
+
+      return latest.map((row) => ({
+        region_id: row.region_id,
+        region_name: row.regions?.name ?? "Nieznany region",
+        occupier_country_id: row.current_country_id,
+        occupier_country_name: names.get(row.current_country_id) ?? "Nieznane państwo",
+        previous_country_id: row.previous_country_id,
+        previous_country_name: names.get(row.previous_country_id) ?? "Nieznane państwo",
+        occupied_at: row.occupied_at,
+      }));
+    },
+  });
+}
+
 export function occupiedRegionsQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["occupied_regions", countryId],
