@@ -81,10 +81,10 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableKey}`,
+        Authorization: `Bearer ${lovableKey}`,\n        "Lovable-API-Key": lovableKey,\n        "X-Lovable-AIG-SDK": "native",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3.7-flash",
         messages: [
           { role: "system", content: SYSTEM },
           {
