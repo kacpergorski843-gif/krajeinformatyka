@@ -114,7 +114,7 @@ ${message}`,
           },
         ],
         temperature: 0.3,
-        max_tokens: 900,
+        max_tokens: 1800,
       }),
     });
 
