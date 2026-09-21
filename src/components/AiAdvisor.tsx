@@ -66,13 +66,8 @@ export function AiAdvisor() {
         throw new Error("Sesja wygasła. Zaloguj się ponownie.");
       }
 
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session?.access_token) {
-        throw new Error("Sesja wygasła. Zaloguj się ponownie.");
-      }
-
       const result = await askAiAdvisor({
-        data: { message, accessToken: data.session.access_token },
+        data: { message, accessToken: session.access_token },
       });
 
       if (!result.answer) throw new Error("AI nie zwróciło odpowiedzi.");
@@ -86,8 +81,8 @@ export function AiAdvisor() {
   }
 
   return (
-    <Panel className="mb-4 border-primary/30 bg-primary/5 p-3">
-      <div className="flex items-center gap-2">
+    <Panel className="border-primary/30 bg-primary/5 p-4 sm:p-5">
+      <div className="flex items-center gap-3">
         <div className="flex size-9 items-center justify-center rounded-sm border border-primary/30 bg-primary/10">
           <Bot className="size-5 text-primary" />
         </div>
@@ -112,14 +107,14 @@ export function AiAdvisor() {
           ))}
         </div>
       ) : (
-        <div className="mt-3 max-h-80 space-y-2 overflow-y-auto">
+        <div className="mt-4 max-h-[60vh] space-y-3 overflow-y-auto pr-1">
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`whitespace-pre-wrap rounded-sm border p-3 text-sm ${message.role === "assistant" ? "border-primary/20 bg-background" : "border-border bg-secondary/30"}`}
+              className={`rounded-sm border p-4 text-sm break-words ${message.role === "assistant" ? "border-primary/20 bg-background" : "ml-auto max-w-[90%] border-border bg-secondary/30 sm:max-w-[75%]"}`}
             >
-              <p className="label-hud mb-1">{message.role === "assistant" ? "DORADCA" : "TY"}</p>
-              {message.content}
+              <p className="label-hud mb-2">{message.role === "assistant" ? "DORADCA AI" : "TY"}</p>
+              {message.role === "assistant" ? <AdvisorAnswer content={message.content} /> : <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>}
             </div>
           ))}
           {loading ? <div className="text-xs text-muted-foreground">Doradca analizuje sytuację...</div> : null}
