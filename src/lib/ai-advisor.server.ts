@@ -58,8 +58,15 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
         supabase.from("ai_advisor_memory").select("memory,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
       ]);
 
-    for (const result of [countryRes, regionsRes, shopRes, occupationsRes, historyRes, memoryRes]) {
+    for (const result of [countryRes, regionsRes, shopRes, occupationsRes, historyRes]) {
       if (result.error) throw new Error(result.error.message);
+    }
+
+    const memoryAvailable =
+      !memoryRes.error ||
+      !/ai_advisor_memory.*(schema cache|does not exist|not found)/i.test(memoryRes.error.message);
+    if (memoryRes.error && memoryAvailable) {
+      throw new Error(memoryRes.error.message);
     }
 
     const lovableKey = runtimeEnv("LOVABLE_API_KEY");
@@ -104,11 +111,16 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
     const answer = result.choices?.[0]?.message?.content?.trim();
     if (!answer) throw new Error("AI nie zwróciło odpowiedzi.");
 
-    await supabase.from("ai_advisor_memory").insert({
-      user_id: user.id,
-      country_id: countryId,
-      memory: `Pytanie: ${message.slice(0, 800)}\nOdpowiedź: ${answer.slice(0, 1600)}`,
-    });
+    if (memoryAvailable) {
+      const { error: memoryInsertError } = await supabase.from("ai_advisor_memory").insert({
+        user_id: user.id,
+        country_id: countryId,
+        memory: `Pytanie: ${message.slice(0, 800)}\nOdpowiedź: ${answer.slice(0, 1600)}`,
+      });
+      if (memoryInsertError && !/ai_advisor_memory.*(schema cache|does not exist|not found)/i.test(memoryInsertError.message)) {
+        console.error("AI advisor memory save failed", memoryInsertError.message);
+      }
+    }
 
     return { answer };
   });
