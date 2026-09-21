@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Bot, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { askAiAdvisor } from "@/lib/ai-advisor.server";
 import { Panel } from "@/components/stat";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -33,14 +34,17 @@ export function AiAdvisor() {
         throw new Error("Sesja wygasła. Zaloguj się ponownie.");
       }
 
-      const { data, error } = await supabase.functions.invoke("ai-advisor", {
-        body: { message },
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session?.access_token) {
+        throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+      }
+
+      const result = await askAiAdvisor({
+        data: { message, accessToken: data.session.access_token },
       });
 
-      if (error) throw new Error(error.message || "Nie udało się połączyć z doradcą AI");
-      const result = data as { answer?: string; error?: string };
-      if (!result.answer) throw new Error(result.error || "AI nie zwróciło odpowiedzi.");
-      setMessages((current) => [...current, { role: "assistant", content: data.answer! }]);
+      if (!result.answer) throw new Error("AI nie zwróciło odpowiedzi.");
+      setMessages((current) => [...current, { role: "assistant", content: result.answer }]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udało się połączyć z doradcą AI");
       setMessages((current) => current.slice(0, -1));
