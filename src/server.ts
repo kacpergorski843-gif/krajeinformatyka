@@ -51,8 +51,8 @@ export default {
       // request environment. Expose that server-only binding to server functions
       // without ever sending it to the browser.
       if (env && typeof env === "object") {
-        (globalThis as { __env__?: Record<string, string | undefined> }).__env__ =
-          env as Record<string, string | undefined>;
+        (globalThis as { __env__?: Record<string, unknown> }).__env__ =
+          env as Record<string, unknown>;
       }
 
       const handler = await getServerEntry();
