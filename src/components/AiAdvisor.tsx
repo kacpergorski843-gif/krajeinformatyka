@@ -81,7 +81,7 @@ export function AiAdvisor() {
   }
 
   return (
-    <Panel className="border-primary/30 bg-primary/5 p-4 sm:p-5">
+    <Panel className="flex min-h-[calc(100vh-13rem)] flex-col border-primary/30 bg-primary/5 p-4 sm:p-5">
       <div className="flex items-center gap-3">
         <div className="flex size-9 items-center justify-center rounded-sm border border-primary/30 bg-primary/10">
           <Bot className="size-5 text-primary" />
@@ -107,7 +107,7 @@ export function AiAdvisor() {
           ))}
         </div>
       ) : (
-        <div className="mt-4 max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+        <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
           {messages.map((message, index) => (
             <div
               key={index}
