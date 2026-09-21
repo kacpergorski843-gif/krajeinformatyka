@@ -248,6 +248,21 @@ export const adminUsersQuery = queryOptions({
   queryFn: async () => await unwrap(supabase.rpc("admin_list_users")),
 });
 
+export type ActiveIncomeBonus = {
+  id: string;
+  percent: number;
+  starts_at: string;
+  ends_at: string;
+  country_id: string | null;
+  country_name: string | null;
+  created_at: string;
+};
+
+export const activeIncomeBonusesQuery = queryOptions({
+  queryKey: ["active_income_bonuses"],
+  queryFn: async () => await unwrap(supabase.rpc("admin_list_active_income_bonuses")) as unknown as ActiveIncomeBonus[],
+});
+
 export const adminActionsQuery = queryOptions({
   queryKey: ["admin_actions"],
   queryFn: async () =>
