@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Bot, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { askAiAdvisor } from "@/lib/ai-advisor.server";
 import { Panel } from "@/components/stat";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -33,30 +34,11 @@ export function AiAdvisor() {
         throw new Error("Sesja wygasła. Zaloguj się ponownie.");
       }
 
-      const response = await fetch("/api/ai-advisor", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ message }),
+      const result = await askAiAdvisor({
+        data: { message, accessToken: session.access_token },
       });
-
+      const data: { answer?: string; error?: string } = result;
       const raw = await response.text();
-      let data: { answer?: string; error?: string } = {};
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        // Keep the raw HTTP status below when the backend returns non-JSON.
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            `Doradca AI zwrócił błąd HTTP ${response.status}. Spróbuj ponownie za chwilę.`,
-        );
-      }
-
       if (!data.answer) throw new Error(data.error || "AI nie zwróciło odpowiedzi.");
       setMessages((current) => [...current, { role: "assistant", content: data.answer! }]);
     } catch (error) {
