@@ -74,22 +74,25 @@ Deno.serve(async (req) => {
       pamiec_doradcy: memoryRes.data,
     };
 
-    const apiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!apiKey) return json({ error: "Doradca AI nie jest jeszcze skonfigurowany: brak OPENAI_API_KEY." }, 503);
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!lovableKey) return json({ error: "Doradca AI nie jest jeszcze skonfigurowany w Lovable." }, 503);
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${lovableKey}`,
       },
       body: JSON.stringify({
-        model: Deno.env.get("OPENAI_MODEL") || "gpt-5-mini",
-        instructions: SYSTEM,
-        input: [
-          { role: "user", content: `AKTUALNY KONTEKST GRY:\n${JSON.stringify(context)}\n\nPYTANIE GRACZA:\n${message}` },
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: SYSTEM },
+          {
+            role: "user",
+            content: `AKTUALNY KONTEKST GRY:\n${JSON.stringify(context)}\n\nPYTANIE GRACZA:\n${message}`,
+          },
         ],
-        max_output_tokens: 900,
+        max_tokens: 900,
       }),
     });
 
@@ -100,7 +103,7 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
-    const answer = result.output_text?.trim();
+    const answer = result.choices?.[0]?.message?.content?.trim();
     if (!answer) return json({ error: "AI nie zwróciło odpowiedzi." }, 502);
 
     await supabase.from("ai_advisor_memory").insert({
