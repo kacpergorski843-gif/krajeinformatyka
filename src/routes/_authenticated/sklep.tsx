@@ -192,16 +192,6 @@ function Shop() {
     return null;
   }
 
-  const selectedBuildingIncome = item?.building ? Number(item.income_kr ?? 0) : 0;
-  const replacedBuilding = upgradeTarget?.building
-    ? (shop ?? []).find((shopItem) => shopItem.building === upgradeTarget.building)
-    : null;
-  const replacedBuildingIncome = Number(replacedBuilding?.income_kr ?? 0);
-  const currentIncome = Number(country?.gross_income ?? 0);
-  const incomeAfterPurchase = item?.building
-    ? currentIncome - replacedBuildingIncome + selectedBuildingIncome
-    : currentIncome;
-
   const upgradeTarget = item?.building && region
     ? (() => {
         const level = item.building.startsWith("factory_") ? Number(item.building.split("_")[1]) : 0;
@@ -216,6 +206,16 @@ function Shop() {
         return required ? region.slots.find((slot) => slot.building === required) ?? null : null;
       })()
     : null;
+
+  const selectedBuildingIncome = item?.building ? Number(item.income_kr ?? 0) : 0;
+  const replacedBuilding = upgradeTarget?.building
+    ? (shop ?? []).find((shopItem) => shopItem.building === upgradeTarget.building)
+    : null;
+  const replacedBuildingIncome = Number(replacedBuilding?.income_kr ?? 0);
+  const currentIncome = Number(country?.gross_income ?? 0);
+  const incomeAfterPurchase = item?.building
+    ? currentIncome - replacedBuildingIncome + selectedBuildingIncome
+    : currentIncome;
 
   const blockReason =
     item?.building && region
