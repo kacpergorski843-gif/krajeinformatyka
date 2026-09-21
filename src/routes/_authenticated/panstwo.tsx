@@ -7,8 +7,8 @@ import { AppShell } from "@/components/AppShell";
 import { CountryFlag } from "@/components/CountryFlag";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
-import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, transactionsQuery } from "@/lib/api";
-import { fmtKR, kr, timeToDailyCycle, units } from "@/lib/format";
+import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, shopQuery, transactionsQuery } from "@/lib/api";
+import { fmtKR, kr, timeToDailyCycle, units, RESOURCE_LABELS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/panstwo")({
   head: () => ({
@@ -36,8 +36,10 @@ function MyCountry() {
   const country = countries?.find((c) => c.country_id === me?.countryId);
   const { data: economyBonus } = useQuery(economyBonusQuery(me?.countryId));
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
+  const { data: shop } = useQuery(shopQuery);
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 200));
   const { data: occupationHistory } = useQuery(regionOccupationsQuery(me?.countryId));
+  const occupiedByMe = (occupationHistory ?? []).filter((occupation) => occupation.current_country_id === me?.countryId);
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
 
   useEffect(() => {
@@ -126,6 +128,36 @@ function MyCountry() {
         </div>
       </Panel>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
+      {occupiedByMe.length ? (
+        <Panel className="mb-4 border-primary/40 bg-primary/5 p-3">
+          <p className="label-hud">OKUPOWANE REGIONY — TWOJE ZYSKI</p>
+          <div className="mt-3 space-y-2">
+            {occupiedByMe.slice(0, 5).map((occupation) => {
+              const region = (regions ?? []).find((item) => item.id === occupation.region_id);
+              if (!region) return null;
+              const effects = (region.slots ?? []).reduce((acc, slot) => {
+                const item = (shop ?? []).find((shopItem) => shopItem.building === slot.building);
+                if (!item) return acc;
+                acc.kr += Number(item.income_kr ?? 0);
+                if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0) + Number(item.produces_amount ?? 0);
+                return acc;
+              }, { kr: 0, resources: {} as Record<string, number> });
+              return (
+                <div key={occupation.id} className="border border-primary/30 bg-secondary/20 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div><p className="text-sm font-semibold">OKUPUJESZ: {occupation.region_name}</p><p className="text-xs text-muted-foreground">Region przejęty od {countries?.find((row) => row.country_id === occupation.previous_country_id)?.name ?? "Nieznane państwo"}</p></div>
+                    <span className="text-xs font-semibold text-primary">OD {new Date(occupation.occupied_at).toLocaleString("pl-PL")}</span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZYSK KR</p><p className="num mt-1 text-sm text-success">+{fmtKR(effects.kr)} / doba</p></div>
+                    {Object.entries(effects.resources).map(([resource, value]) => <div key={resource} className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZYSK {RESOURCE_LABELS[resource] ?? resource}</p><p className="num mt-1 text-sm text-success">+{units(value)} / doba</p></div>)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+      ) : null}
       {occupationHistory?.slice(0, 3).map((occupation) => {
         const isCurrent = occupation.current_country_id === me.countryId;
         const label = isCurrent ? "REGION PRZEJĘTY" : "REGION OKUPOWANY";
