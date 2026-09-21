@@ -16,12 +16,6 @@ declare
   v_item public.shop_items;
   v_required text;
   v_old public.shop_items;
-  v_delta_kr numeric;
-  v_delta_coal numeric;
-  v_delta_oil numeric;
-  v_delta_copper numeric;
-  v_delta_iron numeric;
-  v_delta_uranium numeric;
 begin
   select country_id into v_country
   from public.regions
@@ -76,37 +70,8 @@ begin
     raise exception 'Nie znaleziono poprzedniego poziomu budynku';
   end if;
 
-  v_delta_kr := v_item.cost_kr - v_old.cost_kr;
-  v_delta_coal := v_item.cost_coal - v_old.cost_coal;
-  v_delta_oil := v_item.cost_oil - v_old.cost_oil;
-  v_delta_copper := v_item.cost_copper - v_old.cost_copper;
-  v_delta_iron := v_item.cost_iron - v_old.cost_iron;
-  v_delta_uranium := v_item.cost_uranium - v_old.cost_uranium;
-
-  if exists (
-    select 1 from public.countries c
-    where c.id = v_country
-      and (
-        c.balance < greatest(v_delta_kr, 0)
-        or c.coal < greatest(v_delta_coal, 0)
-        or c.oil < greatest(v_delta_oil, 0)
-        or c.copper < greatest(v_delta_copper, 0)
-        or c.iron < greatest(v_delta_iron, 0)
-        or c.uranium < greatest(v_delta_uranium, 0)
-      )
-  ) then
-    raise exception 'Za mało środków na ulepszenie';
-  end if;
-
-  update public.countries
-  set
-    balance = balance - v_delta_kr,
-    coal = coal - v_delta_coal,
-    oil = oil - v_delta_oil,
-    copper = copper - v_delta_copper,
-    iron = iron - v_delta_iron,
-    uranium = uranium - v_delta_uranium
-  where id = v_country;
+  -- Ulepszenie kosztuje pełną cenę nowego poziomu z katalogu sklepu.
+  perform public.charge_country(v_country, v_item, 1);
 
   update public.region_slots
   set building = v_item.building
@@ -119,7 +84,7 @@ begin
     v_country,
     'BUILD_UPGRADE',
     'Ulepszenie: ' || v_old.name || ' → ' || v_item.name,
-    -v_delta_kr,
+    -v_item.cost_kr,
     auth.uid(),
     jsonb_build_object(
       'region_id', p_region_id,
