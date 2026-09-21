@@ -48,26 +48,21 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
     if (!profile?.country_id) throw new Error("Nie masz jeszcze przypisanego państwa.");
 
     const countryId = profile.country_id;
-    const [countryRes, regionsRes, shopRes, occupationsRes, historyRes, memoryRes] =
+    const [countryRes, regionsRes, shopRes, occupationsRes, historyRes] =
       await Promise.all([
         supabase.from("country_stats").select("*").eq("country_id", countryId).maybeSingle(),
         supabase.from("regions").select("id,name,country_id,aa_defense,region_slots(id,slot_index,building)").eq("country_id", countryId).order("created_at"),
         supabase.from("shop_items").select("*").eq("active", true).order("sort_order"),
         supabase.from("region_occupations").select("region_id,previous_country_id,current_country_id,occupied_at,regions(name)").or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`).order("occupied_at", { ascending: false }).limit(30),
         supabase.from("transactions").select("*").eq("country_id", countryId).order("created_at", { ascending: false }).limit(40),
-        supabase.from("ai_advisor_memory").select("memory,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
       ]);
 
     for (const result of [countryRes, regionsRes, shopRes, occupationsRes, historyRes]) {
       if (result.error) throw new Error(result.error.message);
     }
 
-    const memoryAvailable =
-      !memoryRes.error ||
-      !/ai_advisor_memory.*(schema cache|does not exist|not found)/i.test(memoryRes.error.message);
-    if (memoryRes.error && memoryAvailable) {
-      throw new Error(memoryRes.error.message);
-    }
+    const memoryAvailable = false;
+    const advisorMemory: Array<{ memory: string; created_at: string }> = [];
 
     const lovableKey = runtimeEnv("LOVABLE_API_KEY");
     if (!lovableKey) throw new Error("Doradca AI nie jest skonfigurowany po stronie serwera.");
@@ -93,7 +88,7 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
               sklep: shopRes.data,
               okupacje: occupationsRes.data,
               historia_transakcji: historyRes.data,
-              pamiec_doradcy: memoryRes.data,
+              pamiec_doradcy: advisorMemory,
             })}\n\nPYTANIE GRACZA:\n${message}`,
           },
         ],
@@ -111,16 +106,4 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
     const answer = result.choices?.[0]?.message?.content?.trim();
     if (!answer) throw new Error("AI nie zwróciło odpowiedzi.");
 
-    if (memoryAvailable) {
-      const { error: memoryInsertError } = await supabase.from("ai_advisor_memory").insert({
-        user_id: user.id,
-        country_id: countryId,
-        memory: `Pytanie: ${message.slice(0, 800)}\nOdpowiedź: ${answer.slice(0, 1600)}`,
-      });
-      if (memoryInsertError && !/ai_advisor_memory.*(schema cache|does not exist|not found)/i.test(memoryInsertError.message)) {
-        console.error("AI advisor memory save failed", memoryInsertError.message);
-      }
-    }
-
-    return { answer };
-  });
+    return { answer };\n  });\n
