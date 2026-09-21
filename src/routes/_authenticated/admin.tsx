@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/select";
 import {
   activeIncomeBonusesQuery,
+  adminActiveRegionOccupationsQuery,
   adminActionsQuery,
   allRegionsQuery,
   adminShopQuery,
@@ -182,6 +183,7 @@ const SHOP_NUMERIC = [
 function Update4Tools() {
   const { data: countries } = useQuery(countriesQuery);
   const activeBonuses = useQuery(activeIncomeBonusesQuery);
+  const activeOccupations = useQuery(adminActiveRegionOccupationsQuery);
   const queryClient = useQueryClient();
   const { data: regions } = useQuery(allRegionsQuery);
   const [country, setCountry] = useState("");
@@ -217,6 +219,19 @@ function Update4Tools() {
   const selectedOccupationRegion = (regions ?? []).find((item) => item.id === occupationRegion);
   const selectedOccupationTarget = (countries ?? []).find((item) => item.country_id === occupationTargetCountry);
   const occupationIsSameCountry = occupationCountry !== "" && occupationCountry === occupationTargetCountry;
+
+  const revertOccupation = async (regionId: string) => {
+    try {
+      await rpc("admin_revert_region_occupation", { p_region_id: regionId });
+      toast.success("Okupacja została cofnięta");
+      await queryClient.invalidateQueries({ queryKey: ["admin_active_region_occupations"] });
+      await queryClient.invalidateQueries({ queryKey: ["regions"] });
+      await queryClient.invalidateQueries({ queryKey: ["region_occupations"] });
+      await queryClient.invalidateQueries({ queryKey: ["occupied_regions"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się cofnąć okupacji");
+    }
+  };
 
   return (
     <div className="admin-v4-tools">
@@ -429,6 +444,26 @@ function Update4Tools() {
             <span>PRZEKAZANIE</span><strong>{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</strong><small>{occupationIsSameCountry ? "Nowy właściciel musi być innym państwem." : "Operacja trafi do historii okupacji i audytu administratora."}</small>
           </div>
           <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przekaż region <ChevronRight /></Button>
+          <div className="mt-5 border-t border-border pt-4">
+            <p className="label-hud mb-2">AKTYWNE OKUPACJE</p>
+            {activeOccupations.isLoading ? <LoadingRows /> : activeOccupations.data?.length ? (
+              <div className="space-y-2">
+                {activeOccupations.data.map((occupation) => (
+                  <div key={occupation.region_id} className="grid gap-3 border border-destructive/30 bg-destructive/5 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div>
+                      <p className="text-sm font-semibold">{occupation.region_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">{occupation.occupier_country_name}</span> okupuje region od {dateTime(occupation.occupied_at)} · poprzedni właściciel: {occupation.previous_country_name}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => void revertOccupation(occupation.region_id)}>
+                      Cofnij okupację
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-xs text-muted-foreground">Brak aktywnych okupacji.</p>}
+          </div>
         </section>
       </div>
 
