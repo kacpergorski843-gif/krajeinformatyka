@@ -7,6 +7,38 @@ import { Panel } from "@/components/stat";
 
 type Message = { role: "user" | "assistant"; content: string };
 
+function AdvisorAnswer({ content }: { content: string }) {
+  const lines = content.replace(/\*\*/g, "").replace(/\*/g, "").split("\n");
+
+  return (
+    <div className="space-y-2 leading-relaxed">
+      {lines.map((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={index} className="h-1" />;
+        if (/^#{1,3}\s+/.test(trimmed)) {
+          return (
+            <p key={index} className="pt-1 font-semibold text-primary">
+              {trimmed.replace(/^#{1,3}\s+/, "")}
+            </p>
+          );
+        }
+        if (/^[-–—]\s+/.test(trimmed)) {
+          return (
+            <div key={index} className="flex gap-2 pl-1">
+              <span className="text-primary">•</span>
+              <span>{trimmed.replace(/^[-–—]\s+/, "")}</span>
+            </div>
+          );
+        }
+        if (/^---+$/.test(trimmed)) {
+          return <div key={index} className="my-1 border-t border-border" />;
+        }
+        return <p key={index}>{trimmed}</p>;
+      })}
+    </div>
+  );
+}
+
 const starters = [
   "Przeanalizuj moje państwo i wskaż najważniejsze problemy.",
   "Czy teraz lepiej inwestować w gospodarkę czy obronę?",
