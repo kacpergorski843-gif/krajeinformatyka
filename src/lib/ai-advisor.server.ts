@@ -47,100 +47,23 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       throw new Error("Brak konfiguracji backendu.");
     }
 
-    const openRouterKey = runtimeEnv("OPENROUTER_API_KEY");
-    if (!openRouterKey) {
+    const lovableKey = runtimeEnv("LOVABLE_API_KEY");
+    if (!lovableKey) {
       throw new Error(
-        "Doradca AI nie jest skonfigurowany. Brakuje OPENROUTER_API_KEY w sekretach środowiska.",
+        "Doradca AI nie jest skonfigurowany. Brakuje LOVABLE_API_KEY w sekretach środowiska.",
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: `Bearer ${data.accessToken}` } },
-    });
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) throw new Error("Sesja wygasła. Zaloguj się ponownie.");
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("country_id, display_name")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profileError) throw new Error(profileError.message);
-    if (!profile?.country_id) {
-      throw new Error("Nie masz jeszcze przypisanego państwa.");
-    }
-
-    const countryId = profile.country_id;
-    const [countryRes, regionsRes, shopRes, occupationsRes, historyRes] =
-      await Promise.all([
-        supabase
-          .from("country_stats")
-          .select("*")
-          .eq("country_id", countryId)
-          .maybeSingle(),
-        supabase
-          .from("regions")
-          .select(
-            "id,name,country_id,aa_defense,region_slots(id,slot_index,building)",
-          )
-          .eq("country_id", countryId)
-          .order("created_at"),
-        supabase
-          .from("shop_items")
-          .select("*")
-          .eq("active", true)
-          .order("sort_order"),
-        supabase
-          .from("region_occupations")
-          .select(
-            "region_id,previous_country_id,current_country_id,occupied_at,regions(name)",
-          )
-          .or(
-            `previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`,
-          )
-          .order("occupied_at", { ascending: false })
-          .limit(30),
-        supabase
-          .from("transactions")
-          .select("*")
-          .eq("country_id", countryId)
-          .order("created_at", { ascending: false })
-          .limit(40),
-      ]);
-
-    for (const result of [
-      countryRes,
-      regionsRes,
-      shopRes,
-      occupationsRes,
-      historyRes,
-    ]) {
-      if (result.error) throw new Error(result.error.message);
-    }
-
-    const context = {
-      gracz: { nazwa: profile.display_name },
-      panstwo: countryRes.data,
-      regiony: regionsRes.data,
-      sklep: shopRes.data,
-      okupacje: occupationsRes.data,
-      historia_transakcji: historyRes.data,
-    };
-
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${openRouterKey}`,
+        Authorization: `Bearer ${lovableKey}`,
+        "Lovable-API-Key": lovableKey,
+        "X-Lovable-AIG-SDK": "native",
         "Content-Type": "application/json",
-        "HTTP-Referer": runtimeEnv("APP_URL") ?? "https://krajeinformatyka.lovable.app",
-        "X-Title": "Kraje Informatyka - Doradca AI",
       },
       body: JSON.stringify({
-        model: "google/gemma-4-26b-a4b-it:free",
+        model: "google/gemini-3.7-flash",
         messages: [
           { role: "system", content: SYSTEM },
           {
@@ -153,7 +76,7 @@ ${message}`,
           },
         ],
         temperature: 0.3,
-        max_tokens: 1000,
+        max_tokens: 900,
       }),
     });
 
