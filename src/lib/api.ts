@@ -222,6 +222,68 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
   });
 }
 
+export type OccupiedRegion = RegionWithSlots & {
+  occupied_at: string;
+  occupier_country_id: string;
+  occupier_country_name: string;
+};
+
+export function occupiedRegionsQuery(countryId: string | null | undefined) {
+  return queryOptions({
+    queryKey: ["occupied_regions", countryId],
+    enabled: !!countryId,
+    queryFn: async (): Promise<OccupiedRegion[]> => {
+      const occupations = await unwrap(
+        supabase
+          .from("region_occupations")
+          .select("region_id, current_country_id, occupied_at")
+          .eq("previous_country_id", countryId!)
+          .order("occupied_at", { ascending: false }),
+      ) as Array<{
+        region_id: string;
+        current_country_id: string;
+        occupied_at: string;
+      }>;
+
+      const latestByRegion = new Map<string, (typeof occupations)[number]>();
+      for (const occupation of occupations) {
+        if (!latestByRegion.has(occupation.region_id)) latestByRegion.set(occupation.region_id, occupation);
+      }
+      const active = [...latestByRegion.values()].filter((occupation) => occupation.current_country_id !== countryId);
+      if (!active.length) return [];
+
+      const regionIds = active.map((occupation) => occupation.region_id);
+      const rows = await unwrap(
+        supabase
+          .from("regions")
+          .select("id, name, country_id, aa_defense, region_slots(id, slot_index, building)")
+          .in("id", regionIds),
+      ) as unknown as RegionRow[];
+
+      const countryIds = [...new Set(active.map((occupation) => occupation.current_country_id))];
+      const countryRows = await unwrap(
+        supabase.from("countries").select("id,name").in("id", countryIds),
+      ) as Array<{ id: string; name: string }>;
+      const names = new Map(countryRows.map((row) => [row.id, row.name]));
+
+      const occupationByRegion = new Map(active.map((occupation) => [occupation.region_id, occupation]));
+      return rows.map((row) => {
+        const occupation = occupationByRegion.get(row.id)!;
+        return {
+          id: row.id,
+          name: row.name,
+          country_id: row.country_id,
+          aa_defense: row.aa_defense ?? 0,
+          slots: [...(row.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
+          occupied_at: occupation.occupied_at,
+          occupier_country_id: occupation.current_country_id,
+          occupier_country_name: names.get(occupation.current_country_id) ?? "Nieznane państwo",
+        };
+      }).sort((a, b) => new Date(b.occupied_at).getTime() - new Date(a.occupied_at).getTime());
+    },
+  });
+}
+
 export function transactionsQuery(countryId: string | null | undefined, limit = 50) {
   return queryOptions({
     queryKey: ["transactions", countryId, limit],
