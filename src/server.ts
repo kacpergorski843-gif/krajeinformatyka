@@ -47,6 +47,14 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // Lovable/TanStack Start injects production secrets into the Worker
+      // request environment. Expose that server-only binding to server functions
+      // without ever sending it to the browser.
+      if (env && typeof env === "object") {
+        (globalThis as { __env__?: Record<string, string | undefined> }).__env__ =
+          env as Record<string, string | undefined>;
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
