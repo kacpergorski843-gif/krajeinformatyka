@@ -47,11 +47,49 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       throw new Error("Brak konfiguracji backendu.");
     }
 
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: `Bearer ${data.accessToken}` } },
+    });
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("country_id, display_name")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) throw new Error(profileError.message);
+    if (!profile?.country_id) throw new Error("Nie masz jeszcze przypisanego państwa.");
+
+    const countryId = profile.country_id;
+    const [countryRes, regionsRes, shopRes, occupationsRes, historyRes] = await Promise.all([
+      supabase.from("country_stats").select("*").eq("country_id", countryId).maybeSingle(),
+      supabase.from("regions").select("id,name,country_id,aa_defense,region_slots(id,slot_index,building)").eq("country_id", countryId).order("created_at"),
+      supabase.from("shop_items").select("*").eq("active", true).order("sort_order"),
+      supabase.from("region_occupations").select("region_id,previous_country_id,current_country_id,occupied_at,regions(name)").or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`).order("occupied_at", { ascending: false }).limit(30),
+      supabase.from("transactions").select("*").eq("country_id", countryId).order("created_at", { ascending: false }).limit(40),
+    ]);
+
+    for (const result of [countryRes, regionsRes, shopRes, occupationsRes, historyRes]) {
+      if (result.error) throw new Error(result.error.message);
+    }
+
+    const context = {
+      gracz: { nazwa: profile.display_name },
+      panstwo: countryRes.data,
+      regiony: regionsRes.data,
+      sklep: shopRes.data,
+      okupacje: occupationsRes.data,
+      historia_transakcji: historyRes.data,
+    };
+
     const lovableKey = runtimeEnv("LOVABLE_API_KEY");
     if (!lovableKey) {
-      throw new Error(
-        "Doradca AI nie jest skonfigurowany. Brakuje LOVABLE_API_KEY w sekretach środowiska.",
-      );
+      throw new Error("Doradca AI nie jest skonfigurowany. Brakuje LOVABLE_API_KEY w sekretach środowiska.");
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -84,7 +122,7 @@ ${message}`,
     if (!response.ok) {
       throw new Error(
         result.error?.message ??
-          `Zewnętrzny model AI zwrócił błąd HTTP ${response.status}.`,
+          `Lovable AI zwróciło błąd HTTP ${response.status}.`,
       );
     }
 
