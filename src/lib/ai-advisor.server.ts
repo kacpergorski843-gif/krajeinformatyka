@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
+import { env as cloudflareEnv } from "cloudflare:workers";
 
 const SYSTEM = `Jesteś Doradcą AI w grze COUNTRY RP. Jesteś prawdziwym analitykiem strategicznym, nie generatorem gotowych odpowiedzi.
 Analizuj wyłącznie dane przekazane przez backend i zasady gry. Nie wymyślaj liczb, cen ani mechanik. Jeśli czegoś nie ma w danych, powiedz to.
@@ -77,7 +78,8 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
     const memoryAvailable = false;
     const advisorMemory: Array<{ memory: string; created_at: string }> = [];
 
-    const lovableKey = runtimeEnv("LOVABLE_API_KEY");
+    const workerEnv = cloudflareEnv as unknown as Record<string, string | undefined>;
+    const lovableKey = workerEnv.LOVABLE_API_KEY ?? runtimeEnv("LOVABLE_API_KEY");
     if (!lovableKey) throw new Error("Doradca AI nie jest skonfigurowany po stronie serwera.");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
