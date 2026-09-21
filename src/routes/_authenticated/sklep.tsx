@@ -104,6 +104,31 @@ function Shop() {
     mutationFn: async (v: { item: ShopItem; qty: number }) => {
       if (v.item.building) {
         if (!region) throw new Error("Wybierz region");
+
+        const factoryLevel = v.item.building.startsWith("factory_")
+          ? Number(v.item.building.split("_")[1])
+          : 0;
+        const fortUpgrade = v.item.building === "fort_2" || v.item.building === "fort_3";
+        const requiredBuilding =
+          factoryLevel > 1
+            ? `factory_${factoryLevel - 1}`
+            : v.item.building === "fort_2"
+              ? "fort_1"
+              : v.item.building === "fort_3"
+                ? "fort_2"
+                : null;
+        const upgradeSlot = requiredBuilding
+          ? region.slots.find((s) => s.building === requiredBuilding)?.slot_index ?? null
+          : null;
+
+        if (upgradeSlot !== null && (factoryLevel > 1 || fortUpgrade)) {
+          return rpc("upgrade_building_in_slot", {
+            p_region_id: region.id,
+            p_slot_index: upgradeSlot,
+            p_item_code: v.item.code,
+          });
+        }
+
         const index = firstFreeSlot(region);
         if (!index) throw new Error("Region nie ma wolnych slotów");
         return rpc("build_in_slot", {
@@ -167,9 +192,26 @@ function Shop() {
     return null;
   }
 
+  const upgradeTarget = item?.building && region
+    ? (() => {
+        const level = item.building.startsWith("factory_") ? Number(item.building.split("_")[1]) : 0;
+        const required =
+          level > 1
+            ? `factory_${level - 1}`
+            : item.building === "fort_2"
+              ? "fort_1"
+              : item.building === "fort_3"
+                ? "fort_2"
+                : null;
+        return required ? region.slots.find((slot) => slot.building === required) ?? null : null;
+      })()
+    : null;
+
   const blockReason =
     item?.building && region
-      ? buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
+      ? upgradeTarget
+        ? null
+        : buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
       : null;
   const cannotBuy =
     !country ||
@@ -383,7 +425,11 @@ function Shop() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {blockReason ? (
+                  {upgradeTarget ? (
+                    <p className="text-primary text-xs">
+                      Ulepszenie zastąpi {BUILDING_LABELS[upgradeTarget.building] ?? upgradeTarget.building} w slocie {upgradeTarget.slot_index} — nie zajmie dodatkowego miejsca.
+                    </p>
+                  ) : blockReason ? (
                     <p className="text-destructive text-xs">{blockReason}</p>
                   ) : null}
                 </div>
@@ -427,7 +473,7 @@ function Shop() {
                   disabled={buy.isPending || cannotBuy}
                   onClick={() => buy.mutate({ item, qty })}
                 >
-                  {buy.isPending ? "Realizuję…" : "Potwierdź zakup"}
+                  {buy.isPending ? "Realizuję…" : upgradeTarget ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
                 </Button>
               </div>
             </div>
