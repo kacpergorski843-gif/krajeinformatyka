@@ -183,7 +183,7 @@ const SHOP_NUMERIC = [
 function Update4Tools() {
   const { data: countries } = useQuery(countriesQuery);
   const activeBonuses = useQuery(activeIncomeBonusesQuery);
-  const activeOccupations = useQuery(adminActiveRegionOccupationsQuery);
+  const activeOccupations = useQuery(adminActiveRegionOccupationsQuery());
   const queryClient = useQueryClient();
   const { data: regions } = useQuery(allRegionsQuery);
   const [country, setCountry] = useState("");
