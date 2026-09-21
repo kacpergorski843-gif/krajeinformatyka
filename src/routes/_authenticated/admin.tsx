@@ -773,14 +773,62 @@ function RegionAaEditor({ regions, pending, onSave }: { regions: RegionWithSlots
 }
 
 function RegionManagement({ country, regions, shopItems, regionName, onRegionName, onAdd, adding, onRemoveRegion, onRemoveSlot, loading }: { country: CountryStats; regions: RegionWithSlots[]; shopItems: ShopItem[]; regionName: string; onRegionName: (value: string) => void; onAdd: () => void; adding: boolean; onRemoveRegion: (region: RegionWithSlots) => void; onRemoveSlot: (slot: { id: string; building: string; region: string }) => void; loading: boolean }) {
+  const queryClient = useQueryClient();
+  const [buildTarget, setBuildTarget] = useState<{ regionId: string; regionName: string; slotIndex: number } | null>(null);
+  const [building, setBuilding] = useState("");
+  const buildableItems = shopItems.filter((item) => item.building && item.active);
   const itemByBuilding = new Map(shopItems.filter((item) => item.building).map((item) => [item.building, item]));
-  return <div className="space-y-4"><SectionHeading icon={<Warehouse />} title="Regiony i terytorium" description={`${country.regions_count} regionów · po 9 slotów w każdym`} /><Panel className="p-3"><div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"><Input value={regionName} onChange={(event) => onRegionName(event.target.value)} placeholder="Nazwa nowego regionu" /><Button disabled={!regionName.trim() || adding} onClick={onAdd}><PackagePlus />Dodaj region</Button></div></Panel>{loading ? <LoadingRows /> : regions.length === 0 ? <HudState icon={<Warehouse />} title="Brak regionów" description="Dodaj pierwszy region tego państwa." /> : <div className="space-y-3">{regions.map((region) => {
-    const income = region.slots.reduce((sum, slot) => sum + Number(itemByBuilding.get(slot.building)?.income_kr ?? 0), 0);
-    const production = region.slots.reduce<Record<string, number>>((totals, slot) => { const item = itemByBuilding.get(slot.building); if (item?.produces) totals[item.produces] = (totals[item.produces] ?? 0) + Number(item.produces_amount); return totals; }, {});
-    return <Panel key={region.id} className="min-w-0 overflow-hidden p-0"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border p-3"><div className="min-w-0"><p className="truncate font-semibold">{region.name}</p><p className="mt-1 text-xs text-muted-foreground">{region.slots.length}/9 slotów · <span className="text-success">+{fmtKR(income)} / doba</span></p></div><Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" aria-label={`Usuń region ${region.name}`} onClick={() => onRemoveRegion(region)}><Trash2 /></Button></div><div className="grid gap-2 p-3 sm:grid-cols-3">{Array.from({ length: 9 }, (_, index) => { const slot = region.slots.find((entry) => entry.slot_index === index + 1); return slot ? <div key={index} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border border-primary/20 bg-primary/5 p-2"><span className="min-w-0"><span className="block text-[10px] text-muted-foreground">SLOT {index + 1}</span><span className="block truncate text-xs">{BUILDING_LABELS[slot.building] ?? slot.building}</span></span><Button size="icon" variant="ghost" className="size-7 text-destructive hover:text-destructive" aria-label={`Wyburz ${BUILDING_LABELS[slot.building] ?? slot.building}`} onClick={() => onRemoveSlot({ id: slot.id, building: slot.building, region: region.name })}><Trash2 className="size-3.5" /></Button></div> : <div key={index} className="border border-dashed border-border p-2 text-inactive"><span className="block text-[10px]">SLOT {index + 1}</span><span className="text-xs">Pusty</span></div>; })}</div>{Object.keys(production).length ? <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2">{Object.entries(production).map(([resource, amount]) => <Badge key={resource} variant="outline" className="border-success/30 text-success">{RESOURCE_LABELS[resource] ?? resource} +{fmtNum(amount)}</Badge>)}</div> : null}</Panel>;
-  })}</div>}</div>;
-}
 
+  const addBuilding = useMutation({
+    mutationFn: async () => {
+      if (!buildTarget || !building) throw new Error("Wybierz budynek");
+      return rpc("admin_grant_building", {
+        p_country_id: country.country_id,
+        p_region_id: buildTarget.regionId,
+        p_slot_index: buildTarget.slotIndex,
+        p_building: building,
+        p_quantity: 1,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Budynek został dodany");
+      setBuildTarget(null);
+      setBuilding("");
+      queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return <div className="space-y-4">
+    <SectionHeading icon={<Warehouse />} title="Regiony i terytorium" description={`${country.regions_count} regionów · po 9 slotów w każdym`} />
+    <Panel className="p-3"><div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"><Input value={regionName} onChange={(event) => onRegionName(event.target.value)} placeholder="Nazwa nowego regionu" /><Button disabled={!regionName.trim() || adding} onClick={onAdd}><PackagePlus />Dodaj region</Button></div></Panel>
+    {loading ? <LoadingRows /> : regions.length === 0 ? <HudState icon={<Warehouse />} title="Brak regionów" description="Dodaj pierwszy region tego państwa." /> : <div className="space-y-3">{regions.map((region) => {
+      const income = region.slots.reduce((sum, slot) => sum + Number(itemByBuilding.get(slot.building)?.income_kr ?? 0), 0);
+      const production = region.slots.reduce<Record<string, number>>((totals, slot) => { const item = itemByBuilding.get(slot.building); if (item?.produces) totals[item.produces] = (totals[item.produces] ?? 0) + Number(item.produces_amount); return totals; }, {});
+      return <Panel key={region.id} className="min-w-0 overflow-hidden p-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border p-3"><div className="min-w-0"><p className="truncate font-semibold">{region.name}</p><p className="mt-1 text-xs text-muted-foreground">{region.slots.length}/9 slotów · <span className="text-success">+{fmtKR(income)} / doba</span></p></div><Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" aria-label={`Usuń region ${region.name}`} onClick={() => onRemoveRegion(region)}><Trash2 /></Button></div>
+        <div className="grid gap-2 p-3 sm:grid-cols-3">{Array.from({ length: 9 }, (_, index) => {
+          const slot = region.slots.find((entry) => entry.slot_index === index + 1);
+          return slot ? <div key={index} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border border-primary/20 bg-primary/5 p-2"><span className="min-w-0"><span className="block text-[10px] text-muted-foreground">SLOT {index + 1}</span><span className="block truncate text-xs">{BUILDING_LABELS[slot.building] ?? slot.building}</span></span><Button size="icon" variant="ghost" className="size-7 text-destructive hover:text-destructive" aria-label={`Wyburz ${BUILDING_LABELS[slot.building] ?? slot.building`} onClick={() => onRemoveSlot({ id: slot.id, building: slot.building, region: region.name })}><Trash2 className="size-3.5" /></Button></div> : <button key={index} type="button" className="border border-dashed border-border p-2 text-left text-inactive transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-foreground" onClick={() => { setBuildTarget({ regionId: region.id, regionName: region.name, slotIndex: index + 1 }); setBuilding(""); }}><span className="block text-[10px]">SLOT {index + 1}</span><span className="mt-1 flex items-center gap-1 text-xs"><PackagePlus className="size-3.5" />Dodaj budynek</span></button>;
+        })}</div>
+        {Object.keys(production).length ? <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2">{Object.entries(production).map(([resource, amount]) => <Badge key={resource} variant="outline" className="border-success/30 text-success">{RESOURCE_LABELS[resource] ?? resource} +{fmtNum(amount)}</Badge>)}</div> : null}
+      </Panel>;
+    })}</div>}
+    <Dialog open={!!buildTarget} onOpenChange={(open) => !open && setBuildTarget(null)}>
+      <DialogContent className="w-[calc(100%-1rem)] max-w-md">
+        <DialogHeader><DialogTitle>Dodaj budynek</DialogTitle><DialogDescription>{buildTarget ? `Państwo: ${country.name} · Region: ${buildTarget.regionName} · Slot ${buildTarget.slotIndex}` : ""}</DialogDescription></DialogHeader>
+        <div className="space-y-3">
+          <Label>Typ budynku</Label>
+          <Select value={building} onValueChange={setBuilding}>
+            <SelectTrigger><SelectValue placeholder="Wybierz budynek" /></SelectTrigger>
+            <SelectContent>{buildableItems.map((item) => <SelectItem key={item.building!} value={item.building!}>{item.name || BUILDING_LABELS[item.building!] || item.building}</SelectItem>)}</SelectContent>
+          </Select>
+          <Button className="w-full" disabled={!building || addBuilding.isPending} onClick={() => addBuilding.mutate()}>{addBuilding.isPending ? "Dodawanie..." : "Dodaj budynek"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  </div>;
+}
 function CountryHistory({ transactions, strikes, countryId, loading }: { transactions: TransactionRow[]; strikes: MissileStrike[]; countryId: string; loading: boolean }) {
   const [showZero, setShowZero] = useState(false);
   const visible = transactions.filter((transaction) => showZero || Number(transaction.amount_kr) !== 0);
