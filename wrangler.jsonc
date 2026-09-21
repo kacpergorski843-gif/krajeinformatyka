@@ -4,6 +4,7 @@
   "compatibility_date": "2026-09-21",
   "compatibility_flags": ["nodejs_compat"],
   "ai": {
-    "binding": "AI"
+    "binding": "AI",
+    "remote": true
   }
 }
