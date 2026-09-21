@@ -195,6 +195,7 @@ function Update4Tools() {
   const [percent, setPercent] = useState("25");
   const [bonusScope, setBonusScope] = useState<"global" | "country">("global");
   const [bonusCountry, setBonusCountry] = useState("");
+  const [selectedBonus, setSelectedBonus] = useState<NonNullable<typeof activeBonuses.data>[number] | null>(null);
   const [hours, setHours] = useState("24");
   const [confirm, setConfirm] = useState<"building" | "bonus" | "occupation" | null>(null);
 
@@ -318,13 +319,26 @@ function Update4Tools() {
             {activeBonuses.isLoading ? <LoadingRows /> : activeBonuses.data?.length ? (
               <div className="space-y-2">
                 {activeBonuses.data.map((bonus) => (
-                  <div key={bonus.id} className="grid gap-2 border border-border bg-secondary/30 p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
+                  <div
+                    key={bonus.id}
+                    className="grid cursor-pointer gap-2 border border-border bg-secondary/30 p-3 transition-colors hover:border-primary/40 hover:bg-secondary/50 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedBonus(bonus)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedBonus(bonus);
+                      }
+                    }}
+                  >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">+{bonus.percent}% dochodu · {bonus.country_name ?? "Wszystkie państwa"}</p>
                       <p className="text-xs text-muted-foreground">Aktywny do {dateTime(bonus.ends_at)}</p>
                     </div>
                     <Badge variant="outline" className="w-fit border-success/30 text-success">AKTYWNY</Badge>
-                    <Button size="sm" variant="destructive" onClick={async () => {
+                    <Button size="sm" variant="destructive" onClick={async (event) => {
+                      event.stopPropagation();
                       try {
                         await rpc("admin_remove_income_bonus", { p_bonus_id: bonus.id });
                         toast.success("Bonus został usunięty");
@@ -339,6 +353,44 @@ function Update4Tools() {
               </div>
             ) : <p className="text-xs text-muted-foreground">Brak aktywnych bonusów.</p>}
           </div>
+
+          <Dialog open={selectedBonus !== null} onOpenChange={(open) => !open && setSelectedBonus(null)}>
+            <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-md sm:w-[calc(100%-2rem)]">
+              <DialogHeader>
+                <DialogTitle>Szczegóły bonusu</DialogTitle>
+                <DialogDescription>Sprawdź dokładnie, którego państwa dotyczy bonus, zanim go usuniesz.</DialogDescription>
+              </DialogHeader>
+              {selectedBonus ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
+                    <span className="text-sm text-muted-foreground">Zakres</span>
+                    <span className="text-right text-sm font-semibold">{selectedBonus.country_name ?? "Wszystkie państwa"}</span>
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
+                    <span className="text-sm text-muted-foreground">Bonus dochodu</span>
+                    <span className="num text-sm font-semibold text-success">+{selectedBonus.percent}%</span>
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
+                    <span className="text-sm text-muted-foreground">Aktywny od</span>
+                    <span className="text-right text-sm">{dateTime(selectedBonus.starts_at)}</span>
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
+                    <span className="text-sm text-muted-foreground">Aktywny do</span>
+                    <span className="text-right text-sm">{dateTime(selectedBonus.ends_at)}</span>
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
+                    <span className="text-sm text-muted-foreground">Utworzono</span>
+                    <span className="text-right text-sm">{dateTime(selectedBonus.created_at)}</span>
+                  </div>
+                  <p className="pt-2 text-xs text-muted-foreground">
+                    {selectedBonus.country_name
+                      ? "Ten bonus działa tylko na wybrane państwo."
+                      : "Ten bonus działa na wszystkie państwa."}
+                  </p>
+                </div>
+              ) : null}
+            </DialogContent>
+          </Dialog>
         </section>
 
         <section className="admin-v4-card">
