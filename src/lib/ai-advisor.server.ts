@@ -12,8 +12,21 @@ type Input = { message: string; accessToken: string };
 
 function runtimeEnv(name: string): string | undefined {
   const globalEnv = (globalThis as { __env__?: Record<string, string | undefined> }).__env__;
+  const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.[name];
+
+  let denoEnv: string | undefined;
+  try {
+    const deno = (globalThis as {
+      Deno?: { env?: { get?: (key: string) => string | undefined } };
+    }).Deno;
+    denoEnv = deno?.env?.get?.(name);
+  } catch {
+    denoEnv = undefined;
+  }
+
   return globalEnv?.[name]
-    ?? (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.[name]
+    ?? processEnv
+    ?? denoEnv
     ?? (import.meta.env as Record<string, string | undefined>)[name];
 }
 
