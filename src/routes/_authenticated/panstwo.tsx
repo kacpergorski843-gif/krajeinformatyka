@@ -7,7 +7,6 @@ import { AppShell } from "@/components/AppShell";
 import { CountryFlag } from "@/components/CountryFlag";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
-import { AiAdvisor } from "@/components/AiAdvisor";
 import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, shopQuery, transactionsQuery } from "@/lib/api";
 import { fmtKR, kr, timeToDailyCycle, units, RESOURCE_LABELS } from "@/lib/format";
 
@@ -122,8 +121,6 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
-      <AiAdvisor />
-
       <Panel className="mb-4 flex items-center gap-3 p-3">
         <CountryFlag
           flag={country.flag}
