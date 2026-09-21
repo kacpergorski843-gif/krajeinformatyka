@@ -318,7 +318,7 @@ function Update4Tools() {
                 <Label>Państwo</Label>
                 <Select value={bonusCountry} onValueChange={setBonusCountry}>
                   <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                  <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             ) : null}
@@ -437,7 +437,7 @@ function Update4Tools() {
             <Label>Nowy właściciel</Label>
             <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
               <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz nowe państwo" : "Najpierw wybierz region"} /></SelectTrigger>
-              <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+              <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="admin-v4-summary admin-v4-summary-danger">
