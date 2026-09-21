@@ -33,21 +33,10 @@ export function AiAdvisor() {
         throw new Error("Sesja wygasła. Zaloguj się ponownie.");
       }
 
-      const supabaseUrl =
-        import.meta.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
-      const supabaseKey =
-        import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-        process.env["SUPABASE_PUBLISHABLE_KEY"];
-
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error("Brak konfiguracji połączenia z backendem.");
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/ai-advisor`, {
+      const response = await fetch("/api/ai-advisor", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: supabaseKey,
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ message }),
