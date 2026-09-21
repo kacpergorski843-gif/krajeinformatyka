@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { countriesQuery, meQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
+import { countriesQuery, meQuery, occupiedRegionsQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
 import type { RegionWithSlots, ShopItem } from "@/lib/api";
 import { BUILDING_LABELS, RESOURCE_LABELS, fmtKR, units } from "@/lib/format";
 
@@ -70,6 +70,7 @@ function Regions() {
   const [selected, setSelected] = useState<string | null>(null);
   const countryId = selected ?? me?.countryId ?? null;
   const { data: regions } = useQuery(regionsQuery(countryId));
+  const { data: occupiedRegions } = useQuery(occupiedRegionsQuery(me?.countryId));
   const country = countries?.find((c) => c.country_id === countryId);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [buildFor, setBuildFor] = useState<RegionWithSlots | null>(null);
@@ -170,6 +171,35 @@ function Regions() {
             Nie masz przypisanego państwa — poproś administratora gry.
           </p>
         </Panel>
+      ) : null}
+
+      {occupiedRegions?.length ? (
+        <div className="mb-4 space-y-2">
+          <p className="label-hud">OKUPOWANE REGIONY</p>
+          {occupiedRegions.map((r) => {
+            const effects = (r.slots ?? []).reduce((acc, slot) => {
+              const item = (shop ?? []).find((shopItem) => shopItem.building === slot.building);
+              if (!item) return acc;
+              acc.kr += Number(item.income_kr ?? 0);
+              if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0) + Number(item.produces_amount ?? 0);
+              acc.coalUpkeep += Number(item.upkeep_coal ?? 0);
+              return acc;
+            }, { kr: 0, coalUpkeep: 0, resources: {} as Record<string, number> });
+            return (
+              <Panel key={r.id} className="border-destructive/40 bg-destructive/5 p-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div><p className="text-sm font-semibold">{r.name}</p><p className="text-xs text-muted-foreground">OKUPOWANY przez {r.occupier_country_name} · od {new Date(r.occupied_at).toLocaleString("pl-PL")}</p></div>
+                  <span className="text-xs font-semibold text-destructive">NIE JEST POD TWOJĄ KONTROLĄ</span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">TRACISZ KR</p><p className="num mt-1 text-sm text-destructive">−{fmtKR(effects.kr)} / doba</p></div>
+                  {Object.entries(effects.resources).map(([resource, value]) => <div key={resource} className="border border-border bg-secondary/30 p-2"><p className="label-hud">TRACISZ {RESOURCE_LABELS[resource] ?? resource}</p><p className="num mt-1 text-sm text-destructive">−{units(value)} / doba</p></div>)}
+                  {effects.coalUpkeep > 0 ? <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZUŻYCIE WĘGLA</p><p className="num mt-1 text-sm text-muted-foreground">−{units(effects.coalUpkeep)} / doba</p></div> : null}
+                </div>
+              </Panel>
+            );
+          })}
+        </div>
       ) : null}
 
       <div className="space-y-2">
