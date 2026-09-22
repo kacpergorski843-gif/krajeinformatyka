@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { History } from "lucide-react";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Button } from "@/components/ui/button";
-import { dateTime, fmtKR } from "@/lib/format";
+import { dateTime, fmtKR, units, RESOURCE_LABELS } from "@/lib/format";
 
 export type TxRow = {
   id: string;
@@ -47,6 +47,8 @@ function weekStart(iso: string): Date {
 const shortDate = (d: Date) =>
   d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit" });
 
+type ResourceDelta = { key: string; label: string; amount: number };
+
 type Merged = {
   key: string;
   label: string;
@@ -54,7 +56,28 @@ type Merged = {
   amount: number;
   created_at: string;
   category: string;
+  resources: ResourceDelta[];
 };
+
+function resourceDeltas(details: Record<string, unknown> | null | undefined): ResourceDelta[] {
+  if (!details) return [];
+
+  const source =
+    (details.resources as Record<string, unknown> | undefined) ??
+    (details.resource_amounts as Record<string, unknown> | undefined) ??
+    details;
+
+  return Object.entries(source)
+    .filter(([key, value]) =>
+      ["coal", "oil", "copper", "iron", "uranium"].includes(key) && Number.isFinite(Number(value)),
+    )
+    .map(([key, value]) => ({
+      key,
+      label: RESOURCE_LABELS[key] ?? key,
+      amount: Number(value),
+    }))
+    .filter((item) => item.amount !== 0);
+}
 
 export function OperationsHistory({
   rows,
@@ -180,18 +203,30 @@ export function OperationsHistory({
                       {m.category} · {dateTime(m.created_at)}
                     </p>
                   </div>
-                  <p
-                    className={`num shrink-0 text-sm ${
-                      m.amount > 0
-                        ? "text-success"
-                        : m.amount < 0
-                          ? "text-destructive"
-                          : "text-inactive"
-                    }`}
-                  >
-                    {m.amount > 0 ? "+" : ""}
-                    {fmtKR(m.amount)}
-                  </p>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    {m.resources.length ? (
+                      <div className="flex flex-wrap justify-end gap-x-2 gap-y-0.5 text-[11px]">
+                        {m.resources.map((resource) => (
+                          <span key={resource.key} className={resource.amount > 0 ? "text-success" : "text-destructive"}>
+                            {resource.amount > 0 ? "+" : ""}
+                            {units(resource.amount)} {resource.label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    <p
+                      className={`num text-sm ${
+                        m.amount > 0
+                          ? "text-success"
+                          : m.amount < 0
+                            ? "text-destructive"
+                            : "text-inactive"
+                      }`}
+                    >
+                      {m.amount > 0 ? "+" : ""}
+                      {fmtKR(m.amount)}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
