@@ -245,7 +245,7 @@ export function adminActiveRegionOccupationsQuery() {
       const rows = await unwrap(
         supabase
           .from("region_occupations")
-          .select("region_id, previous_country_id, current_country_id, occupied_at, regions(name)")
+          .select("region_id, previous_country_id, current_country_id, occupied_at, regions(name, country_id)")
           .order("occupied_at", { ascending: false })
           .limit(500),
       ) as unknown as Array<{
@@ -253,14 +253,19 @@ export function adminActiveRegionOccupationsQuery() {
         previous_country_id: string;
         current_country_id: string;
         occupied_at: string;
-        regions?: { name?: string } | null;
+        regions?: { name?: string; country_id?: string } | null;
+        regions?: { country_id?: string } | null;
       }>;
 
       const latestByRegion = new Map<string, (typeof rows)[number]>();
       for (const row of rows) {
         if (!latestByRegion.has(row.region_id)) latestByRegion.set(row.region_id, row);
       }
-      const latest = [...latestByRegion.values()].filter((row) => row.previous_country_id !== row.current_country_id);
+      const latest = [...latestByRegion.values()].filter(
+        (row) =>
+          row.previous_country_id !== row.current_country_id &&
+          row.regions?.country_id === row.current_country_id,
+      );
       if (!latest.length) return [];
 
       const countryIds = [...new Set(latest.flatMap((row) => [row.previous_country_id, row.current_country_id]))];
@@ -290,7 +295,7 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
       const occupations = await unwrap(
         supabase
           .from("region_occupations")
-          .select("region_id, current_country_id, occupied_at")
+          .select("region_id, current_country_id, occupied_at, regions(country_id)")
           .eq("previous_country_id", countryId!)
           .order("occupied_at", { ascending: false }),
       ) as Array<{
@@ -303,7 +308,11 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
       for (const occupation of occupations) {
         if (!latestByRegion.has(occupation.region_id)) latestByRegion.set(occupation.region_id, occupation);
       }
-      const active = [...latestByRegion.values()].filter((occupation) => occupation.current_country_id !== countryId);
+      const active = [...latestByRegion.values()].filter(
+        (occupation) =>
+          occupation.current_country_id !== countryId &&
+          occupation.regions?.country_id === occupation.current_country_id,
+      );
       if (!active.length) return [];
 
       const regionIds = active.map((occupation) => occupation.region_id);
