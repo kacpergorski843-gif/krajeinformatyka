@@ -441,9 +441,9 @@ function Update4Tools() {
             </Select>
           </div>
           <div className="admin-v4-summary admin-v4-summary-danger">
-            <span>PRZEKAZANIE</span><strong>{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</strong><small>{occupationIsSameCountry ? "Nowy właściciel musi być innym państwem." : "Operacja trafi do historii okupacji i audytu administratora."}</small>
+            <span>PRZEJĘCIE REGIONU</span><strong>{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</strong><small>{occupationIsSameCountry ? "Nowy właściciel musi być innym państwem." : "Przejęcie zmieni właściciela regionu, zachowa budynki i zapisze pełną historię operacji."}</small>
           </div>
-          <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przekaż region <ChevronRight /></Button>
+          <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przejmij region <ChevronRight /></Button>
           <div className="mt-5 border-t border-border pt-4">
             <p className="label-hud mb-2">AKTYWNE OKUPACJE</p>
             {activeOccupations.isLoading ? <LoadingRows /> : activeOccupations.data?.length ? (
@@ -470,11 +470,11 @@ function Update4Tools() {
       <Dialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
         <DialogContent className="admin-v4-confirm">
           <DialogHeader>
-            <DialogTitle>{confirm === "building" ? "Potwierdź dodanie budynku" : confirm === "bonus" ? "Potwierdź bonus dochodu" : "Potwierdź przekazanie regionu"}</DialogTitle>
+            <DialogTitle>{confirm === "building" ? "Potwierdź dodanie budynku" : confirm === "bonus" ? "Potwierdź bonus dochodu" : "Potwierdź przejęcie regionu"}</DialogTitle>
             <DialogDescription>
               {confirm === "building" ? `Dodasz ${BUILDING_LABELS[building] ?? building} do ${selectedCountry?.name ?? "wybranego państwa"}, region ${selectedRegion?.name ?? "—"}, slot ${slot}, ilość ×${qty}.` :
                confirm === "bonus" ? "Uruchomisz bonus +" + percent + "% dochodu na " + hours + " godzin " + (bonusScope === "global" ? "dla wszystkich państw" : "dla państwa " + ((countries ?? []).find((item) => item.country_id === bonusCountry)?.name ?? "—")) + ". Bonus wygaśnie automatycznie." :
-               `Region ${selectedOccupationRegion?.name ?? "—"} z państwa ${selectedOccupationCountry?.name ?? "—"} zostanie przekazany państwu ${selectedOccupationTarget?.name ?? "—"}.`}
+               `Region ${selectedOccupationRegion?.name ?? "—"} z państwa ${selectedOccupationCountry?.name ?? "—"} zostanie przejęty przez państwo ${selectedOccupationTarget?.name ?? "—"}.`}
             </DialogDescription>
           </DialogHeader>
           <div className="admin-v4-confirm-actions">
@@ -484,7 +484,7 @@ function Update4Tools() {
               onClick={() => {
                 if (confirm === "building") void run("admin_grant_building", { p_country_id: country, p_region_id: region, p_slot_index: Number(slot), p_building: building, p_quantity: Number(qty) }, "Budynek dodany");
                 if (confirm === "bonus") void run("admin_start_income_bonus", { p_percent: Number(percent), p_hours: Number(hours), p_country_id: bonusScope === "country" ? bonusCountry : null }, "Bonus dochodu uruchomiony");
-                if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: occupationRegion, p_new_country_id: occupationTargetCountry }, "Region przekazany");
+                if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: occupationRegion, p_new_country_id: occupationTargetCountry }, "Region przejęty");
               }}
             >Potwierdź operację</Button>
           </div>
