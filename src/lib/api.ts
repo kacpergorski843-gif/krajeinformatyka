@@ -257,7 +257,6 @@ export function adminActiveRegionOccupationsQuery() {
         occupied_at: string;
         event_type: "OCCUPATION" | "REVERT";
         regions?: { name?: string; country_id?: string } | null;
-        regions?: { country_id?: string } | null;
       }>;
 
       const latestByRegion = new Map<string, (typeof rows)[number]>();
@@ -306,6 +305,7 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
         current_country_id: string;
         occupied_at: string;
         event_type: "OCCUPATION" | "REVERT";
+        regions?: { country_id?: string } | null;
       }>;
 
       const latestByRegion = new Map<string, (typeof occupations)[number]>();
