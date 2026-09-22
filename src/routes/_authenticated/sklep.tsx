@@ -259,6 +259,28 @@ function Shop() {
     }
 
     if (i.building) {
+      const canUpgrade = (region: RegionWithSlots) => {
+        const level = i.building?.startsWith("factory_")
+          ? Number(i.building.split("_")[1])
+          : 0;
+        const required =
+          level > 1
+            ? `factory_${level - 1}`
+            : i.building === "fort_2"
+              ? "fort_1"
+              : i.building === "fort_3"
+                ? "fort_2"
+                : null;
+
+        return required
+          ? region.slots.some((slot) => slot.building === required)
+          : false;
+      };
+
+      // Ulepszenie zastępuje budynek w tym samym slocie, więc pełny
+      // region nadal może kupić kolejny poziom fabryki/fortyfikacji.
+      if ((regions ?? []).some(canUpgrade)) return false;
+
       return !(regions ?? []).some(
         (r) => !buildBlockReason(r, i.building!) && !levelLockForRegion(r, i.building!),
       );
