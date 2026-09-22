@@ -460,7 +460,7 @@ function Shop() {
                         : 0;
                       const required =
                         level > 1
-                          ? `factory_\${level - 1}`
+                          ? `factory_${level - 1}`
                           : building === "fort_2"
                             ? "fort_1"
                             : building === "fort_3"
@@ -483,7 +483,7 @@ function Shop() {
                           type="button"
                           onClick={() => selectable && setRegionId(r.id)}
                           disabled={!selectable}
-                          className={`w-full rounded-lg border p-3 text-left transition-colors \${selectedRegion
+                          className={`w-full rounded-lg border p-3 text-left transition-colors ${selectedRegion
                             ? "border-primary bg-primary/10"
                             : selectable
                               ? "border-border bg-background/40 hover:border-primary/60"
@@ -496,8 +496,8 @@ function Shop() {
                                 {r.slots.length}/9 slotów · {units(r.aa_defense)} OPL
                               </p>
                             </div>
-                            <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider \${upgradeSlot || selectable ? "text-primary" : "text-muted-foreground"}`}>
-                              {upgradeSlot ? `ULEPSZENIE · SLOT \${upgradeSlot.slot_index}` : selectable ? "DOSTĘPNY" : "NIEDOSTĘPNY"}
+                            <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider ${upgradeSlot || selectable ? "text-primary" : "text-muted-foreground"}`}>
+                              {upgradeSlot ? `ULEPSZENIE · SLOT ${upgradeSlot.slot_index}` : selectable ? "DOSTĘPNY" : "NIEDOSTĘPNY"}
                             </span>
                           </div>
 
@@ -509,7 +509,7 @@ function Shop() {
                               return (
                                 <div
                                   key={slotIndex}
-                                  className={`min-h-12 rounded border px-1.5 py-1 text-center \${isUpgrade
+                                  className={`min-h-12 rounded border px-1.5 py-1 text-center ${isUpgrade
                                     ? "border-primary bg-primary/15 text-primary"
                                     : slot
                                       ? "border-border bg-muted/30 text-foreground"
@@ -547,9 +547,6 @@ function Shop() {
                   ) : null}
                 </div>
               ) : null}
-                </div>
-              ) : null}
-
               {isBuilding && item && selectedBuildingIncome > 0 ? (
                 <div className="panel hud-frame space-y-2 p-4 text-xs">
                   <p className="label-hud">ZAROBKI PAŃSTWA</p>
