@@ -77,6 +77,7 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       strikesRes,
       economyRunsRes,
       bonusesRes,
+      conversationsRes,
     ] = await Promise.all([
       supabase.from("country_stats").select("*").eq("country_id", countryId).maybeSingle(),
       supabase.from("regions").select("id,name,country_id,aa_defense,region_slots(id,slot_index,building)").eq("country_id", countryId).order("created_at"),
@@ -88,11 +89,21 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       supabase.from("missile_strikes").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("economy_runs").select("*").order("run_date", { ascending: false }).limit(30),
       supabase.from("economy_bonuses").select("id,percent,starts_at,ends_at,country_id,created_at").order("starts_at", { ascending: false }).limit(100),
+      supabase
+        .from("ai_advisor_conversations")
+        .select("role,content,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(40),
     ]);
 
     for (const result of [countryRes, regionsRes, shopRes, occupationsRes, historyRes, worldCountriesRes, worldRegionsRes, strikesRes, economyRunsRes, bonusesRes]) {
       if (result.error) throw new Error(result.error.message);
     }
+
+    const conversationHistory = (conversationsRes.error ? [] : (conversationsRes.data ?? []))
+      .slice()
+      .reverse();
 
     const context = {
       gracz: { nazwa: profile.display_name },
@@ -101,6 +112,7 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       sklep: shopRes.data,
       okupacje: occupationsRes.data,
       historia_transakcji: historyRes.data,
+      historia_rozmow_z_doradca: conversationHistory,
       swiat: {
         panstwa: worldCountriesRes.data,
         regiony: worldRegionsRes.data,
@@ -151,6 +163,19 @@ ${message}`,
 
     const answer = result.choices?.[0]?.message?.content?.trim();
     if (!answer) throw new Error("AI nie zwróciło odpowiedzi.");
+
+    const memoryRows = [
+      { user_id: user.id, country_id: countryId, role: "user", content: message },
+      { user_id: user.id, country_id: countryId, role: "assistant", content: answer },
+    ];
+
+    const { error: memoryError } = await supabase
+      .from("ai_advisor_conversations")
+      .insert(memoryRows);
+
+    if (memoryError) {
+      console.warn("Nie udało się zapisać pamięci Doradcy AI:", memoryError.message);
+    }
 
     return { answer };
   });
