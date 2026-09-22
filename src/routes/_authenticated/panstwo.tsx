@@ -275,9 +275,9 @@ function MyCountry() {
           >
             <p className="truncate text-sm">{r.name}</p>
             <span
-              className={`num shrink-0 text-xs ${r.slots.length === 0 ? "text-inactive" : "text-primary"}`}
+              className={`num shrink-0 text-xs ${(r.slots ?? []).length === 0 ? "text-inactive" : "text-primary"}`}
             >
-              {r.slots.length}/9
+              {(r.slots ?? []).length}/9
             </span>
           </Link>
         ))}
