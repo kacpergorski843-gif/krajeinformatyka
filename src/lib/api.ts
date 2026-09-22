@@ -194,6 +194,7 @@ export type RegionOccupation = {
   previous_country_id: string;
   current_country_id: string;
   occupied_at: string;
+  event_type: "OCCUPATION" | "REVERT";
   region_name: string;
 };
 
@@ -205,7 +206,7 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
       const rows = await unwrap(
         supabase
           .from("region_occupations")
-          .select("id, region_id, previous_country_id, current_country_id, occupied_at, regions(name)")
+          .select("id, region_id, previous_country_id, current_country_id, occupied_at, event_type, regions(name)")
           .or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`)
           .order("occupied_at", { ascending: false })
           .limit(50),
@@ -216,6 +217,7 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
         previous_country_id: row.previous_country_id,
         current_country_id: row.current_country_id,
         occupied_at: row.occupied_at,
+        event_type: row.event_type,
         region_name: row.regions?.name ?? "Nieznany region",
       }));
     },
@@ -245,7 +247,7 @@ export function adminActiveRegionOccupationsQuery() {
       const rows = await unwrap(
         supabase
           .from("region_occupations")
-          .select("region_id, previous_country_id, current_country_id, occupied_at, regions(name, country_id)")
+          .select("region_id, previous_country_id, current_country_id, occupied_at, event_type, regions(name, country_id)")
           .order("occupied_at", { ascending: false })
           .limit(500),
       ) as unknown as Array<{
@@ -253,6 +255,7 @@ export function adminActiveRegionOccupationsQuery() {
         previous_country_id: string;
         current_country_id: string;
         occupied_at: string;
+        event_type: "OCCUPATION" | "REVERT";
         regions?: { name?: string; country_id?: string } | null;
         regions?: { country_id?: string } | null;
       }>;
@@ -263,7 +266,7 @@ export function adminActiveRegionOccupationsQuery() {
       }
       const latest = [...latestByRegion.values()].filter(
         (row) =>
-          row.previous_country_id !== row.current_country_id &&
+          row.event_type === "OCCUPATION" &&
           row.regions?.country_id === row.current_country_id,
       );
       if (!latest.length) return [];
@@ -295,13 +298,14 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
       const occupations = await unwrap(
         supabase
           .from("region_occupations")
-          .select("region_id, current_country_id, occupied_at, regions(country_id)")
+          .select("region_id, current_country_id, occupied_at, event_type, regions(country_id)")
           .eq("previous_country_id", countryId!)
           .order("occupied_at", { ascending: false }),
       ) as Array<{
         region_id: string;
         current_country_id: string;
         occupied_at: string;
+        event_type: "OCCUPATION" | "REVERT";
       }>;
 
       const latestByRegion = new Map<string, (typeof occupations)[number]>();
@@ -310,6 +314,7 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
       }
       const active = [...latestByRegion.values()].filter(
         (occupation) =>
+          occupation.event_type === "OCCUPATION" &&
           occupation.current_country_id !== countryId &&
           occupation.regions?.country_id === occupation.current_country_id,
       );
