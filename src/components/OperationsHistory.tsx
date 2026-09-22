@@ -112,10 +112,20 @@ export function OperationsHistory({
         group = { week, items: [] };
         out.push(group);
       }
+      const deltas = resourceDeltas(t.details);
       const last = group.items[group.items.length - 1];
       if (last && last.label === t.label) {
         last.count += 1;
         last.amount += Number(t.amount_kr);
+        for (const delta of deltas) {
+          const existing = last.resources.find((resource) => resource.key === delta.key);
+          if (existing) {
+            existing.amount += delta.amount;
+          } else {
+            last.resources.push({ ...delta });
+          }
+        }
+        last.resources = last.resources.filter((resource) => resource.amount !== 0);
       } else {
         group.items.push({
           key: t.id,
@@ -124,6 +134,7 @@ export function OperationsHistory({
           amount: Number(t.amount_kr),
           created_at: t.created_at,
           category: categoryOf(t),
+          resources: deltas,
         });
       }
     }
