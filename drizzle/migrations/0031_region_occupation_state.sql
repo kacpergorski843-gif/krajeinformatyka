@@ -1,4 +1,7 @@
 -- UPDATE 4.3: make region occupation state explicit and make occupy/revert history reliable.
+revoke all on table public.region_occupations from anon;
+grant select on table public.region_occupations to authenticated;
+
 alter table public.region_occupations
   add column if not exists event_type text not null default 'OCCUPATION'
     check (event_type in ('OCCUPATION', 'REVERT'));
