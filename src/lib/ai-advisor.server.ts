@@ -12,9 +12,19 @@ type Input = { message: string; accessToken: string };
 
 function runtimeEnv(name: string): string | undefined {
   const globalEnv = (globalThis as { __env__?: Record<string, unknown> }).__env__;
-  const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
-  const value = globalEnv?.[name] ?? processEnv?.[name];
-  return typeof value === "string" ? value : undefined;
+  const globalProcess = (globalThis as {
+    process?: { env?: Record<string, string | undefined> };
+  }).process;
+  const processEnv = globalProcess?.env;
+
+  // TanStack/Lovable Preview exposes server secrets through Node's process.env,
+  // while the deployed Worker can expose them through the request env binding.
+  // Read both paths explicitly so the advisor works in both runtimes.
+  const globalValue = globalEnv?.[name];
+  const processValue = processEnv?.[name];
+  const value = globalValue ?? processValue;
+
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 type OpenRouterResponse = {
