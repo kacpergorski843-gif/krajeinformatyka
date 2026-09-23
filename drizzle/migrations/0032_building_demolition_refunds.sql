@@ -6,6 +6,9 @@
 alter table public.region_slots
   add column if not exists built_at timestamptz;
 
+alter table public.region_slots
+  add column if not exists built_by uuid references auth.users(id) on delete set null;
+
 -- Existing buildings predate this policy; treat them as older than 24h.
 update public.region_slots
 set built_at = now() - interval '25 hours'
@@ -16,6 +19,9 @@ alter table public.region_slots
 
 alter table public.region_slots
   alter column built_at set not null;
+
+alter table public.region_slots
+  alter column built_by set default auth.uid();
 
 create or replace function public.refund_player_on_building_demolition()
 returns trigger
@@ -29,7 +35,24 @@ declare
   v_item public.shop_items;
   v_multiplier numeric;
 begin
-  -- Administrators and system operations never receive player refunds.
+  -- An upgrade deletes the old row and inserts the new building in the same
+  -- slot during one transaction. Do not treat that replacement as demolition.
+  if exists (
+    select 1
+    from public.region_slots rs
+    where rs.region_id = OLD.region_id
+      and rs.slot_index = OLD.slot_index
+  ) then
+    return OLD;
+  end if;
+
+  -- Refund only the player who originally built this slot.
+  -- This also prevents an admin-granted/free building from being converted
+  -- into a cash/resource refund.
+  if OLD.built_by is null or OLD.built_by <> auth.uid() then
+    return OLD;
+  end if;
+
   select ur.role::text
     into v_user_role
   from public.user_roles ur
@@ -40,6 +63,10 @@ begin
   if v_user_role is null then
     return OLD;
   end if;
+
+  -- Upgrades replace a building in the same slot inside one transaction.
+  -- A deferred trigger sees the replacement row and therefore skips the
+  -- demolition refund for upgrades.
 
   select r.country_id
     into v_country_id
@@ -82,8 +109,9 @@ $function$;
 
 drop trigger if exists region_slots_player_demolition_refund on public.region_slots;
 
-create trigger region_slots_player_demolition_refund
-before delete on public.region_slots
+create constraint trigger region_slots_player_demolition_refund
+after delete on public.region_slots
+deferrable initially deferred
 for each row
 execute function public.refund_player_on_building_demolition();
 
