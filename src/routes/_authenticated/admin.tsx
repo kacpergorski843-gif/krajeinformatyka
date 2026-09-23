@@ -184,7 +184,7 @@ function escapeHtml(value: string) {
 }
 
 function openApplicationExportPdf(data: ApplicationExport) {
-  const printWindow = window.open("", "_blank", "noopener,noreferrer");
+  const printWindow = window.open("", "_blank");
   if (!printWindow) throw new Error("Przeglądarka zablokowała nowe okno. Zezwól na wyskakujące okna dla aplikacji.");
 
   const sections = Object.entries(data.tables)
