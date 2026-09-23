@@ -165,6 +165,12 @@ ${message}`,
 
     const result = (await response.json()) as OpenRouterResponse;
     if (!response.ok) {
+      if (response.status === 402) {
+        throw new Error(
+          "Doradca AI jest chwilowo niedostępny: Lovable AI zwróciło HTTP 402, co oznacza brak dostępnych kredytów AI. Aplikacja działa poprawnie, ale bramka AI odrzuciła to zapytanie.",
+        );
+      }
+
       throw new Error(
         result.error?.message ??
           `Lovable AI zwróciło błąd HTTP ${response.status}.`,
