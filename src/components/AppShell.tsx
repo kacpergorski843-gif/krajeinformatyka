@@ -71,7 +71,7 @@ export function AppShell({ me, title, subtitle, children }: {
       </main>
     </div>
     <nav className="mobile-nav lg:hidden">
-      {items.slice(0, 5).map((item) => <Link key={item.to} to={item.to} activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
+      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
         <item.icon className="size-5" strokeWidth={1.8}/><span>{item.label}</span>
       </Link>)}
       <button className="mobile-nav-item" onClick={() => setMobileOpen(true)}><Menu className="size-5"/><span>Menu</span></button>
