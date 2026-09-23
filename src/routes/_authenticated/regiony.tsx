@@ -345,7 +345,7 @@ function Regions() {
           <DialogHeader>
             <DialogTitle>{occupied ? BUILDING_LABELS[occupied.building] : ""}</DialogTitle>
             <DialogDescription>
-              {occupied?.region} — rozbiórka zwalnia slot, ale nie zwraca kosztów.
+              {occupied?.region} — pierwsze 24 godziny: zwrot 100% kosztu budowy. Po 24 godzinach: zwrot 75%.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2">
