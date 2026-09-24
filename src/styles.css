@@ -632,8 +632,27 @@
 .admin-v4-submit svg{width:14px;height:14px}
 .admin-v4-confirm{max-width:460px}
 .admin-v4-confirm-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:.5rem}
+.admin-tabs-mobile{margin-bottom:.55rem}
+.admin-operation-picker{display:none}
+.admin-operation-picker button{min-height:48px;border:1px solid var(--color-border);background:var(--color-card);color:var(--color-muted-foreground);display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.55rem .4rem;font-size:.62rem;font-weight:800;letter-spacing:.04em;touch-action:manipulation}
+.admin-operation-picker button svg{width:16px;height:16px}
+.admin-operation-picker button.is-active{border-color:color-mix(in oklab,var(--color-primary) 45%,var(--color-border));background:color-mix(in oklab,var(--color-primary) 9%,var(--color-card));color:var(--color-primary)}
 @media(max-width:1050px){.admin-v4-grid{grid-template-columns:1fr 1fr}.admin-v4-card:last-child{grid-column:1/-1}}
 @media(max-width:700px){.admin-v4-intro{align-items:flex-start;flex-direction:column;padding:.95rem}.admin-v4-intro-badge{width:max-content}.admin-v4-grid{grid-template-columns:1fr}.admin-v4-card:last-child{grid-column:auto}.admin-v4-card-copy{min-height:0}.admin-v4-confirm-actions{display:grid;grid-template-columns:1fr 1fr}.admin-v4-confirm-actions button{width:100%}}
+@media(max-width:639px){
+  .admin-tabs-desktop{display:none}
+  .admin-tabs-mobile{display:block}
+  .admin-operation-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem;margin-bottom:.6rem}
+  .admin-v4-grid{display:block}
+  .admin-v4-card{display:none;padding:.9rem}
+  .admin-v4-card.admin-v4-mobile-active{display:flex}
+  .admin-v4-card-copy{padding-top:.65rem}
+  .admin-v4-card-copy p{font-size:.68rem}
+  .admin-v4-field [data-slot=select-trigger],.admin-v4-field input{min-height:46px;font-size:.9rem}
+  .admin-v4-submit{min-height:50px;margin-top:.7rem;font-size:.72rem!important}
+  .admin-v4-summary{min-height:76px;margin-top:.7rem}
+  .admin-v4-bonus-display{min-height:92px}
+}
 @media(max-width:380px){.admin-v4-card{padding:.8rem}.admin-v4-intro h2{font-size:1.05rem}.admin-v4-card-copy h3{font-size:.92rem}}
 
 

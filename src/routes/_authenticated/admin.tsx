@@ -302,6 +302,7 @@ function Update4Tools() {
   const [selectedBonus, setSelectedBonus] = useState<NonNullable<typeof activeBonuses.data>[number] | null>(null);
   const [hours, setHours] = useState("24");
   const [confirm, setConfirm] = useState<"building" | "bonus" | "occupation" | null>(null);
+  const [activeOperation, setActiveOperation] = useState<"building" | "bonus" | "occupation">("building");
 
   const run = async (fn: string, args: Record<string, unknown>, label: string) => {
     try {
@@ -346,8 +347,27 @@ function Update4Tools() {
         <div className="admin-v4-intro-badge"><Shield /> ADMIN ONLY</div>
       </div>
 
+      <div className="admin-operation-picker" role="tablist" aria-label="Wybierz operację">
+        {([
+          ["building", "Budynek", Building2],
+          ["bonus", "Bonus", CircleDollarSign],
+          ["occupation", "Region", Boxes],
+        ] as const).map(([value, label, Icon]) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={activeOperation === value}
+            className={activeOperation === value ? "is-active" : ""}
+            onClick={() => setActiveOperation(value)}
+          >
+            <Icon />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
       <div className="admin-v4-grid">
-        <section className="admin-v4-card">
+        <section className={`admin-v4-card admin-v4-operation-building ${activeOperation === "building" ? "admin-v4-mobile-active" : ""}`}>
           <div className="admin-v4-card-top">
             <span className="admin-v4-icon"><Building2 /></span>
             <span className="admin-v4-step">01 / BUILD</span>
@@ -390,7 +410,7 @@ function Update4Tools() {
           <Button className="admin-v4-submit" disabled={!country || !region || !building || Number(slot) < 1 || Number(slot) > 9 || Number(qty) < 1 || Number(qty) > 9} onClick={() => setConfirm("building")}>Dodaj budynek <ChevronRight /></Button>
         </section>
 
-        <section className="admin-v4-card">
+        <section className={`admin-v4-card admin-v4-operation-bonus ${activeOperation === "bonus" ? "admin-v4-mobile-active" : ""}`}>
           <div className="admin-v4-card-top">
             <span className="admin-v4-icon"><CircleDollarSign /></span>
             <span className="admin-v4-step">02 / ECONOMY</span>
@@ -510,7 +530,7 @@ function Update4Tools() {
           </Dialog>
         </section>
 
-        <section className="admin-v4-card">
+        <section className={`admin-v4-card admin-v4-operation-occupation ${activeOperation === "occupation" ? "admin-v4-mobile-active" : ""}`}>
           <div className="admin-v4-card-top">
             <span className="admin-v4-icon admin-v4-icon-danger"><Radar /></span>
             <span className="admin-v4-step">03 / TERRITORY</span>
@@ -603,6 +623,7 @@ function AdminPanel() {
   const runs = useQuery(economyRunsQuery);
   const queryClient = useQueryClient();
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
+  const [adminTab, setAdminTab] = useState("countries");
 
   useEffect(() => {
     const timer = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
@@ -647,9 +668,24 @@ function AdminPanel() {
           <Kpi icon={<CalendarClock />} label="Cykl dobowy" value={countdown} hint={latestRun ? `Ostatni: ${dateTime(latestRun.ran_at)}` : "Brak wcześniejszych rozliczeń"} loading={runs.isLoading} />
         </section>
 
-        <Tabs defaultValue="countries" className="min-w-0">
-          <div className="admin-scrollbar w-full max-w-full overflow-x-auto pb-1">
-            <TabsList className="grid h-auto min-w-[48rem] grid-cols-6 border border-border/70 bg-card/80 p-1">
+        <Tabs value={adminTab} onValueChange={setAdminTab} className="min-w-0">
+          <div className="admin-tabs-mobile sm:hidden">
+            <Select value={adminTab} onValueChange={setAdminTab}>
+              <SelectTrigger className="min-h-12 w-full border-border/70 bg-card/80">
+                <SelectValue placeholder="Wybierz sekcję" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="countries">Państwa</SelectItem>
+                <SelectItem value="users">Użytkownicy</SelectItem>
+                <SelectItem value="shop">Sklep / Produkty</SelectItem>
+                <SelectItem value="economy">Cykl dobowy</SelectItem>
+                <SelectItem value="history">Historia / Audyt</SelectItem>
+                <SelectItem value="update4">Operacje</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="admin-tabs-desktop hidden sm:block">
+            <TabsList className="grid h-auto w-full grid-cols-6 border border-border/70 bg-card/80 p-1">
               <AdminTab value="countries" icon={<Building2 />}>Państwa</AdminTab>
               <AdminTab value="users" icon={<UserCog />}>Użytkownicy</AdminTab>
               <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
