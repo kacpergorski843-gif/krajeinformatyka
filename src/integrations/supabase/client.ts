@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
+// Lovable Cloud can expose these through env at build time. The public project
+// fallback keeps the client usable in previews where env injection is absent.
+const DEFAULT_SUPABASE_URL = 'https://kbcofzdboyzgsquvtzfq.supabase.co';
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_7_r097eJVu-A2-HUG8GAQg_Mjd83qW4';
+
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }
@@ -34,22 +39,14 @@ function createSupabaseClient() {
   const SUPABASE_URL =
     publicEnv.VITE_SUPABASE_URL ??
     serverEnv.VITE_SUPABASE_URL ??
-    serverEnv.SUPABASE_URL;
+    serverEnv.SUPABASE_URL ??
+    DEFAULT_SUPABASE_URL;
 
   const SUPABASE_PUBLISHABLE_KEY =
     publicEnv.VITE_SUPABASE_PUBLISHABLE_KEY ??
     serverEnv.VITE_SUPABASE_PUBLISHABLE_KEY ??
-    serverEnv.SUPABASE_PUBLISHABLE_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
-    ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
-  }
+    serverEnv.SUPABASE_PUBLISHABLE_KEY ??
+    DEFAULT_SUPABASE_PUBLISHABLE_KEY;
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
