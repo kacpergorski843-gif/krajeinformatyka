@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 
+const SUPABASE_FALLBACK_URL = "https://kbcofzdboyzgsquvtzfq.supabase.co";
+const SUPABASE_FALLBACK_PUBLISHABLE_KEY = "sb_publishable_7_r097eJVu-A2-HUG8GAQg_Mjd83qW4";
+
 const SYSTEM = `Jesteś Doradcą AI w grze COUNTRY RP. Jesteś prawdziwym analitykiem strategicznym, nie generatorem gotowych odpowiedzi.
 Analizuj wyłącznie dane przekazane przez backend i zasady gry. Nie wymyślaj liczb, cen ani mechanik. Jeśli czegoś nie ma w danych, powiedz to.
 Twoim zadaniem jest pomagać graczowi podejmować decyzje, ale nie wykonywać ich za niego.
@@ -40,22 +43,17 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       throw new Error("Wiadomość musi mieć 1–2000 znaków");
     }
 
-    // Server runtime first, then the Vite build-time public values. This is important
-    // for Lovable/TanStack preview where the server process may not receive the same
-    // environment bindings as the Vite build.
     const supabaseUrl =
       runtimeEnv("SUPABASE_URL") ??
       runtimeEnv("VITE_SUPABASE_URL") ??
-      buildEnv("VITE_SUPABASE_URL");
+      buildEnv("VITE_SUPABASE_URL") ??
+      SUPABASE_FALLBACK_URL;
     const supabaseKey =
       runtimeEnv("SUPABASE_PUBLISHABLE_KEY") ??
       runtimeEnv("SUPABASE_ANON_KEY") ??
       runtimeEnv("VITE_SUPABASE_PUBLISHABLE_KEY") ??
-      buildEnv("VITE_SUPABASE_PUBLISHABLE_KEY");
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Brak konfiguracji backendu. Sprawdź konfigurację Supabase w Lovable Cloud.");
-    }
+      buildEnv("VITE_SUPABASE_PUBLISHABLE_KEY") ??
+      SUPABASE_FALLBACK_PUBLISHABLE_KEY;
 
     const supabase = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: `Bearer ${data.accessToken}` } },
@@ -103,7 +101,13 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
       okupacje: occupationsRes.data,
       historia_transakcji: historyRes.data,
       historia_rozmow_z_doradca: conversationHistory,
-      swiat: { panstwa: worldCountriesRes.data, regiony: worldRegionsRes.data, uderzenia_rakietowe: strikesRes.data, cykle_gospodarcze: economyRunsRes.data, bonusy_gospodarcze: bonusesRes.data },
+      swiat: {
+        panstwa: worldCountriesRes.data,
+        regiony: worldRegionsRes.data,
+        uderzenia_rakietowe: strikesRes.data,
+        cykle_gospodarcze: economyRunsRes.data,
+        bonusy_gospodarcze: bonusesRes.data,
+      },
     };
 
     const lovableKey = runtimeEnv("LOVABLE_API_KEY");
@@ -113,13 +117,28 @@ export const askAiAdvisor = createServerFn({ method: "POST" })
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${lovableKey}`, "Lovable-API-Key": lovableKey, "X-Lovable-AIG-SDK": "native", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "google/gemini-3.7-flash", messages: [{ role: "system", content: SYSTEM }, { role: "user", content: `AKTUALNY KONTEKST GRY:\n${JSON.stringify(context)}\n\nPYTANIE GRACZA:\n${message}` }], temperature: 0.3, max_tokens: 32768 }),
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "Lovable-API-Key": lovableKey,
+        "X-Lovable-AIG-SDK": "native",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3.7-flash",
+        messages: [
+          { role: "system", content: SYSTEM },
+          { role: "user", content: `AKTUALNY KONTEKST GRY:\n${JSON.stringify(context)}\n\nPYTANIE GRACZA:\n${message}` },
+        ],
+        temperature: 0.3,
+        max_tokens: 32768,
+      }),
     });
 
     const result = (await response.json()) as OpenRouterResponse;
     if (!response.ok) {
-      if (response.status === 402) throw new Error("Doradca AI jest chwilowo niedostępny: Lovable AI zwróciło HTTP 402, co oznacza brak dostępnych kredytów AI. Aplikacja działa poprawnie, ale bramka AI odrzuciła to zapytanie.");
+      if (response.status === 402) {
+        throw new Error("Doradca AI jest chwilowo niedostępny: Lovable AI zwróciło HTTP 402, co oznacza brak dostępnych kredytów AI. Aplikacja działa poprawnie, ale bramka AI odrzuciła to zapytanie.");
+      }
       throw new Error(result.error?.message ?? `Lovable AI zwróciło błąd HTTP ${response.status}.`);
     }
 
