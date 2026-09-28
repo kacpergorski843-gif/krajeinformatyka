@@ -1213,3 +1213,22 @@
     animation: none !important;
   }
 }
+
+
+/* Lightweight rendering hints for long admin/data-heavy surfaces. */
+.admin-v4-card,
+.admin-data-row,
+.country-card,
+.command-region-row {
+  contain: layout paint;
+}
+
+@media (min-width: 641px) {
+  .admin-v4-card,
+  .admin-data-row,
+  .country-card,
+  .command-region-row {
+    content-visibility: auto;
+    contain-intrinsic-size: 180px;
+  }
+}
