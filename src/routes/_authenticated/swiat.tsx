@@ -24,6 +24,7 @@ function World() {
   const { data: me } = useQuery(meQuery);
   const { data: countries, isPending, isError, error } = useQuery(publicCountriesQuery);
   const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
   const [selectedId, setSelectedId] = useState<string | null>(() =>
     typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("country"),
   );
