@@ -849,6 +849,17 @@
     min-height: 44px;
   }
 
+  /* Switches keep their compact control geometry instead of inheriting button touch height. */
+  .content-area button[role="switch"],
+  .mobile-drawer button[role="switch"],
+  [data-radix-dialog-content] button[role="switch"] {
+    min-width: 36px;
+    width: 36px;
+    min-height: 20px;
+    height: 20px;
+    padding: 2px;
+  }
+
   .content-area input,
   .content-area select,
   .content-area [role="combobox"],
