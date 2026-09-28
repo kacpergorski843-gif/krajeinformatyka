@@ -1,7 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity, ArrowRightLeft } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,19 +25,46 @@ export function AppShell({ me, title, subtitle, children }: {
   const queryClient = useQueryClient();
   const [confirmOut, setConfirmOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
     router.navigate({ to: "/auth", replace: true });
   }
+
   const items = me?.isAdmin ? [...NAV, { to: "/admin", label: "Administracja", icon: ShieldHalf } as const] : NAV;
-  const nav = (mobile = false) => <div className={mobile ? "grid gap-1" : "space-y-1"}>
-    {items.map((item) => <Link key={item.to} to={item.to} onClick={() => mobile && setMobileOpen(false)}
-      activeProps={{ className: "nav-active" }} className="nav-item">
-      <item.icon className="size-[18px] shrink-0" strokeWidth={1.8} /><span className="truncate">{item.label}</span>
-    </Link>)}
-  </div>;
+  const nav = (mobile = false) => (
+    <div className={mobile ? "grid gap-1" : "space-y-1"}>
+      {items.map((item) => (
+        <Link
+          key={item.to}
+          to={item.to}
+          prefetch="intent"
+          onClick={() => mobile && setMobileOpen(false)}
+          activeProps={{ className: "nav-active" }}
+          className="nav-item"
+        >
+          <item.icon className="size-[18px] shrink-0" strokeWidth={1.8} />
+          <span className="truncate">{item.label}</span>
+        </Link>
+      ))}
+    </div>
+  );
 
   return <div className="app-shell min-h-screen pb-20 lg:pb-0">
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
@@ -63,20 +90,20 @@ export function AppShell({ me, title, subtitle, children }: {
           <div className="min-w-0"><div className="flex items-center gap-2"><span className="command-pulse" /><p className="label-hud">SYSTEM / {title.toUpperCase()}</p></div>
           <h1 className="page-title truncate">{title}</h1>{subtitle ? <p className="page-subtitle truncate">{subtitle}</p> : null}</div>
           <div className="flex items-center gap-2"><div className="system-status hidden sm:flex"><span /> ONLINE</div>
-            <button className="mobile-menu-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Otwórz menu"><Menu className="size-5" /></button>
+            <button className="mobile-menu-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Otwórz menu" aria-expanded={mobileOpen}><Menu className="size-5" /></button>
           </div>
         </header>
         <div className="content-area"><div className="page-intro"><span>LIVE OPERATIONS</span><span className="page-intro-line" /></div>{children}</div>
       </main>
     </div>
-    <nav className="mobile-nav lg:hidden">
-      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
+    <nav className="mobile-nav lg:hidden" aria-label="Główna nawigacja">
+      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} prefetch="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
         <item.icon className="size-5" strokeWidth={1.8}/><span>{item.label}</span>
       </Link>)}
-      <button className="mobile-nav-item" onClick={() => setMobileOpen(true)}><Menu className="size-5"/><span>Menu</span></button>
+      <button className="mobile-nav-item" onClick={() => setMobileOpen(true)} aria-label="Otwórz pełne menu"><Menu className="size-5"/><span>Menu</span></button>
     </nav>
-    {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" onClick={() => setMobileOpen(false)}>
-      <aside className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
+    {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" role="presentation" onClick={() => setMobileOpen(false)}>
+      <aside className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Activity className="size-5"/></div><span className="font-display font-bold tracking-[0.18em]">COUNTRY RP</span></div>
         <button onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button></div>
         <div className="mt-5">{nav(true)}</div>
