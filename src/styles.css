@@ -853,10 +853,10 @@
   .content-area button[role="switch"],
   .mobile-drawer button[role="switch"],
   [data-radix-dialog-content] button[role="switch"] {
-    min-width: 36px;
-    width: 36px;
-    min-height: 20px;
-    height: 20px;
+    min-width: 44px;
+    width: 44px;
+    min-height: 24px;
+    height: 24px;
     padding: 2px;
   }
 
