@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { ArrowRightLeft, Coins, Flame, Droplet, CircleDot, Magnet, Atom } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { CountryFlag } from "@/components/CountryFlag";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +25,7 @@ const resources = [
 
 function Transfers() {
   const { data: me } = useQuery(meQuery);
-  const { data: countries } = useQuery(countriesQuery);
+  const { data: countries, isPending, isError, error } = useQuery(countriesQuery);
   const queryClient = useQueryClient();
   const [target, setTarget] = useState("");
   const [resource, setResource] = useState("balance");
@@ -46,11 +48,11 @@ function Transfers() {
       p_amount: amountNumber,
     }),
     onSuccess: () => {
-      toast.success("Transfer wysłany");
+      toast.success("Transfer zrealizowany", { description: `${fmtNum(amountNumber)} ${resources.find((x) => x[0] === resource)?.[1]} → ${recipient?.name}` });
       setAmount("");
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error("Nie udało się wykonać transferu", { description: e.message }),
   });
 
   const Icon = useMemo(() => resources.find((x) => x[0] === resource)?.[2] ?? Coins, [resource]);
@@ -60,48 +62,50 @@ function Transfers() {
       <div>
         <p className="label-hud">LOGISTICS COMMAND</p>
         <h2 className="mt-1 text-xl font-semibold">Centrum transferów</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Przekazuj pieniądze i surowce między państwami w kontrolowanym, atomowym transferze.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Przekazuj pieniądze i surowce między państwami. Każda operacja jest wykonywana atomowo.</p>
       </div>
     </div>
-    <div className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
+
+    {isPending ? <PageSkeleton rows={3} cards={2} /> : null}
+    {isError ? (
+      <Panel className="border-destructive/40 bg-destructive/5 p-5">
+        <p className="font-semibold text-destructive">Nie udało się wczytać państw</p>
+        <p className="mt-1 text-sm text-muted-foreground">{error instanceof Error ? error.message : "Spróbuj ponownie za chwilę."}</p>
+      </Panel>
+    ) : null}
+
+    {!isPending && !isError ? <div className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
       <Panel className="hud-frame">
-        <div className="mb-6 flex items-center gap-3"><div className="brand-mark"><ArrowRightLeft className="size-5"/></div><div><p className="font-display text-lg font-semibold">Nowy transfer</p><p className="text-sm text-muted-foreground">Operacja jest wykonywana atomowo przez backend.</p></div></div>
+        <div className="mb-6 flex items-center gap-3"><div className="brand-mark"><ArrowRightLeft className="size-5"/></div><div><p className="font-display text-lg font-semibold">Nowy transfer</p><p className="text-sm text-muted-foreground">Wybierz odbiorcę, zasób i kwotę.</p></div></div>
         <div className="space-y-5">
           <div><p className="label-hud mb-2">1. Wybierz państwo</p>
             <Select value={target} onValueChange={setTarget}><SelectTrigger><SelectValue placeholder="Wybierz odbiorcę"/></SelectTrigger><SelectContent>
               {(countries ?? []).filter((c) => c.country_id !== me?.countryId).map((c) => (
                 <SelectItem key={c.country_id} value={c.country_id}>
-                  <span className="flex items-center gap-2">
-                    {c.flag?.startsWith("http") ? (
-                      <img src={c.flag} alt="" className="size-5 shrink-0 rounded-sm object-cover" loading="lazy" />
-                    ) : (
-                      <span className="inline-flex size-5 shrink-0 items-center justify-center text-base" aria-hidden="true">{c.flag}</span>
-                    )}
-                    <span>{c.name}</span>
-                  </span>
+                  <span className="flex items-center gap-2"><CountryFlag flag={c.flag} alt="" className="size-5 shrink-0 rounded-sm text-base" /><span>{c.name}</span></span>
                 </SelectItem>
               ))}
             </SelectContent></Select>
           </div>
           <div><p className="label-hud mb-2">2. Wybierz zasób</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-              {resources.map(([key,label,I]) => <button key={key} type="button" onClick={() => setResource(key)} className={`flex min-h-12 items-center gap-2 rounded-lg border p-3 text-left text-sm transition-colors ${resource===key ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/40 text-muted-foreground"}`}><I className="size-4"/>{label}</button>)}
+              {resources.map(([key,label,I]) => <button key={key} type="button" onClick={() => setResource(key)} className={`flex min-h-12 items-center gap-2 rounded-lg border p-3 text-left text-sm transition-all ${resource===key ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"}`} aria-pressed={resource === key}><I className="size-4"/>{label}</button>)}
             </div>
           </div>
-          <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="numeric" type="number" min={isMoney ? "1000000000" : "0"} step={isMoney ? "1000000000" : "any"} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={isMoney ? "1 000 000 000" : "0"}/></div>
+          <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="numeric" type="number" min={isMoney ? "1000000000" : "0"} step={isMoney ? "1000000000" : "any"} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={isMoney ? "1 000 000 000" : "0"} aria-describedby="transfer-amount-help" /><p id="transfer-amount-help" className="mt-2 text-xs text-muted-foreground">Dostępne: <span className="num">{units(available)}</span>{isMoney ? " · przelewy KR muszą być wielokrotnością 1 mld" : ""}</p></div>
         </div>
       </Panel>
 
       <Panel className="h-fit">
         <SectionTitle>Podsumowanie</SectionTitle>
-        <div className="rounded-xl border border-border bg-secondary/30 p-4">
+        <div className="rounded-xl border border-border bg-secondary/30 p-4" aria-live="polite">
           <div className="flex items-center gap-3"><Icon className="size-5 text-primary"/><div><p className="text-xs text-muted-foreground uppercase">Wysyłasz</p><p className="num text-xl font-semibold">{fmtNum(amountNumber)} {resources.find(x=>x[0]===resource)?.[1]}</p></div></div>
           <div className="my-5 border-l border-dashed border-primary/40 pl-4"><p className="text-xs text-muted-foreground uppercase">Do</p><p className="font-semibold">{recipient?.name ?? "Nie wybrano państwa"}</p></div>
           <div className="border-t border-border pt-4"><p className="text-xs text-muted-foreground uppercase">Pozostanie u nadawcy</p><p className={`num mt-1 text-xl font-semibold ${canSend ? "text-success" : "text-foreground"}`}>{fmtNum(remaining)}</p></div>
         </div>
-        <Button className="mt-4 min-h-12 w-full" disabled={!canSend || transfer.isPending} onClick={() => transfer.mutate()}>{transfer.isPending ? "Wysyłam…" : "Wyślij transfer"}</Button>
-        {mine ? <p className="mt-3 text-xs text-muted-foreground">Dostępne: <span className="num">{units(available)}</span></p> : null}
+        <Button className="mt-4 min-h-12 w-full" disabled={!canSend || transfer.isPending} onClick={() => transfer.mutate()}>{transfer.isPending ? "Wysyłam transfer…" : "Wyślij transfer"}</Button>
+        {!canSend && amountNumber > 0 && recipient && !transfer.isPending ? <p className="mt-3 text-center text-xs text-destructive">{amountNumber > available ? "Kwota przekracza dostępne środki." : !validMoneyAmount ? "Kwota KR musi być wielokrotnością 1 mld." : "Uzupełnij odbiorcę i popraw kwotę."}</p> : null}
       </Panel>
-    </div>
+    </div> : null}
   </AppShell>;
 }
