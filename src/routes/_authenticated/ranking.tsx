@@ -32,6 +32,7 @@ function Ranking() {
   const { data: countries, isPending, isError, error } = useQuery(countriesQuery);
   const [mode, setMode] = useState<Mode>("income");
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
 
   const fullList = useMemo(() => [...(countries ?? [])].sort((a, b) => mode === "income" ? Number(b.gross_income) - Number(a.gross_income) : b.vote_potential - a.vote_potential), [countries, mode]);
   const list = useMemo(() => {
