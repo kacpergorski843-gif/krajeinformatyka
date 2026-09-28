@@ -459,6 +459,16 @@ export const adminShopQuery = queryOptions({
     )) as unknown as ShopItem[],
 });
 
+export const allRegionOptionsQuery = queryOptions({
+  queryKey: ["all_region_options"],
+  queryFn: async (): Promise<Array<{ id: string; name: string; country_id: string }>> => {
+    const rows = await unwrap(
+      supabase.from("regions").select("id,name,country_id").order("created_at"),
+    );
+    return (rows ?? []) as Array<{ id: string; name: string; country_id: string }>;
+  },
+});
+
 export const allRegionsQuery = queryOptions({
   queryKey: ["all_regions"],
   queryFn: async (): Promise<RegionWithSlots[]> => {
