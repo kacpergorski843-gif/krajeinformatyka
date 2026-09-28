@@ -67,7 +67,8 @@ function MyCountry() {
           try {
             await rpc("claim_main_admin", {});
             toast.success("Jesteś głównym administratorem");
-            queryClient.invalidateQueries();
+            void queryClient.invalidateQueries({ queryKey: ["me"] });
+            void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
           } catch (e) {
             toast.error(e instanceof Error ? e.message : "Nie udało się");
           }
