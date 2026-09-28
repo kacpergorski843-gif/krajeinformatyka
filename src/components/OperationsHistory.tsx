@@ -1,14 +1,8 @@
 import { useMemo, useState } from "react";
-import { History } from "lucide-react";
+import { ChevronRight, History, ReceiptText, WalletCards } from "lucide-react";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { dateTime, fmtKR, units, RESOURCE_LABELS } from "@/lib/format";
 
 export type TxRow = {
@@ -20,28 +14,8 @@ export type TxRow = {
   details?: Record<string, unknown> | null;
 };
 
-const FILTERS = [
-  "Wszystkie",
-  "Ekonomia",
-  "Budynki",
-  "Wojsko",
-  "Rakiety",
-  "OPL",
-  "Surowce",
-  "Administracja",
-] as const;
-type Filter = (typeof FILTERS)[number];
-
-const KIND_LABELS: Record<string, string> = {
-  ECONOMY: "Ekonomia",
-  TRANSFER: "Transfer",
-  PURCHASE: "Zakup",
-  BUILD: "Budowa",
-  DEMOLISH: "Rozbiórka",
-  STRIKE: "Atak rakietowy",
-  DEFENSE: "Obrona",
-  ADMIN: "Administracja",
-};
+type View = "all" | "payouts" | "purchases" | "transfers";
+type ResourceDelta = { key: string; label: string; amount: number };
 
 const RESOURCE_NAMES: Record<string, string> = {
   ...RESOURCE_LABELS,
@@ -54,66 +28,45 @@ const RESOURCE_NAMES: Record<string, string> = {
   missile_3: "Rakiety III",
 };
 
-function categoryOf(t: TxRow): Exclude<Filter, "Wszystkie"> {
-  const item = String((t.details as Record<string, unknown> | null)?.["item"] ?? "");
-  if (t.kind === "ADMIN") return "Administracja";
-  if (t.kind === "ECONOMY") return "Ekonomia";
-  if (t.kind === "STRIKE" || t.kind === "DEFENSE") return "Rakiety";
-  if (item === "aa") return "OPL";
-  if (t.kind === "TRANSFER") return "Surowce";
-  if (t.kind === "BUILD" || t.kind === "DEMOLISH") {
-    return /wytwórni|wytwornia|Wytwórnia/i.test(t.label) ? "Surowce" : "Budynki";
-  }
-  return "Wojsko";
-}
-
-function weekStart(iso: string): Date {
-  const d = new Date(iso);
-  const day = (d.getDay() + 6) % 7;
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - day);
-}
-
-const shortDate = (d: Date) => d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit" });
-
-type ResourceDelta = { key: string; label: string; amount: number };
-
-type Merged = {
-  key: string;
-  label: string;
-  count: number;
-  amount: number;
-  created_at: string;
-  category: string;
-  resources: ResourceDelta[];
-  transactions: TxRow[];
+const kindName: Record<string, string> = {
+  ECONOMY: "Wypłata dzienna",
+  PURCHASE: "Zakup",
+  TRANSFER: "Transfer",
+  BUILD: "Budowa",
+  DEMOLISH: "Rozbiórka",
+  STRIKE: "Atak rakietowy",
+  DEFENSE: "Obrona",
+  ADMIN: "Administracja",
 };
 
-function resourceDeltas(details: Record<string, unknown> | null | undefined): ResourceDelta[] {
-  if (!details) return [];
-  const source =
-    (details.resources as Record<string, unknown> | undefined) ??
-    (details.resource_amounts as Record<string, unknown> | undefined) ??
-    details;
-  return Object.entries(source)
-    .filter(([key, value]) =>
-      ["coal", "oil", "copper", "iron", "uranium"].includes(key) && Number.isFinite(Number(value)),
-    )
-    .map(([key, value]) => ({ key, label: RESOURCE_LABELS[key] ?? key, amount: Number(value) }))
-    .filter((item) => item.amount !== 0);
+function details(t: TxRow) {
+  return t.details ?? {};
+}
+
+function isPayout(t: TxRow) {
+  return t.kind === "ECONOMY";
+}
+
+function isPurchase(t: TxRow) {
+  return t.kind === "PURCHASE";
+}
+
+function isTransfer(t: TxRow) {
+  return t.kind === "TRANSFER";
 }
 
 function transferInfo(t: TxRow) {
-  if (t.kind !== "TRANSFER") return null;
-  const details = t.details ?? {};
-  const resource = String(details.resource ?? "");
-  const amount = Number(details.amount ?? 0);
-  const direction = details.direction === "in" ? "in" : "out";
-  const targetName = t.label.includes("→") ? t.label.split("→")[1]?.trim() : t.label.includes("←") ? t.label.split("←")[1]?.trim() : "";
-  const otherName = targetName || "drugie państwo";
-  return { resource, amount, direction, otherName };
+  if (!isTransfer(t)) return null;
+  const d = details(t);
+  const resource = String(d.resource ?? "");
+  const amount = Number(d.amount ?? 0);
+  const direction = d.direction === "in" ? "in" : "out";
+  const arrow = t.label.includes("→") ? "→" : t.label.includes("←") ? "←" : null;
+  const otherName = arrow ? t.label.split(arrow)[1]?.trim() : "drugie państwo";
+  return { resource, amount, direction, otherName: otherName || "drugie państwo" };
 }
 
-function readableLabel(t: TxRow): string {
+function readableLabel(t: TxRow) {
   const transfer = transferInfo(t);
   if (transfer) {
     const resource = RESOURCE_NAMES[transfer.resource] ?? transfer.resource;
@@ -121,198 +74,171 @@ function readableLabel(t: TxRow): string {
       ? `Wysłano ${resource} do ${transfer.otherName}`
       : `Otrzymano ${resource} od ${transfer.otherName}`;
   }
-  if (t.kind === "ECONOMY") return "Wypłata dzienna";
-  return t.label.replace(/^Transfer:\s*/i, "Transfer: ");
+  if (isPayout(t)) return "Wypłata dzienna";
+  if (isPurchase(t)) return t.label.replace(/^Zakup:\s*/i, "");
+  return t.label;
 }
 
 function displayAmount(t: TxRow) {
   const transfer = transferInfo(t);
   if (transfer && transfer.resource !== "balance") {
-    const sign = transfer.direction === "in" ? "+" : "−";
-    return `${sign}${units(transfer.amount)} ${RESOURCE_NAMES[transfer.resource] ?? transfer.resource}`;
+    return `${transfer.direction === "in" ? "+" : "−"}${units(transfer.amount)} ${RESOURCE_NAMES[transfer.resource] ?? transfer.resource}`;
   }
   const amount = Number(t.amount_kr);
   return `${amount > 0 ? "+" : ""}${fmtKR(amount)}`;
 }
 
-function DetailValue({ value }: { value: unknown }) {
-  if (value === null || value === undefined || value === "") return <span>—</span>;
-  if (typeof value === "boolean") return <span>{value ? "Tak" : "Nie"}</span>;
-  if (typeof value === "number") return <span>{units(value)}</span>;
-  if (typeof value === "object") return <span>{JSON.stringify(value)}</span>;
-  return <span>{String(value)}</span>;
+function resourceDeltas(d: Record<string, unknown>): ResourceDelta[] {
+  const source = (d.resources as Record<string, unknown> | undefined) ?? (d.resource_amounts as Record<string, unknown> | undefined) ?? d;
+  return Object.entries(source)
+    .filter(([key, value]) => ["coal", "oil", "copper", "iron", "uranium"].includes(key) && Number.isFinite(Number(value)))
+    .map(([key, value]) => ({ key, label: RESOURCE_NAMES[key] ?? key, amount: Number(value) }))
+    .filter((x) => x.amount !== 0);
+}
+
+function payoutBreakdown(t: TxRow) {
+  const d = details(t);
+  const fields: Array<[string, string]> = [
+    ["Dochód brutto", "gross_income"],
+    ["Produkcja węgla", "coal_prod"],
+    ["Produkcja ropy", "oil_prod"],
+    ["Produkcja miedzi", "copper_prod"],
+    ["Produkcja żelaza", "iron_prod"],
+    ["Produkcja uranu", "uranium_prod"],
+    ["Utrzymanie węgla", "coal_upkeep"],
+    ["Bonus", "bonus"],
+  ];
+  return fields
+    .map(([label, key]) => ({ label, key, value: Number(d[key] ?? 0) }))
+    .filter((x) => x.value !== 0);
+}
+
+function purchaseInfo(t: TxRow) {
+  const d = details(t);
+  const qty = Math.max(1, Number(d.qty ?? 1));
+  const total = Math.abs(Number(t.amount_kr));
+  return { qty, total, unit: total / qty, item: String(d.item ?? "") };
 }
 
 export function OperationsHistory({ rows, title = "Historia operacji" }: { rows: TxRow[] | undefined; title?: string }) {
-  const [filter, setFilter] = useState<Filter>("Wszystkie");
+  const [view, setView] = useState<View>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [full, setFull] = useState(false);
-  const [selected, setSelected] = useState<Merged | null>(null);
+  const [selected, setSelected] = useState<TxRow | null>(null);
 
-  const filtered = useMemo(() => {
-    return (rows ?? []).filter((t) => {
-      if (filter !== "Wszystkie" && categoryOf(t) !== filter) return false;
-      const day = t.created_at.slice(0, 10);
-      if (from && day < from) return false;
-      if (to && day > to) return false;
-      return true;
-    });
-  }, [rows, filter, from, to]);
+  const filtered = useMemo(() => (rows ?? []).filter((t) => {
+    if (view === "payouts" && !isPayout(t)) return false;
+    if (view === "purchases" && !isPurchase(t)) return false;
+    if (view === "transfers" && !isTransfer(t)) return false;
+    const day = t.created_at.slice(0, 10);
+    return (!from || day >= from) && (!to || day <= to);
+  }), [rows, view, from, to]);
 
-  const groups = useMemo(() => {
-    const out: { week: string; items: Merged[] }[] = [];
-    for (const t of filtered) {
-      const ws = weekStart(t.created_at);
-      const we = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate() + 6);
-      const week = `Tydzień ${shortDate(ws)} – ${shortDate(we)}`;
-      let group = out.find((g) => g.week === week);
-      if (!group) {
-        group = { week, items: [] };
-        out.push(group);
-      }
-      const deltas = resourceDeltas(t.details);
-      const last = group.items[group.items.length - 1];
-      if (last && last.label === readableLabel(t) && last.category === categoryOf(t)) {
-        last.count += 1;
-        last.amount += Number(t.amount_kr);
-        last.transactions.push(t);
-        for (const delta of deltas) {
-          const existing = last.resources.find((resource) => resource.key === delta.key);
-          if (existing) existing.amount += delta.amount;
-          else last.resources.push({ ...delta });
-        }
-        last.resources = last.resources.filter((resource) => resource.amount !== 0);
-      } else {
-        group.items.push({
-          key: t.id,
-          label: readableLabel(t),
-          count: 1,
-          amount: Number(t.amount_kr),
-          created_at: t.created_at,
-          category: categoryOf(t),
-          resources: deltas,
-          transactions: [t],
-        });
-      }
-    }
-    return out;
-  }, [filtered]);
-
-  const visible = useMemo(() => {
-    if (full) return groups;
-    let left = 10;
-    const out: { week: string; items: Merged[] }[] = [];
-    for (const g of groups) {
-      if (left <= 0) break;
-      const items = g.items.slice(0, left);
-      left -= items.length;
-      out.push({ week: g.week, items });
-    }
-    return out;
-  }, [groups, full]);
-
-  const totalItems = groups.reduce((n, g) => n + g.items.length, 0);
-  const detailRows = selected?.transactions ?? [];
+  const ordered = useMemo(() => [...filtered].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)), [filtered]);
+  const visible = full ? ordered : ordered.slice(0, 10);
+  const payouts = ordered.filter(isPayout);
+  const purchases = ordered.filter(isPurchase);
 
   return (
     <>
       <SectionTitle>{title}</SectionTitle>
-      <div className="admin-scrollbar -mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
-        {FILTERS.map((f) => (
-          <button key={f} type="button" onClick={() => setFilter(f)} className={`shrink-0 rounded-sm border px-2.5 py-1.5 text-[11px] tracking-[0.1em] uppercase ${filter === f ? "border-primary/70 text-primary bg-secondary" : "border-border text-muted-foreground"}`}>
-            {f}
+
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {([
+          ["all", "Wszystko"],
+          ["payouts", "Wypłaty"],
+          ["purchases", "Zakupy"],
+          ["transfers", "Transfery"],
+        ] as const).map(([key, label]) => (
+          <button key={key} type="button" onClick={() => setView(key)} className={`min-h-10 rounded-lg border px-3 py-2 text-xs font-medium transition ${view === key ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:bg-secondary/40"}`}>
+            {label}
           </button>
         ))}
       </div>
-      <div className="mb-3 grid gap-2 sm:grid-cols-2">
-        <label className="label-hud flex min-w-0 items-center gap-2">Od<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border-border bg-background text-foreground min-w-0 flex-1 rounded-sm border px-2 py-1.5 text-xs" /></label>
-        <label className="label-hud flex min-w-0 items-center gap-2">Do<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border-border bg-background text-foreground min-w-0 flex-1 rounded-sm border px-2 py-1.5 text-xs" /></label>
+
+      <div className="mb-4 grid gap-2 sm:grid-cols-2">
+        <label className="text-xs text-muted-foreground">Od<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground" /></label>
+        <label className="text-xs text-muted-foreground">Do<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground" /></label>
       </div>
 
-      <Panel className="p-0">
-        {visible.map((g) => (
-          <div key={g.week}>
-            <p className="border-border/70 bg-secondary/40 label-hud border-y px-3 py-1.5">{g.week}</p>
-            <div className="divide-border/70 divide-y">
-              {g.items.map((m) => (
-                <button key={m.key} type="button" onClick={() => setSelected(m)} className="hover:bg-secondary/30 focus-visible:ring-primary grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2.5 text-left outline-none focus-visible:ring-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm">{m.label}{m.count > 1 ? <span className="text-primary"> ×{m.count}</span> : null}</p>
-                    <p className="text-inactive text-[11px]">{m.category} · {dateTime(m.created_at)}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">Kliknij, aby zobaczyć szczegóły</p>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    {m.resources.length ? <div className="flex flex-wrap justify-end gap-x-2 gap-y-0.5 text-[11px]">{m.resources.map((resource) => <span key={resource.key} className={resource.amount > 0 ? "text-success" : "text-destructive"}>{resource.amount > 0 ? "+" : ""}{units(resource.amount)} {resource.label}</span>)}</div> : null}
-                    <p className={`num text-sm ${m.amount > 0 ? "text-success" : m.amount < 0 ? "text-destructive" : "text-inactive"}`}>{m.transactions.length > 1 && m.transactions.every((t) => Number(t.amount_kr) === 0) ? "Surowce" : `${m.amount > 0 ? "+" : ""}${fmtKR(m.amount)}`}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-        {totalItems === 0 ? <p className="text-muted-foreground flex items-center gap-2 p-3 text-sm"><History className="size-4" strokeWidth={1.5} /> Brak operacji dla wybranych filtrów.</p> : null}
+      {view === "all" && (
+        <div className="mb-4 grid gap-2 sm:grid-cols-2">
+          <button type="button" onClick={() => setView("payouts")} className="rounded-xl border border-border bg-secondary/20 p-3 text-left hover:bg-secondary/40">
+            <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm font-medium"><WalletCards className="size-4" /> Wypłaty</span><ChevronRight className="size-4 text-muted-foreground" /></div>
+            <p className="mt-1 text-xs text-muted-foreground">{payouts.length} wypłat · kliknij, aby sprawdzić rozliczenie</p>
+          </button>
+          <button type="button" onClick={() => setView("purchases")} className="rounded-xl border border-border bg-secondary/20 p-3 text-left hover:bg-secondary/40">
+            <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm font-medium"><ReceiptText className="size-4" /> Zakupy</span><ChevronRight className="size-4 text-muted-foreground" /></div>
+            <p className="mt-1 text-xs text-muted-foreground">{purchases.length} zakupów · ilość, cena i suma</p>
+          </button>
+        </div>
+      )}
+
+      <Panel className="overflow-hidden p-0">
+        {visible.map((t) => {
+          const transfer = transferInfo(t);
+          const purchase = isPurchase(t) ? purchaseInfo(t) : null;
+          const payout = isPayout(t);
+          const amount = Number(t.amount_kr);
+          return (
+            <button key={t.id} type="button" onClick={() => setSelected(t)} className="flex min-h-[72px] w-full items-center gap-3 border-b border-border/70 px-3 py-3 text-left transition last:border-0 hover:bg-secondary/30">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{readableLabel(t)}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{kindName[t.kind] ?? "Operacja"} · {dateTime(t.created_at)}</p>
+                {purchase ? <p className="mt-1 text-xs text-muted-foreground">Ilość: {units(purchase.qty)} · cena szt.: {fmtKR(purchase.unit)}</p> : null}
+                {transfer ? <p className="mt-1 text-xs text-muted-foreground">{transfer.direction === "out" ? "Do" : "Od"}: {transfer.otherName}</p> : null}
+                {payout ? <p className="mt-1 text-xs text-muted-foreground">Kliknij, aby zobaczyć pełne rozliczenie</p> : null}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className={`text-sm font-semibold ${amount > 0 ? "text-success" : amount < 0 ? "text-destructive" : "text-muted-foreground"}`}>{displayAmount(t)}</span>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </div>
+            </button>
+          );
+        })}
+        {!visible.length ? <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><History className="size-4" /> Brak operacji dla wybranych filtrów.</div> : null}
       </Panel>
 
-      {totalItems > 10 ? <Button variant="outline" className="mt-3 w-full" onClick={() => setFull((v) => !v)}>{full ? "Pokaż tylko ostatnie 10" : "Pokaż pełną historię"}</Button> : null}
+      {ordered.length > 10 ? <Button variant="outline" className="mt-3 w-full min-h-10" onClick={() => setFull((v) => !v)}>{full ? "Pokaż ostatnie 10" : `Pokaż pełną historię (${ordered.length})`}</Button> : null}
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selected?.label ?? "Szczegóły operacji"}</DialogTitle>
-            <DialogDescription>
-              {selected ? `${selected.category} · ${dateTime(selected.created_at)}` : ""}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-h-[88vh] max-w-lg overflow-y-auto">
           {selected ? (
-            <div className="space-y-4">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="rounded-lg border p-3"><p className="label-hud">ŁĄCZNIE KR</p><p className="num mt-1 text-lg font-semibold">{selected.amount > 0 ? "+" : ""}{fmtKR(selected.amount)}</p></div>
-                <div className="rounded-lg border p-3"><p className="label-hud">OPERACJI</p><p className="num mt-1 text-lg font-semibold">{selected.transactions.length}</p></div>
-              </div>
+            <>
+              <DialogHeader>
+                <DialogTitle>{readableLabel(selected)}</DialogTitle>
+                <DialogDescription>{dateTime(selected.created_at)} · {kindName[selected.kind] ?? "Operacja"}</DialogDescription>
+              </DialogHeader>
 
-              {selected.resources.length ? (
-                <div className="rounded-lg border p-3">
-                  <p className="label-hud mb-2">SUROWCE</p>
-                  <div className="space-y-1.5 text-sm">
-                    {selected.resources.map((resource) => <div key={resource.key} className="flex justify-between gap-3"><span>{resource.label}</span><span className={resource.amount >= 0 ? "text-success font-semibold" : "text-destructive font-semibold"}>{resource.amount > 0 ? "+" : ""}{units(resource.amount)}</span></div>)}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="space-y-2">
-                <p className="label-hud">SZCZEGÓŁY</p>
-                {detailRows.map((tx) => {
-                  const transfer = transferInfo(tx);
-                  const details = tx.details ?? {};
-                  return (
-                    <div key={tx.id} className="rounded-lg border p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium">{readableLabel(tx)}</p>
-                          <p className="text-xs text-muted-foreground">{dateTime(tx.created_at)}</p>
-                        </div>
-                        <p className={`num shrink-0 text-sm ${Number(tx.amount_kr) > 0 ? "text-success" : Number(tx.amount_kr) < 0 ? "text-destructive" : "text-muted-foreground"}`}>{displayAmount(tx)}</p>
-                      </div>
-                      {transfer ? (
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                          <div className="rounded border bg-secondary/20 p-2"><p className="label-hud">KIERUNEK</p><p className="mt-1 font-medium">{transfer.direction === "out" ? "Od Ciebie" : "Do Ciebie"}</p></div>
-                          <div className="rounded border bg-secondary/20 p-2"><p className="label-hud">PAŃSTWO</p><p className="mt-1 font-medium">{transfer.otherName}</p></div>
-                        </div>
-                      ) : null}
-                      {tx.kind === "ECONOMY" ? (
-                        <div className="mt-3 rounded border bg-secondary/20 p-2 text-xs">
-                          <p className="label-hud mb-2">ROZLICZENIE WYPŁATY</p>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                            {Object.entries(details).map(([key, value]) => <div key={key} className="contents"><span className="text-muted-foreground">{key.replaceAll("_", " ")}</span><span className="text-right font-medium"><DetailValue value={value} /></span></div>)}
-                          </div>
-                        </div>
-                      ) : null}
+              {isPurchase(selected) ? (() => {
+                const p = purchaseInfo(selected);
+                return (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-border bg-secondary/20 p-4">
+                      <p className="text-xs text-muted-foreground">CO KUPIONO</p>
+                      <p className="mt-1 text-base font-semibold">{selected.label.replace(/^Zakup:\s*/i, "")}</p>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">ILOŚĆ</p><p className="mt-1 text-lg font-semibold">{units(p.qty)}</p></div>
+                      <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">CENA / SZT.</p><p className="mt-1 text-lg font-semibold">{fmtKR(p.unit)}</p></div>
+                    </div>
+                    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4"><div className="flex justify-between gap-3"><span className="text-sm font-medium">Łącznie zapłacono</span><span className="font-semibold text-destructive">−{fmtKR(p.total)}</span></div></div>
+                    <div className="rounded-xl border p-4 text-sm"><div className="flex justify-between"><span>Data zakupu</span><span className="font-medium">{dateTime(selected.created_at)}</span></div><div className="mt-2 flex justify-between"><span>Status</span><span className="font-medium text-success">Zapisano w historii</span></div></div>
+                  </div>
+                );
+              })() : isPayout(selected) ? (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4"><p className="text-xs text-muted-foreground">WYPŁATA NETTO</p><p className="mt-1 text-2xl font-semibold text-success">+{fmtKR(Number(selected.amount_kr))}</p><p className="mt-1 text-xs text-muted-foreground">Zaksięgowano: {dateTime(selected.created_at)}</p></div>
+                  <div className="rounded-xl border p-4"><p className="mb-3 text-xs font-medium text-muted-foreground">ROZLICZENIE</p><div className="space-y-2 text-sm">{payoutBreakdown(selected).map((x) => <div key={x.key} className="flex justify-between gap-3"><span>{x.label}</span><span className="font-medium">{fmtKR(x.value)}</span></div>)}<div className="mt-3 flex justify-between border-t pt-3 font-semibold"><span>Zaksięgowano</span><span className="text-success">+{fmtKR(Number(selected.amount_kr))}</span></div></div></div>
+                </div>
+              ) : isTransfer(selected) ? (() => {
+                const transfer = transferInfo(selected)!;
+                return <div className="space-y-3"><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">TRANSFER</p><p className="mt-1 text-base font-semibold">{readableLabel(selected)}</p><p className="mt-1 text-xs text-muted-foreground">{dateTime(selected.created_at)}</p></div><div className="grid grid-cols-2 gap-2"><div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">ZASÓB</p><p className="mt-1 font-medium">{RESOURCE_NAMES[transfer.resource] ?? transfer.resource}</p></div><div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">ILOŚĆ</p><p className="mt-1 font-medium">{units(transfer.amount)}</p></div></div><div className="rounded-xl border p-4 text-sm"><div className="flex justify-between"><span>{transfer.direction === "out" ? "Odbiorca" : "Nadawca"}</span><span className="font-medium">{transfer.otherName}</span></div><div className="mt-2 flex justify-between"><span>Kierunek</span><span className="font-medium">{transfer.direction === "out" ? "Wysłano" : "Otrzymano"}</span></div></div></div>;
+              })() : (
+                <div className="space-y-3"><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">OPERACJA</p><p className="mt-1 font-semibold">{readableLabel(selected)}</p><p className="mt-1 text-xs text-muted-foreground">{dateTime(selected.created_at)}</p></div><div className="rounded-xl border p-4"><div className="flex justify-between"><span>Wartość</span><span className="font-semibold">{displayAmount(selected)}</span></div></div></div>
+              )}
+            </>
           ) : null}
         </DialogContent>
       </Dialog>
