@@ -895,9 +895,19 @@ function CountriesTab() {
 function CountryDashboard({ country, users, onClose }: { country: CountryStats | null; users: AdminUser[]; onClose: () => void }) {
   const queryClient = useQueryClient();
   const regions = useQuery(regionsQuery(country?.country_id ?? null));
-  const history = useQuery(transactionsQuery(country?.country_id ?? null, 50));
-  const strikes = useQuery(strikesQuery);
-  const shop = useQuery(adminShopQuery);
+  const [countryTab, setCountryTab] = useState("quick");
+  const history = useQuery({
+    ...transactionsQuery(country?.country_id ?? null, 50),
+    enabled: !!country && countryTab === "history",
+  });
+  const strikes = useQuery({
+    ...strikesQuery,
+    enabled: !!country && countryTab === "history",
+  });
+  const shop = useQuery({
+    ...adminShopQuery,
+    enabled: !!country && countryTab === "regions",
+  });
   const [changes, setChanges] = useState<Partial<Record<FieldKey, string>>>({});
   const [identity, setIdentity] = useState<{ name?: string; flag?: string }>({});
   const [flagFile, setFlagFile] = useState<File | null>(null);
@@ -909,6 +919,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
+    setCountryTab("quick");
     setChanges({});
     setIdentity({});
     setFlagFile(null);
@@ -961,7 +972,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
             <Badge variant="outline" className="shrink-0 border-primary/40 text-primary">{country.regions_count} regionów</Badge>
           </div>
         </div>
-        <Tabs defaultValue="quick" className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <Tabs value={countryTab} onValueChange={setCountryTab} className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="admin-scrollbar shrink-0 overflow-x-auto border-b border-border bg-card px-2 sm:px-4">
             <TabsList className="h-auto min-w-max justify-start bg-transparent p-0">
               {([["quick","Szybka edycja"],["info","Informacje"],["regions","Regiony"],["history","Historia"]] as const).map(([value,label]) => <TabsTrigger key={value} value={value} className="rounded-none border-b-2 border-transparent px-3 py-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary">{label}</TabsTrigger>)}
