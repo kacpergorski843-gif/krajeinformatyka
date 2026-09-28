@@ -69,7 +69,18 @@ function Transfers() {
         <div className="space-y-5">
           <div><p className="label-hud mb-2">1. Wybierz państwo</p>
             <Select value={target} onValueChange={setTarget}><SelectTrigger><SelectValue placeholder="Wybierz odbiorcę"/></SelectTrigger><SelectContent>
-              {(countries ?? []).filter((c) => c.country_id !== me?.countryId).map((c) => <SelectItem key={c.country_id} value={c.country_id}>{c.flag} {c.name}</SelectItem>)}
+              {(countries ?? []).filter((c) => c.country_id !== me?.countryId).map((c) => (
+                <SelectItem key={c.country_id} value={c.country_id}>
+                  <span className="flex items-center gap-2">
+                    {c.flag?.startsWith("http") ? (
+                      <img src={c.flag} alt="" className="size-5 shrink-0 rounded-sm object-cover" loading="lazy" />
+                    ) : (
+                      <span className="inline-flex size-5 shrink-0 items-center justify-center text-base" aria-hidden="true">{c.flag}</span>
+                    )}
+                    <span>{c.name}</span>
+                  </span>
+                </SelectItem>
+              ))}
             </SelectContent></Select>
           </div>
           <div><p className="label-hud mb-2">2. Wybierz zasób</p>
