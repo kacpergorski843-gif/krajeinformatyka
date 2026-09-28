@@ -96,15 +96,29 @@ function resourceDeltas(d: Record<string, unknown>): ResourceDelta[] {
     .filter((x) => x.amount !== 0);
 }
 
+function payoutResources(t: TxRow) {
+  const d = details(t);
+  const production: Array<[string, string]> = [
+    ["coal", "coal_prod"],
+    ["oil", "oil_prod"],
+    ["copper", "copper_prod"],
+    ["iron", "iron_prod"],
+    ["uranium", "uranium_prod"],
+  ];
+  return production
+    .map(([key, productionKey]) => {
+      const produced = Number(d[productionKey] ?? 0);
+      const consumed = key === "coal" ? Number(d.coal_upkeep ?? 0) : 0;
+      const net = produced - consumed;
+      return { key, label: RESOURCE_NAMES[key] ?? key, produced, consumed, net };
+    })
+    .filter((x) => x.produced !== 0 || x.consumed !== 0);
+}
+
 function payoutBreakdown(t: TxRow) {
   const d = details(t);
   const fields: Array<[string, string]> = [
     ["Dochód brutto", "gross_income"],
-    ["Produkcja węgla", "coal_prod"],
-    ["Produkcja ropy", "oil_prod"],
-    ["Produkcja miedzi", "copper_prod"],
-    ["Produkcja żelaza", "iron_prod"],
-    ["Produkcja uranu", "uranium_prod"],
     ["Utrzymanie węgla", "coal_upkeep"],
     ["Bonus", "bonus"],
   ];
@@ -228,10 +242,58 @@ export function OperationsHistory({ rows, title = "Historia operacji" }: { rows:
                   </div>
                 );
               })() : isPayout(selected) ? (
-                <div className="space-y-3">
-                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4"><p className="text-xs text-muted-foreground">WYPŁATA NETTO</p><p className="mt-1 text-2xl font-semibold text-success">+{fmtKR(Number(selected.amount_kr))}</p><p className="mt-1 text-xs text-muted-foreground">Zaksięgowano: {dateTime(selected.created_at)}</p></div>
-                  <div className="rounded-xl border p-4"><p className="mb-3 text-xs font-medium text-muted-foreground">ROZLICZENIE</p><div className="space-y-2 text-sm">{payoutBreakdown(selected).map((x) => <div key={x.key} className="flex justify-between gap-3"><span>{x.label}</span><span className="font-medium">{fmtKR(x.value)}</span></div>)}<div className="mt-3 flex justify-between border-t pt-3 font-semibold"><span>Zaksięgowano</span><span className="text-success">+{fmtKR(Number(selected.amount_kr))}</span></div></div></div>
-                </div>
+                (() => {
+                  const resources = payoutResources(selected);
+                  const money = payoutBreakdown(selected);
+                  const netCoal = resources.find((r) => r.key === "coal")?.net ?? 0;
+                  return (
+                    <div className="space-y-3 pb-1">
+                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">WYPŁATA DZIENNA</p>
+                        <div className="mt-1 flex items-end justify-between gap-3">
+                          <p className="text-2xl font-semibold tracking-tight text-success">+{fmtKR(Number(selected.amount_kr))}</p>
+                          <span className="pb-1 text-xs text-muted-foreground">{dateTime(selected.created_at)}</span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div><p className="text-sm font-semibold">Surowce z wypłaty</p><p className="mt-0.5 text-xs text-muted-foreground">Produkcja, zużycie i wynik netto</p></div>
+                          <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium">{resources.length} zas.</span>
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          {resources.map((r) => (
+                            <div key={r.key} className="rounded-xl bg-secondary/35 p-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm font-medium">{r.label}</span>
+                                <span className={`text-sm font-semibold ${r.net >= 0 ? "text-success" : "text-destructive"}`}>{r.net >= 0 ? "+" : "−"}{units(Math.abs(r.net))}</span>
+                              </div>
+                              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                                <div><span className="text-muted-foreground">Otrzymano</span><p className="mt-0.5 font-medium">+{units(r.produced)}</p></div>
+                                {r.consumed > 0 ? <div><span className="text-muted-foreground">Zużyto</span><p className="mt-0.5 font-medium text-destructive">−{units(r.consumed)}</p></div> : <div><span className="text-muted-foreground">Zużycie</span><p className="mt-0.5 font-medium">0</p></div>}
+                              </div>
+                            </div>
+                          ))}
+                          {!resources.length ? <div className="rounded-xl bg-secondary/35 p-3 text-sm text-muted-foreground">W tym cyklu nie zaksięgowano produkcji surowców.</div> : null}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border p-4">
+                        <p className="text-sm font-semibold">Rozliczenie KR</p>
+                        <div className="mt-3 space-y-2 text-sm">
+                          {money.map((x) => <div key={x.key} className="flex justify-between gap-3"><span className="text-muted-foreground">{x.label}</span><span className="font-medium">{fmtKR(x.value)}</span></div>)}
+                          <div className="mt-3 flex justify-between border-t pt-3 font-semibold"><span>Wypłacono</span><span className="text-success">+{fmtKR(Number(selected.amount_kr))}</span></div>
+                        </div>
+                      </div>
+
+                      {resources.some((r) => r.consumed > 0) ? (
+                        <div className="rounded-xl border border-border bg-secondary/20 p-3 text-xs text-muted-foreground">
+                          Węgiel zużyty na utrzymanie został odjęty od produkcji w tym cyklu. Wynik pokazuje faktyczny bilans surowca po rozliczeniu.
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()
               ) : isTransfer(selected) ? (() => {
                 const transfer = transferInfo(selected)!;
                 return <div className="space-y-3"><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">TRANSFER</p><p className="mt-1 text-base font-semibold">{readableLabel(selected)}</p><p className="mt-1 text-xs text-muted-foreground">{dateTime(selected.created_at)}</p></div><div className="grid grid-cols-2 gap-2"><div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">ZASÓB</p><p className="mt-1 font-medium">{RESOURCE_NAMES[transfer.resource] ?? transfer.resource}</p></div><div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">ILOŚĆ</p><p className="mt-1 font-medium">{units(transfer.amount)}</p></div></div><div className="rounded-xl border p-4 text-sm"><div className="flex justify-between"><span>{transfer.direction === "out" ? "Odbiorca" : "Nadawca"}</span><span className="font-medium">{transfer.otherName}</span></div><div className="mt-2 flex justify-between"><span>Kierunek</span><span className="font-medium">{transfer.direction === "out" ? "Wysłano" : "Otrzymano"}</span></div></div></div>;
