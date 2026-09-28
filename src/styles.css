@@ -1176,3 +1176,36 @@
   .auth-card { box-shadow:0 18px 55px oklch(.04 .02 250 / 25%); }
   .auth-card-top { padding:.85rem 1rem; }
 }
+
+
+/* Performance: keep the HUD depth effect, but avoid expensive backdrop compositing on smaller devices. */
+@media (max-width: 1024px) {
+  .panel {
+    backdrop-filter: none;
+  }
+
+  .mobile-nav {
+    backdrop-filter: none;
+  }
+
+  .mobile-drawer-backdrop {
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item,
+  .stat-card:hover,
+  .stat-card-command,
+  .shop-card,
+  .command-kpi,
+  .command-region-row {
+    transition: none !important;
+  }
+
+  .animate-pulse,
+  .animate-spin,
+  [class*="animate-["] {
+    animation: none !important;
+  }
+}
