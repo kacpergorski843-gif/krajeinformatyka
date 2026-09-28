@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
+import { useDeferredValue, useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   Boxes,
@@ -55,7 +55,7 @@ import {
   activeIncomeBonusesQuery,
   adminActiveRegionOccupationsQuery,
   adminActionsQuery,
-  allRegionsQuery,
+  allRegionOptionsQuery,
   adminShopQuery,
   adminUsersQuery,
   countriesQuery,
@@ -287,7 +287,7 @@ function Update4Tools() {
   const activeBonuses = useQuery(activeIncomeBonusesQuery);
   const activeOccupations = useQuery(adminActiveRegionOccupationsQuery());
   const queryClient = useQueryClient();
-  const { data: regions } = useQuery(allRegionsQuery);
+  const { data: regions } = useQuery(allRegionOptionsQuery);
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
   const [occupationCountry, setOccupationCountry] = useState("");
@@ -799,6 +799,7 @@ function CountriesTab() {
   const userQuery = useQuery(adminUsersQuery);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [filter, setFilter] = useState<"all" | "assigned" | "free">("all");
   const [sort, setSort] = useState<"name" | "balance" | "income" | "military">("income");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -810,7 +811,7 @@ function CountriesTab() {
 
   const list = useMemo(() => {
     let rows = [...(countryQuery.data ?? [])];
-    const query = search.trim().toLowerCase();
+    const query = deferredSearch.trim().toLowerCase();
     if (query) rows = rows.filter((country) => country.name.toLowerCase().includes(query));
     if (filter === "assigned") rows = rows.filter((country) => assignedIds.has(country.country_id));
     if (filter === "free") rows = rows.filter((country) => !assignedIds.has(country.country_id));
@@ -1170,6 +1171,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const countryQuery = useQuery(countriesQuery);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [newCountryFor, setNewCountryFor] = useState<AdminUser | null>(null);
   const [newCountryName, setNewCountryName] = useState("");
   const [newCountryFile, setNewCountryFile] = useState<File | null>(null);
@@ -1177,7 +1179,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [editFlagCountry, setEditFlagCountry] = useState<{ id: string; name: string; flag: string } | null>(null);
   const [editFlagFile, setEditFlagFile] = useState<File | null>(null);
   const [editFlagPreview, setEditFlagPreview] = useState<string | null>(null);
-  const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(search.trim().toLowerCase()));
+  const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(deferredSearch.trim().toLowerCase()));
 
   const assign = useMutation({
     mutationFn: ({ userId, countryId }: { userId: string; countryId: string }) =>
@@ -1462,13 +1464,14 @@ function ShopTab() {
   const itemQuery = useQuery(adminShopQuery);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [category, setCategory] = useState("all");
   const [visibility, setVisibility] = useState("all");
   const [edit, setEdit] = useState<Record<string, string> | null>(null);
   const categories = [...new Set((itemQuery.data ?? []).map((item) => item.category))];
-  const items = (itemQuery.data ?? []).filter((item) => item.name.toLowerCase().includes(search.toLowerCase()) && (category === "all" || item.category === category) && (visibility === "all" || String(item.active) === visibility));
-  const save = useMutation({ mutationFn: (payload: Record<string, string>) => rpc("admin_upsert_shop_item", { p_item: payload }), onSuccess: () => { toast.success("Produkt zapisany"); setEdit(null); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
-  const toggle = useMutation({ mutationFn: ({ code, active }: { code: string; active: boolean }) => rpc("admin_toggle_shop_item", { p_code: code, p_active: active }), onSuccess: () => { toast.success("Widoczność zmieniona"); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
+  const items = (itemQuery.data ?? []).filter((item) => item.name.toLowerCase().includes(deferredSearch.toLowerCase()) && (category === "all" || item.category === category) && (visibility === "all" || String(item.active) === visibility));
+  const save = useMutation({ mutationFn: (payload: Record<string, string>) => rpc("admin_upsert_shop_item", { p_item: payload }), onSuccess: () => { toast.success("Produkt zapisany"); setEdit(null); void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] }); void queryClient.invalidateQueries({ queryKey: ["shop_items"] }); }, onError: (error: Error) => toast.error(error.message) });
+  const toggle = useMutation({ mutationFn: ({ code, active }: { code: string; active: boolean }) => rpc("admin_toggle_shop_item", { p_code: code, p_active: active }), onSuccess: () => { toast.success("Widoczność zmieniona"); void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] }); void queryClient.invalidateQueries({ queryKey: ["shop_items"] }); }, onError: (error: Error) => toast.error(error.message) });
   const emptyForm = { code: "", name: "", category: "INNE", description: "", building: "", produces: "", active: "true", cost_kr: "0", cost_coal: "0", cost_oil: "0", cost_copper: "0", cost_iron: "0", cost_uranium: "0", income_kr: "0", upkeep_coal: "0", produces_amount: "0", sort_order: "100" };
   const toForm = (item: ShopItem) => ({ code: item.code, name: item.name, category: item.category, description: item.description, building: item.building ?? "", produces: item.produces ?? "", active: String(item.active), cost_kr: item.cost_kr, cost_coal: item.cost_coal, cost_oil: item.cost_oil, cost_copper: item.cost_copper, cost_iron: item.cost_iron, cost_uranium: item.cost_uranium, income_kr: item.income_kr, upkeep_coal: item.upkeep_coal, produces_amount: item.produces_amount, sort_order: String(item.sort_order) });
   return <div className="space-y-4"><Panel className="hud-frame p-3"><div className="grid gap-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_11rem_auto]"><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Szukaj produktu…" value={search} onChange={(event) => setSearch(event.target.value)} /></div><Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Wszystkie kategorie</SelectItem>{categories.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select><Select value={visibility} onValueChange={setVisibility}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Każda widoczność</SelectItem><SelectItem value="true">Widoczne</SelectItem><SelectItem value="false">Ukryte</SelectItem></SelectContent></Select><Button onClick={() => setEdit(emptyForm)}><PackagePlus />Dodaj produkt</Button></div></Panel>{itemQuery.isLoading ? <LoadingRows /> : items.length === 0 ? <HudState icon={<ShoppingCart />} title="Brak produktów" description="Zmień filtry lub dodaj nowy produkt." /> : <div className="grid gap-3 lg:grid-cols-2">{items.map((item) => <Panel key={item.code} className="min-w-0 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><Button variant="ghost" className="h-auto min-w-0 justify-start p-0 text-left hover:bg-transparent" onClick={() => setEdit(toForm(item))}><span className="min-w-0"><span className={`block truncate font-semibold ${item.active ? "" : "text-inactive"}`}>{item.name}</span><span className="block truncate text-[11px] font-normal text-muted-foreground">{item.category} · {item.code}</span></span></Button><Switch checked={item.active} onCheckedChange={(active) => toggle.mutate({ code: item.code, active })} /></div><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Cena" value={fmtKR(item.cost_kr)} /><ValueBox label="Efekt / doba" value={Number(item.income_kr) ? `+${fmtKR(item.income_kr)}` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "—"} tone={Number(item.income_kr) || item.produces ? "success" : "muted"} /></div></Panel>)}</div>}<ProductDialog edit={edit} items={itemQuery.data ?? []} onEdit={setEdit} onSave={(payload) => save.mutate(payload)} pending={save.isPending} /></div>;
