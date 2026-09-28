@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   Boxes,
@@ -303,6 +303,7 @@ function Update4Tools() {
   const [hours, setHours] = useState("24");
   const [confirm, setConfirm] = useState<"building" | "bonus" | "occupation" | null>(null);
   const [activeOperation, setActiveOperation] = useState<"building" | "bonus" | "occupation">("building");
+  const [, startOperationTransition] = useTransition();
 
   const run = async (fn: string, args: Record<string, unknown>, label: string) => {
     try {
@@ -322,6 +323,24 @@ function Update4Tools() {
   const selectedOccupationRegion = (regions ?? []).find((item) => item.id === occupationRegion);
   const selectedOccupationTarget = (countries ?? []).find((item) => item.country_id === occupationTargetCountry);
   const occupationIsSameCountry = occupationCountry !== "" && occupationCountry === occupationTargetCountry;
+
+  const countryOptions = useMemo(
+    () => (countries ?? []).map((item) => (
+      <SelectItem key={item.country_id} value={item.country_id}>
+        <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />
+        {item.name}
+      </SelectItem>
+    )),
+    [countries],
+  );
+  const selectedRegionOptions = useMemo(
+    () => selectedRegions.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>),
+    [selectedRegions],
+  );
+  const occupationRegionOptions = useMemo(
+    () => occupationRegions.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>),
+    [occupationRegions],
+  );
 
   const revertOccupation = async (regionId: string) => {
     try {
@@ -359,7 +378,7 @@ function Update4Tools() {
             role="tab"
             aria-selected={activeOperation === value}
             className={activeOperation === value ? "is-active" : ""}
-            onClick={() => setActiveOperation(value)}
+            onClick={() => startOperationTransition(() => setActiveOperation(value))}
           >
             <Icon />
             <span>{label}</span>
@@ -381,14 +400,14 @@ function Update4Tools() {
               <Label>Państwo</Label>
               <Select value={country} onValueChange={(value) => { setCountry(value); setRegion(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-1 inline-block h-4 w-6 rounded-sm align-middle text-base" />{item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{countryOptions}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
               <Label>Region</Label>
               <Select value={region} onValueChange={setRegion} disabled={!country}>
                 <SelectTrigger><SelectValue placeholder={country ? "Wybierz region" : "Najpierw państwo"} /></SelectTrigger>
-                <SelectContent>{selectedRegions.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{selectedRegionOptions}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
@@ -440,7 +459,7 @@ function Update4Tools() {
                 <Label>Państwo</Label>
                 <Select value={bonusCountry} onValueChange={setBonusCountry}>
                   <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                  <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{countryOptions}</SelectContent>
                 </Select>
               </div>
             ) : null}
@@ -551,7 +570,7 @@ function Update4Tools() {
               <Label>Region</Label>
               <Select value={occupationRegion} onValueChange={setOccupationRegion} disabled={!occupationCountry}>
                 <SelectTrigger><SelectValue placeholder={occupationCountry ? "Wybierz region" : "Najpierw wybierz kraj"} /></SelectTrigger>
-                <SelectContent>{occupationRegions.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{occupationRegionOptions}</SelectContent>
               </Select>
             </div>
           </div>
@@ -624,6 +643,7 @@ function AdminPanel() {
   const queryClient = useQueryClient();
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
   const [adminTab, setAdminTab] = useState("countries");
+  const [, startAdminTabTransition] = useTransition();
 
   useEffect(() => {
     const timer = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
@@ -668,9 +688,9 @@ function AdminPanel() {
           <Kpi icon={<CalendarClock />} label="Cykl dobowy" value={countdown} hint={latestRun ? `Ostatni: ${dateTime(latestRun.ran_at)}` : "Brak wcześniejszych rozliczeń"} loading={runs.isLoading} />
         </section>
 
-        <Tabs value={adminTab} onValueChange={setAdminTab} className="min-w-0">
+        <Tabs value={adminTab} onValueChange={(value) => startAdminTabTransition(() => setAdminTab(value))} className="min-w-0">
           <div className="admin-tabs-mobile sm:hidden">
-            <Select value={adminTab} onValueChange={setAdminTab}>
+            <Select value={adminTab} onValueChange={(value) => startAdminTabTransition(() => setAdminTab(value))}>
               <SelectTrigger className="min-h-12 w-full border-border/70 bg-card/80">
                 <SelectValue placeholder="Wybierz sekcję" />
               </SelectTrigger>
