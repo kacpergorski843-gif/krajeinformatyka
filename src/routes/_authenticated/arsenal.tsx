@@ -134,7 +134,9 @@ function Arsenal() {
       setResult(data);
       setPhase("processing");
       window.setTimeout(() => setPhase("result"), 3000);
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["regions"] });
+      void queryClient.invalidateQueries({ queryKey: ["strikes"] });
     },
     onError: (e: Error) => {
       setPhase("wizard");
