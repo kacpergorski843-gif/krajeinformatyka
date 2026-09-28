@@ -88,7 +88,8 @@ function Regions() {
     onSuccess: () => {
       toast.success("Obiekt wybudowany");
       setBuildFor(null);
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["regions"] });
+    void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
