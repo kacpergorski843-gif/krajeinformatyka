@@ -645,6 +645,10 @@
   .admin-operation-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem;margin-bottom:.6rem}
   .admin-v4-grid{display:block}
   .admin-v4-card{display:none;padding:.9rem}
+  .admin-v4-card:not(.admin-v4-mobile-active) {
+    content-visibility: hidden;
+    contain-intrinsic-size: 520px;
+  }
   .admin-v4-card.admin-v4-mobile-active{display:flex}
   .admin-v4-card-copy{padding-top:.65rem}
   .admin-v4-card-copy p{font-size:.68rem}
