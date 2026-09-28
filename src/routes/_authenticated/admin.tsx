@@ -928,6 +928,17 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   }, [country?.country_id]);
 
   const owner = country ? users.find((user) => user.country_id === country.country_id) : undefined;
+
+  const prefetchCountryTab = (tab: string) => {
+    if (!country) return;
+    if (tab === "history") {
+      void queryClient.prefetchQuery(transactionsQuery(country.country_id, 50));
+      void queryClient.prefetchQuery(strikesQuery);
+    }
+    if (tab === "regions") {
+      void queryClient.prefetchQuery(adminShopQuery);
+    }
+  };
   const patch = { ...identity, ...changes };
   const changedFields = Object.entries(patch).filter(([key, value]) => String(country?.[key as keyof CountryStats] ?? "") !== value);
   const hasChanges = changedFields.length > 0 || !!flagFile;
@@ -975,7 +986,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
         <Tabs value={countryTab} onValueChange={setCountryTab} className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="admin-scrollbar shrink-0 overflow-x-auto border-b border-border bg-card px-2 sm:px-4">
             <TabsList className="h-auto min-w-max justify-start bg-transparent p-0">
-              {([["quick","Szybka edycja"],["info","Informacje"],["regions","Regiony"],["history","Historia"]] as const).map(([value,label]) => <TabsTrigger key={value} value={value} className="rounded-none border-b-2 border-transparent px-3 py-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary">{label}</TabsTrigger>)}
+              {([["quick","Szybka edycja"],["info","Informacje"],["regions","Regiony"],["history","Historia"]] as const).map(([value,label]) => <TabsTrigger key={value} value={value} onMouseEnter={() => prefetchCountryTab(value)} onFocus={() => prefetchCountryTab(value)} className="rounded-none border-b-2 border-transparent px-3 py-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary">{label}</TabsTrigger>)}
             </TabsList>
           </div>
           <div className="admin-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5">
