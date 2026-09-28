@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Globe2, Factory, Shield, LineChart, UserPlus, LogIn, Trophy } from "lucide-react";
+import { ArrowRight, Factory, Globe2, Shield, LineChart, UserPlus, LogIn, Trophy, Coins, Swords } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -7,14 +7,10 @@ export const Route = createFileRoute("/")({
       { title: "Nation Dynamics — panel dowodzenia państwem" },
       {
         name: "description",
-        content:
-          "Zarządzaj budżetem, surowcami, regionami i armią swojego państwa. Dobowa ekonomia o 20:00, arsenał rakietowy i publiczny ranking państw.",
+        content: "Zbuduj państwo, rozwijaj gospodarkę, zarządzaj regionami i walcz o pozycję w rankingu Nation Dynamics.",
       },
       { property: "og:title", content: "Nation Dynamics — panel dowodzenia państwem" },
-      {
-        property: "og:description",
-        content: "Budżet, surowce, regiony, armia i ranking państw w jednym panelu.",
-      },
+      { property: "og:description", content: "Gospodarka, regiony, armia i ranking w jednym panelu dowodzenia." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -23,62 +19,134 @@ export const Route = createFileRoute("/")({
 });
 
 const FEATURES = [
-  {
-    icon: Factory,
-    title: "Ekonomia dobowa",
-    text: "Fabryki i zakłady surowcowe rozliczane codziennie o 20:00.",
-  },
-  { icon: Globe2, title: "Regiony i sloty", text: "9 slotów w regionie z pilnowaniem zasad zabudowy." },
-  { icon: Shield, title: "Arsenał", text: "OPL przypisane do regionów, rakiety I–III i salwy." },
-  { icon: LineChart, title: "Ranking", text: "Zarobki dzienne i potencjał głosów wojennych." },
+  { icon: Factory, title: "Gospodarka", text: "Rozwijaj produkcję i buduj dochód państwa.", stat: "+4.2B KR / doba" },
+  { icon: Globe2, title: "Regiony", text: "Rozwijaj infrastrukturę i kontroluj swoje terytorium.", stat: "9 slotów / region" },
+  { icon: Shield, title: "Arsenał", text: "Buduj obronę i zarządzaj arsenałem rakietowym.", stat: "OPL + rakiety I–III" },
+  { icon: LineChart, title: "Ranking", text: "Śledź pozycję swojego państwa i rywali.", stat: "Ranking państw" },
 ];
 
 function Landing() {
   return (
-    <div className="tactical-bg min-h-screen">
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
-        <div className="landing-shell">
-        <p className="text-primary font-display text-xs tracking-[0.3em] uppercase">
-          Nation Dynamics
-        </p>
-        <h1 className="mt-3 text-3xl leading-tight font-bold sm:text-5xl">
-          Panel dowodzenia Twojego państwa
-        </h1>
-        <p className="text-muted-foreground mt-4 text-sm sm:text-base">
-          Skarbiec, surowce, regiony, armia i historia decyzji — wszystko w jednym miejscu, liczone
-          po stronie serwera. Start każdego państwa to 1 500 000 000 000 KR.
-        </p>
+    <div className="tactical-bg min-h-screen overflow-hidden">
+      <div className="mx-auto flex min-h-screen max-w-6xl items-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <div className="grid w-full gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
+          <main>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5">
+              <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+              <span className="text-primary font-display text-[10px] font-semibold tracking-[0.28em] uppercase">Nation Dynamics</span>
+            </div>
 
-        <div className="mt-7 grid gap-2.5 sm:max-w-xl">
-          <a
-            href="/auth?mode=signup"
-            className="bg-primary text-primary-foreground flex min-h-12 items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase"
-          >
-            <UserPlus className="size-4" strokeWidth={1.5} /> Nowy użytkownik? Zarejestruj się
-          </a>
-          <Link
-            to="/auth"
-            className="border-primary/60 text-primary flex min-h-12 items-center justify-center gap-2 rounded-lg border px-5 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase"
-          >
-            <LogIn className="size-4" strokeWidth={1.5} /> Masz już konto? Zaloguj się
-          </Link>
-          <Link
-            to="/ranking-publiczny"
-            className="border-border text-muted-foreground flex min-h-12 items-center justify-center gap-2 rounded-lg border px-5 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase"
-          >
-            <Trophy className="size-4" strokeWidth={1.5} /> Ranking
-          </Link>
+            <h1 className="max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight sm:text-6xl">
+              Zbuduj państwo.
+              <span className="text-primary block">Przejmij inicjatywę.</span>
+            </h1>
+            <p className="text-muted-foreground mt-5 max-w-2xl text-sm leading-6 sm:text-base">
+              Zarządzaj gospodarką, rozwijaj regiony, buduj potencjał militarny i walcz o pozycję w rankingu.
+              Każda decyzja wpływa na rozwój Twojego państwa.
+            </p>
+
+            <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+              <a
+                href="/auth?mode=signup"
+                className="bg-primary text-primary-foreground group flex min-h-12 items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 hover:shadow-primary/20"
+              >
+                <UserPlus className="size-4" />
+                Rozpocznij grę
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              </a>
+              <Link
+                to="/auth"
+                className="border-primary/50 text-primary flex min-h-12 items-center justify-center gap-2 rounded-lg border px-6 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase transition-colors hover:bg-primary/5"
+              >
+                <LogIn className="size-4" /> Mam już konto
+              </Link>
+              <Link
+                to="/ranking-publiczny"
+                className="text-muted-foreground hover:text-foreground flex min-h-12 items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-xs font-semibold tracking-[0.1em] uppercase transition-colors"
+              >
+                <Trophy className="size-4" /> Ranking publiczny
+              </Link>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[10px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5"><Coins className="size-3.5 text-primary" /> Ekonomia rozliczana serwerowo</span>
+              <span className="inline-flex items-center gap-1.5"><Swords className="size-3.5 text-primary" /> Arsenał i obrona</span>
+            </div>
+          </main>
+
+          <section aria-label="Podgląd panelu państwa" className="relative">
+            <div className="absolute -inset-8 rounded-full bg-primary/5 blur-3xl" />
+            <div className="panel hud-frame relative overflow-hidden p-4 shadow-2xl sm:p-5">
+              <div className="flex items-center justify-between border-b pb-4">
+                <div>
+                  <p className="text-primary font-display text-[9px] tracking-[0.25em] uppercase">Panel państwa</p>
+                  <p className="mt-1 text-lg font-bold">🇵🇱 Polska</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-muted-foreground text-[9px] tracking-wider uppercase">Ranking</p>
+                  <p className="font-display text-lg font-bold">#04</p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {[
+                  ["Skarbiec", "125.4B KR"],
+                  ["Dochód / doba", "+4.2B KR"],
+                  ["Wojsko", "12.4M"],
+                  ["Regiony", "8 / 12"],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg border bg-background/40 p-3">
+                    <p className="text-muted-foreground text-[9px] uppercase tracking-wider">{label}</p>
+                    <p className="mt-1 font-display text-sm font-semibold">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3 rounded-lg border bg-background/30 p-3">
+                <div className="flex items-center justify-between text-[9px] uppercase tracking-wider">
+                  <span className="text-muted-foreground">Potencjał państwa</span>
+                  <span className="text-primary">78%</span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className="bg-primary h-full w-[78%] rounded-full" />
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {[
+                  ["🛢️", "48M", "Ropa"],
+                  ["🔩", "72M", "Żelazo"],
+                  ["🛡️", "18", "OPL"],
+                ].map(([icon, value, label]) => (
+                  <div key={label} className="rounded-lg border bg-background/30 p-3 text-center">
+                    <div className="text-lg">{icon}</div>
+                    <p className="mt-1 font-display text-xs font-semibold">{value}</p>
+                    <p className="text-muted-foreground text-[9px]">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t pt-3">
+                <span className="text-muted-foreground text-[9px] uppercase tracking-wider">Dobowa ekonomia</span>
+                <span className="text-primary font-display text-[10px] font-semibold">AKTYWNA • 20:00</span>
+              </div>
+            </div>
+          </section>
         </div>
+      </div>
 
-        <div className="mt-10 grid gap-2.5 sm:grid-cols-2">
+      <div className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
-            <div key={f.title} className="panel hud-frame p-4">
+            <div key={f.title} className="panel hud-frame group p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30">
               <f.icon className="text-primary size-5" strokeWidth={1.5} />
-              <p className="mt-3 text-sm font-semibold">{f.title}</p>
-              <p className="text-muted-foreground mt-1 text-xs">{f.text}</p>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">{f.title}</p>
+                <span className="text-primary/80 font-display text-[9px] uppercase">{f.stat}</span>
+              </div>
+              <p className="text-muted-foreground mt-1 text-xs leading-5">{f.text}</p>
             </div>
           ))}
-        </div>
         </div>
       </div>
     </div>
