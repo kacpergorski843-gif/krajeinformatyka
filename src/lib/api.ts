@@ -360,13 +360,13 @@ export function transactionsQuery(countryId: string | null | undefined, limit = 
         countryId
           ? supabase
               .from("transactions")
-              .select("*")
+              .select("id,country_id,kind,label,amount_kr,created_at,details")
               .eq("country_id", countryId)
               .order("created_at", { ascending: false })
               .limit(limit)
           : supabase
               .from("transactions")
-              .select("*")
+              .select("id,country_id,kind,label,amount_kr,created_at,details")
               .order("created_at", { ascending: false })
               .limit(limit),
       ),
@@ -484,7 +484,7 @@ export const strikesQuery = queryOptions({
     (await unwrap(
       supabase
         .from("missile_strikes")
-        .select("*")
+        .select("id,attacker_country_id,defender_country_id,region_id,region_name,missile_code,result,aa_defense,region_aa,required_aa,destroyed,created_at")
         .order("created_at", { ascending: false })
         .limit(50),
     )) as unknown as MissileStrike[],
