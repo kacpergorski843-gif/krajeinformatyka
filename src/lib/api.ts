@@ -135,7 +135,7 @@ export const countriesQuery = queryOptions({
   queryKey: ["country_stats"],
   queryFn: async () =>
     (await unwrap(
-      supabase.from("country_stats").select("*").order("gross_income", { ascending: false }),
+      supabase.from("country_stats").select(COUNTRY_STATS_SELECT).order("gross_income", { ascending: false }),
     )) as unknown as CountryStats[],
 });
 
@@ -143,7 +143,7 @@ export const shopQuery = queryOptions({
   queryKey: ["shop_items"],
   queryFn: async () =>
     (await unwrap(
-      supabase.from("shop_items").select("*").eq("active", true).order("sort_order"),
+      supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_copper,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").eq("active", true).order("sort_order"),
     )) as unknown as ShopItem[],
 });
 
@@ -429,7 +429,7 @@ export const adminActionsQuery = queryOptions({
   queryKey: ["admin_actions"],
   queryFn: async () =>
     await unwrap(
-      supabase.from("admin_actions").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.from("admin_actions").select("id,action,created_at,country_id,details").order("created_at", { ascending: false }).limit(50),
     ),
 });
 
@@ -437,7 +437,7 @@ export const economyRunsQuery = queryOptions({
   queryKey: ["economy_runs"],
   queryFn: async () =>
     await unwrap(
-      supabase.from("economy_runs").select("*").order("run_date", { ascending: false }).limit(14),
+      supabase.from("economy_runs").select("id,run_date,ran_at,summary").order("run_date", { ascending: false }).limit(14),
     ),
 });
 
@@ -455,7 +455,7 @@ export const adminShopQuery = queryOptions({
   queryKey: ["admin_shop_items"],
   queryFn: async () =>
     (await unwrap(
-      supabase.from("shop_items").select("*").order("sort_order"),
+      supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_copper,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").order("sort_order"),
     )) as unknown as ShopItem[],
 });
 
