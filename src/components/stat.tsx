@@ -2,13 +2,13 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function Panel({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("panel p-5 sm:p-6", className)}>{children}</div>;
+  return <div className={cn("panel p-5 transition-[border-color,box-shadow,transform] duration-200", className)}>{children}</div>;
 }
 
 export function Stat({ label, value, hint, tone = "default", icon }: {
   label: string; value: string; hint?: string; tone?: "default" | "primary" | "accent"; icon?: ReactNode;
 }) {
-  return <Panel className="stat-card stat-card-command">
+  return <Panel className="stat-card stat-card-command hover:border-primary/25 hover:shadow-sm">
     <div className="flex items-start justify-between gap-3">
       <p className="stat-label">{label}</p>
       {icon ? <span className="stat-icon">{icon}</span> : null}
