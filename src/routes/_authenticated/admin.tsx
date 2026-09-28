@@ -1113,7 +1113,9 @@ function RegionManagement({ country, regions, shopItems, regionName, onRegionNam
       toast.success("Budynek został dodany");
       setBuildTarget(null);
       setBuilding("");
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["regions", country.country_id] });
+      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["transactions", country.country_id] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -1186,7 +1188,8 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
       rpc("admin_assign_country", { p_user_id: userId, p_country_id: countryId }),
     onSuccess: () => {
       toast.success("Państwo przypisane");
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
+      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -1221,7 +1224,9 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
       setNewCountryName("");
       setNewCountryFile(null);
       setNewCountryPreview(null);
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
+      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["public_countries"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -1248,7 +1253,8 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
       setEditFlagCountry(null);
       setEditFlagFile(null);
       setEditFlagPreview(null);
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["public_countries"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -1258,7 +1264,8 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
       rpc("set_user_role", { p_user_id: userId, p_role: role }),
     onSuccess: () => {
       toast.success("Uprawnienia zmienione");
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
+      void queryClient.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -1270,7 +1277,8 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
     onSuccess: () => {
       toast.success("Konto gracza usunięte");
       setToDelete(null);
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
+      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
