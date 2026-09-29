@@ -104,6 +104,20 @@ function Shop() {
     mutationFn: async (v: { item: ShopItem; qty: number }) => {
       if (v.item.building) {
         if (!region) throw new Error("Wybierz region");
+        if (v.item.building.startsWith("factory_")) {
+          const level = Number(v.item.building.split("_")[1]);
+          if (level > 1) {
+            const required = `factory_${level - 1}`;
+            const existing = region.slots.find((slot) => slot.building === required);
+            if (existing) {
+              return rpc("upgrade_building_in_slot", {
+                p_region_id: region.id,
+                p_slot_index: existing.slot_index,
+                p_item_code: v.item.code,
+              });
+            }
+          }
+        }
         const index = firstFreeSlot(region);
         if (!index) throw new Error("Region nie ma wolnych slotów");
         return rpc("build_in_slot", {
@@ -169,7 +183,13 @@ function Shop() {
 
   const blockReason =
     item?.building && region
-      ? buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
+      ? item.building.startsWith("factory_") &&
+        Number(item.building.split("_")[1]) > 1 &&
+        region.slots.some(
+          (slot) => slot.building === `factory_${Number(item.building!.split("_")[1]) - 1}`,
+        )
+        ? null
+        : buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
       : null;
   const cannotBuy =
     !country ||
@@ -207,6 +227,10 @@ function Shop() {
     }
 
     if (i.building) {
+      if (i.building.startsWith("factory_") && Number(i.building.split("_")[1]) > 1) {
+        const required = `factory_${Number(i.building.split("_")[1]) - 1}`;
+        return !(regions ?? []).some((r) => r.slots.some((slot) => slot.building === required));
+      }
       return !(regions ?? []).some(
         (r) => !buildBlockReason(r, i.building!) && !levelLockForRegion(r, i.building!),
       );
