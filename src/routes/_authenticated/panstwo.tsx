@@ -246,7 +246,7 @@ function MyCountry() {
           ))}
         </div>
       </Panel>
-      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Stat
           label="Potencjał głosów"
           value={units(country.vote_potential)}
@@ -254,7 +254,6 @@ function MyCountry() {
           tone="accent"
         />
         <Stat label="Głosy fortyfikacji" value={units(country.fort_votes)} />
-        <Stat label="Wartość militarna" value={fmtKR(country.military_value)} />
       </div>
 
       {/* Widget regionów */}
