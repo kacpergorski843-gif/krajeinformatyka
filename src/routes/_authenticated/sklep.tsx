@@ -94,48 +94,346 @@ function Shop() {
   const coalLeft = coalHave + coalProd - coalUse;
   const region = (regions ?? []).find((r) => r.id === regionId) ?? null;
 
-  function openItem(i: ShopItem) { setItem(i); setQtyText("1"); setRegionId(null); }
+  function openItem(i: ShopItem) {
+    setItem(i);
+    setQtyText("1");
+    setRegionId(null);
+  }
 
   const buy = useMutation({
     mutationFn: async (v: { item: ShopItem; qty: number }) => {
       if (v.item.building) {
         if (!region) throw new Error("Wybierz region");
-        const factoryLevel = v.item.building.startsWith("factory_") ? Number(v.item.building.split("_")[1]) : 0;
-        const fortUpgrade = v.item.building === "fort_2" || v.item.building === "fort_3";
-        const requiredBuilding = factoryLevel > 1 ? `factory_${factoryLevel - 1}` : v.item.building === "fort_2" ? "fort_1" : v.item.building === "fort_3" ? "fort_2" : null;
-        const upgradeSlot = requiredBuilding ? region.slots.find((s) => s.building === requiredBuilding)?.slot_index ?? null : null;
-        if (upgradeSlot !== null && (factoryLevel > 1 || fortUpgrade)) return rpc("upgrade_building_in_slot", { p_region_id: region.id, p_slot_index: upgradeSlot, p_item_code: v.item.code });
         const index = firstFreeSlot(region);
         if (!index) throw new Error("Region nie ma wolnych slotów");
-        return rpc("build_in_slot", { p_region_id: region.id, p_slot_index: index, p_item_code: v.item.code });
+        return rpc("build_in_slot", {
+          p_region_id: region.id,
+          p_slot_index: index,
+          p_item_code: v.item.code,
+        });
       }
       if (v.item.code === "aa") {
         if (!regionId) throw new Error("Wybierz region obrony");
         return rpc("purchase_aa", { p_country_id: countryId, p_region_id: regionId, p_qty: v.qty });
       }
-      return rpc("purchase_unit", { p_country_id: countryId, p_item_code: v.item.code, p_qty: v.qty });
+      return rpc("purchase_unit", {
+        p_country_id: countryId,
+        p_item_code: v.item.code,
+        p_qty: v.qty,
+      });
     },
-    onSuccess: () => { toast.success("Zakup zrealizowany"); setItem(null); setQtyText("1"); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); void queryClient.invalidateQueries({ queryKey: ["regions"] }); void queryClient.invalidateQueries({ queryKey: ["transactions"] }); },
+    onSuccess: () => {
+      toast.success("Zakup zrealizowany");
+      setItem(null);
+      setQtyText("1");
+      queryClient.invalidateQueries();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const allItems = shop ?? [];
+  const factories = allItems.filter((i) => i.building?.startsWith("factory_"));
+  const mines = allItems.filter((i) => i.building?.startsWith("mine_"));
+  const forts = allItems.filter((i) => i.building?.startsWith("fort_"));
+  const units_ = allItems.filter((i) => !i.building);
+
   const ownedByBuilding = new Map<string, number>();
-  for (const r of regions ?? []) for (const s of r.slots) ownedByBuilding.set(s.building, (ownedByBuilding.get(s.building) ?? 0) + 1);
+  for (const r of regions ?? []) {
+    for (const s of r.slots) {
+      ownedByBuilding.set(s.building, (ownedByBuilding.get(s.building) ?? 0) + 1);
+    }
+  }
+
+  // Braki dla aktualnie wybranego produktu i ilości
   const effectiveQty = isBuilding ? 1 : qty;
   const needKr = item ? Number(item.cost_kr) * effectiveQty : 0;
   const haveKr = Number(country?.balance ?? 0);
   const krShort = item ? haveKr < needKr : false;
-  const resourceRows = item ? RESOURCES.filter((r) => unitCost(item, r) > 0).map((r) => { const need = unitCost(item, r) * effectiveQty; const have = Number(country?.[r] ?? 0); return { r, need, have, short: have < need }; }) : [];
-  const disabledReason = item ? isBuilding ? !region ? "Wybierz region" : buildBlockReason(region, item.building ?? "") : krShort || resourceRows.some((r) => r.short) ? "Brak środków lub surowców" : null : null;
+  const resourceRows = item
+    ? RESOURCES.filter((r) => unitCost(item, r) > 0).map((r) => {
+        const need = unitCost(item, r) * effectiveQty;
+        const have = Number((country?.[r] as string) ?? 0);
+        return { r, need, have, missing: have < need };
+      })
+    : [];
+  function levelLock(i: ShopItem): string | null {
+    if (!i.building?.startsWith("factory_")) return null;
+    const level = Number(i.building.split("_")[1]);
+    if (level <= 1) return null;
+    const required = `factory_${level - 1}`;
+    if (!ownedByBuilding.has(required)) {
+      return `Poziom ${level} — ZABLOKOWANY · WYMAGANY: Fabryka poziom ${level - 1}`;
+    }
+    return null;
+  }
+
+  const blockReason =
+    item?.building && region
+      ? buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
+      : null;
+  const cannotBuy =
+    !country ||
+    krShort ||
+    resourceRows.some((x) => x.missing) ||
+    !!blockReason ||
+    (isBuilding && !region) ||
+    (item?.code === "aa" && !regionId);
+
+  function levelLockForRegion(selectedRegion: RegionWithSlots, building: string): string | null {
+    if (!building.startsWith("factory_")) return null;
+    const level = Number(building.split("_")[1]);
+    if (level <= 1) return null;
+    const required = `factory_${level - 1}`;
+    if (!selectedRegion.slots.some((slot) => slot.building === required)) {
+      return `W tym regionie wymagany jest najpierw poziom ${level - 1}`;
+    }
+    return null;
+  }
+
+  function itemCannotBuy(i: ShopItem): boolean {
+    if (!country) return true;
+
+    const itemKr = Number(i.cost_kr);
+    if (haveKr < itemKr) return true;
+
+    const missingResource = RESOURCES.some((r) => {
+      const need = unitCost(i, r);
+      return need > 0 && Number((country[r] as string) ?? 0) < need;
+    });
+    if (missingResource) return true;
+
+    if (i.code === "aa") {
+      return !(regions ?? []).some((r) => !buildBlockReason(r, "aa"));
+    }
+
+    if (i.building) {
+      return !(regions ?? []).some(
+        (r) => !buildBlockReason(r, i.building!) && !levelLockForRegion(r, i.building!),
+      );
+    }
+
+    return false;
+  }
+
+  function ItemCard({ i, owned }: { i: ShopItem; owned?: number }) {
+    const cannotBuyItem = itemCannotBuy(i);
+
+    return (
+      <Panel className="hud-frame flex h-full flex-col p-5">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+          <p className="truncate text-base font-semibold">{i.name}</p>
+          <p className="num text-primary shrink-0 text-sm">{fmtKR(i.cost_kr)}</p>
+        </div>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{i.description}</p>
+        {levelLock(i) ? <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-destructive">{levelLock(i)}</p> : null}
+        <div className="mt-3 space-y-1 text-xs">
+          {RESOURCES.filter((r) => unitCost(i, r) > 0).map((r) => (
+            <p key={r} className="text-muted-foreground uppercase">
+              {RESOURCE_LABELS[r]}:{" "}
+              <span className="num text-foreground">{units(unitCost(i, r))}</span>
+            </p>
+          ))}
+          {Number(i.income_kr) > 0 ? (
+            <p className="text-success">+{fmtKR(i.income_kr)} / doba</p>
+          ) : null}
+          {Number(i.upkeep_coal) > 0 ? (
+            <p className="text-destructive">-{units(i.upkeep_coal)} węgla / doba</p>
+          ) : null}
+          {i.produces ? (
+            <p className="text-success">
+              +{units(i.produces_amount)} {RESOURCE_LABELS[i.produces] ?? i.produces} / doba
+            </p>
+          ) : null}
+          {owned !== undefined ? (
+            <p className="text-info">Posiadasz: {units(owned)}</p>
+          ) : null}
+        </div>
+        <Button
+          className="mt-4 w-full"
+          disabled={!countryId || cannotBuyItem}
+          onClick={() => openItem(i)}
+        >
+          {cannotBuyItem ? "Niedostępne" : "Kup"}
+        </Button>
+      </Panel>
+    );
+  }
 
   return (
-    <AppShell me={me ?? null} title="Sklep" subtitle="Kupuj infrastrukturę, uzbrojenie i jednostki za KR oraz surowce.">
-      <div className="space-y-4">
-        <Panel className="shop-hero"><div><p className="label-hud">LOGISTYKA / ZAOPATRZENIE</p><h2 className="mt-1 text-xl font-semibold sm:text-2xl">Rynek państwa</h2><p className="mt-1 text-sm text-muted-foreground">Kupuj uzbrojenie, infrastrukturę i jednostki za KR oraz surowce.</p></div><div className="text-right text-sm"><p className="text-muted-foreground">Saldo</p><p className="text-lg font-semibold">{fmtKR(haveKr)}</p></div></Panel>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]"><Panel><SectionTitle>Produkty</SectionTitle><div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{allItems.map((product) => { const owned = product.building ? ownedByBuilding.get(product.building) ?? 0 : null; return <button key={product.code} type="button" className="rounded-xl border p-4 text-left transition hover:border-primary/50 hover:bg-muted/30" onClick={() => openItem(product)}><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{product.name}</p><p className="mt-1 text-xs text-muted-foreground">{product.description}</p></div>{owned !== null && <span className="text-xs text-muted-foreground">Posiadane: {owned}</span>}</div><div className="mt-3 text-sm font-medium">{fmtKR(Number(product.cost_kr))}</div></button>; })}</div></Panel><Panel><SectionTitle>Stan zaopatrzenia</SectionTitle><div className="mt-3 space-y-2 text-sm">{RESOURCES.map((r) => <div key={r} className="flex items-center justify-between gap-3"><span>{RESOURCE_LABELS[r]}</span><span className="font-medium">{fmtNum(Number(country?.[r] ?? 0))}</span></div>)}<div className="flex items-center justify-between gap-3 border-t pt-2"><span>Węgiel netto</span><span className="font-medium">{fmtNum(coalLeft)}</span></div></div></Panel></div>
-        <Dialog open={!!item} onOpenChange={(open) => !open && setItem(null)}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>{item?.name}</DialogTitle><DialogDescription>{item?.description}</DialogDescription></DialogHeader><div className="space-y-4">{isBuilding ? <Select value={regionId ?? ""} onValueChange={setRegionId}><SelectTrigger><SelectValue placeholder="Wybierz region" /></SelectTrigger><SelectContent>{(regions ?? []).map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select> : <Input inputMode="numeric" value={qtyText} onChange={(e) => setQtyText(e.target.value)} />}{resourceRows.map((r) => <div key={r.r} className="flex items-center justify-between"><span>{RESOURCE_LABELS[r.r]}</span><span>{fmtNum(r.need)} / {fmtNum(r.have)}</span></div>)}{disabledReason ? <p className="text-sm text-destructive">{disabledReason}</p> : null}<Button className="w-full" disabled={!!disabledReason || buy.isPending} onClick={() => item && buy.mutate({ item, qty: effectiveQty })}>{buy.isPending ? "Kupowanie…" : "Kup"}</Button></div></DialogContent></Dialog>
+    <AppShell
+      me={me ?? null}
+      title="Sklep"
+      subtitle={country ? `${country.name} — ${fmtKR(country.balance)}` : undefined}
+    >
+      {me?.isAdmin ? (
+        <div className="mb-5 max-w-xs">
+          <Select value={countryId ?? ""} onValueChange={setSelected}>
+            <SelectTrigger>
+              <SelectValue placeholder="Wybierz państwo" />
+            </SelectTrigger>
+            <SelectContent>
+              {(countries ?? []).map((c) => (
+                <SelectItem key={c.country_id} value={c.country_id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
+      {!countryId ? (
+        <Panel className="p-5">
+          <p className="text-muted-foreground text-sm">
+            Nie masz przypisanego państwa — zakupy będą możliwe po przypisaniu.
+          </p>
+        </Panel>
+      ) : null}
+
+      <SectionTitle>Fabryki</SectionTitle>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {factories.map((i) => (
+          <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
+        ))}
       </div>
+
+      <SectionTitle>Wytwórnie surowców</SectionTitle>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {mines.map((i) => (
+          <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
+        ))}
+      </div>
+
+      <SectionTitle>Wojsko i obrona</SectionTitle>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {units_.map((i) => (
+          <ItemCard key={i.code} i={i} />
+        ))}
+      </div>
+
+      <SectionTitle
+        action={
+          <Link to="/regiony" className="text-primary shrink-0 text-xs">
+            Regiony
+          </Link>
+        }
+      >
+        Fortyfikacje
+      </SectionTitle>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {forts.map((i) => (
+          <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
+        ))}
+      </div>
+
+      <Dialog open={!!item} onOpenChange={(o) => !o && setItem(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="tracking-[0.14em] uppercase">Potwierdzenie zakupu</DialogTitle>
+            <DialogDescription>{item?.name}</DialogDescription>
+          </DialogHeader>
+          {item ? (
+            <div className="space-y-4">
+              {!isBuilding ? (
+                <div className="space-y-2">
+                  <label htmlFor="qty" className="label-hud">
+                    Ilość
+                  </label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setQtyText(String(Math.max(1, qty - 1)))}
+                    >
+                      −
+                    </Button>
+                    <Input
+                      id="qty"
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      value={qtyText}
+                      onChange={(e) => setQtyText(e.target.value)}
+                      onBlur={() => setQtyText(String(qty))}
+                      className="num text-center"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setQtyText(String(qty + 1))}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              {isBuilding || item.code === "aa" ? (
+                <div className="space-y-2">
+                  <p className="label-hud">{isBuilding ? "Region budowy" : "Region obrony"}</p>
+                  <Select value={regionId ?? ""} onValueChange={setRegionId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wybierz region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(regions ?? []).map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.name} — sloty {r.slots.length}/9 · {units(r.aa_defense)} OPL
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {blockReason ? (
+                    <p className="text-destructive text-xs">{blockReason}</p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="panel hud-frame space-y-2 p-4 text-xs">
+                <div className="flex justify-between gap-2">
+                  <span className="text-muted-foreground uppercase">KR</span>
+                  <span className={`num ${krShort ? "text-destructive" : "text-foreground"}`}>
+                    {fmtNum(haveKr)} / {fmtNum(needKr)}
+                  </span>
+                </div>
+                {resourceRows.map((row) => (
+                  <div key={row.r} className="flex justify-between gap-2">
+                    <span className="text-muted-foreground uppercase">
+                      {RESOURCE_LABELS[row.r]}
+                    </span>
+                    <span className={`num ${row.missing ? "text-destructive" : "text-foreground"}`}>
+                      {units(row.have)} / {units(row.need)}
+                    </span>
+                  </div>
+                ))}
+                <div className="border-border mt-2 flex justify-between gap-2 border-t pt-3">
+                  <span className="text-muted-foreground uppercase">Koszt razem</span>
+                  <span className="num text-primary">{kr(needKr)}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-muted-foreground uppercase">Skarbiec po zakupie</span>
+                  <span className={`num ${krShort ? "text-destructive" : "text-success"}`}>
+                    {kr(haveKr - needKr)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setItem(null)}>
+                  Anuluj
+                </Button>
+                <Button
+                  className="flex-1"
+                  disabled={buy.isPending || cannotBuy}
+                  onClick={() => buy.mutate({ item, qty })}
+                >
+                  {buy.isPending ? "Realizuję…" : "Potwierdź zakup"}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
