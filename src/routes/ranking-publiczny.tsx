@@ -10,13 +10,13 @@ import { fmtKR, units } from "@/lib/format";
 export const Route = createFileRoute("/ranking-publiczny")({
   head: () => ({
     meta: [
-      { title: "Ranking państw — Nation Dynamics" },
+      { title: "Ranking państw — Kraje Informatyka" },
       {
         name: "description",
         content:
           "Publiczny ranking państw: największe dzienne zarobki oraz potencjał głosów wojennych.",
       },
-      { property: "og:title", content: "Ranking państw — Nation Dynamics" },
+      { property: "og:title", content: "Ranking państw — Kraje Informatyka" },
       {
         property: "og:description",
         content: "Największe zarobki dzienne i potencjał głosów wojennych państw.",
