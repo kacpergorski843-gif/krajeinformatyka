@@ -136,7 +136,7 @@ begin
     perform cron.schedule(
       'daily-economy-warsaw',
       '0 * * * *',
-      $$select public.run_daily_economy() where extract(hour from (now() at time zone 'Europe/Warsaw')) = 20;$$
+      $job$select public.run_daily_economy() where extract(hour from (now() at time zone 'Europe/Warsaw')) = 20;$job$
     );
   end if;
 end;
