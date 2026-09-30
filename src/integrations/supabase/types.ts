@@ -695,6 +695,10 @@ export type Database = {
         Args: { p_region_id: string; p_value: number }
         Returns: Json
       }
+      rename_region: {
+        Args: { p_name: string; p_region_id: string }
+        Returns: Json
+      }
       admin_toggle_shop_item: {
         Args: { p_active: boolean; p_code: string }
         Returns: Json
