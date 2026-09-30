@@ -19,7 +19,7 @@ export const Route = createFileRoute("/auth")({
 
 const EMAIL_DOMAIN = "nationdynamics.internal";
 
-function normalizeUsername(raw: string) { return raw.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^[.\-_]+|[.\-_]+$/g, ""); }
+function normalizeUsername(raw: string) { return raw.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^\p{L}\p{N}._+@#%&!$-]/gu, "").replace(/^[.\-_+@#%&!$-]+|[.\-_+@#%&!$-]+$/g, ""); }
 
 function AuthPage() {
   const router = useRouter();
