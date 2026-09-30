@@ -27,7 +27,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { CountryFlag } from "@/components/CountryFlag";
 import { supabase } from "@/integrations/supabase/client";
-import { deletePlayerAccount } from "@/lib/admin.functions";
+import { deletePlayerAccount, resetPlayerPassword } from "@/lib/admin.functions";
 import { exportApplicationData } from "@/lib/admin-export.functions";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
@@ -1203,6 +1203,8 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [editFlagCountry, setEditFlagCountry] = useState<{ id: string; name: string; flag: string } | null>(null);
   const [editFlagFile, setEditFlagFile] = useState<File | null>(null);
   const [editFlagPreview, setEditFlagPreview] = useState<string | null>(null);
+  const [resetPasswordFor, setResetPasswordFor] = useState<AdminUser | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
   const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(deferredSearch.trim().toLowerCase()));
 
   const assign = useMutation({
@@ -1305,6 +1307,19 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: () => {
+      if (!resetPasswordFor) throw new Error("Nie wybrano użytkownika");
+      return resetPlayerPassword({ data: { userId: resetPasswordFor.id, password: resetPassword } });
+    },
+    onSuccess: () => {
+      toast.success("Hasło użytkownika zostało zresetowane");
+      setResetPasswordFor(null);
+      setResetPassword("");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   return (
     <div className="space-y-4">
       <Panel className="hud-frame p-3">
@@ -1342,6 +1357,12 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
                 </Field>
 
                 <div className="grid gap-2 sm:grid-cols-2">
+                  <Button type="button" variant="outline" className="w-full" onClick={() => {
+                    setResetPasswordFor(user);
+                    setResetPassword("");
+                  }}>
+                    <ShieldAlert /> Reset hasła
+                  </Button>
                   <Button type="button" variant="outline" className="w-full" onClick={() => {
                     setNewCountryFor(user);
                     setNewCountryName("");
@@ -1386,6 +1407,48 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
       )}
 
       {!isMainAdmin ? <p className="text-xs text-muted-foreground">Zmiana uprawnień jest dostępna wyłącznie dla głównego administratora.</p> : null}
+
+      <Dialog open={!!resetPasswordFor} onOpenChange={(open) => {
+        if (!open && !resetPasswordMutation.isPending) {
+          setResetPasswordFor(null);
+          setResetPassword("");
+        }
+      }}>
+        <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-lg sm:w-[calc(100%-2rem)]">
+          <DialogHeader>
+            <DialogTitle>Reset hasła</DialogTitle>
+            <DialogDescription>
+              Ustaw nowe hasło dla {resetPasswordFor?.display_name ?? "wybranego użytkownika"}. Obecne hasło nie jest wyświetlane ani odczytywane.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-4" onSubmit={(event) => {
+            event.preventDefault();
+            resetPasswordMutation.mutate();
+          }}>
+            <Field label="Nowe hasło">
+              <Input
+                type="password"
+                value={resetPassword}
+                onChange={(event) => setResetPassword(event.target.value)}
+                minLength={8}
+                maxLength={128}
+                autoComplete="new-password"
+                placeholder="Minimum 8 znaków"
+                disabled={resetPasswordMutation.isPending}
+              />
+            </Field>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button type="button" variant="outline" onClick={() => {
+                setResetPasswordFor(null);
+                setResetPassword("");
+              }} disabled={resetPasswordMutation.isPending}>Anuluj</Button>
+              <Button type="submit" disabled={resetPasswordMutation.isPending || resetPassword.length < 8}>
+                {resetPasswordMutation.isPending ? "Zapisywanie…" : "Ustaw nowe hasło"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!newCountryFor} onOpenChange={(open) => !open && setNewCountryFor(null)}>
         <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-lg sm:w-[calc(100%-2rem)]">
