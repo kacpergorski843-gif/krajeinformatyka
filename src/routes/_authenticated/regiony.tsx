@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel } from "@/components/stat";
@@ -74,6 +74,8 @@ function Regions() {
   const country = countries?.find((c) => c.country_id === countryId);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [buildFor, setBuildFor] = useState<RegionWithSlots | null>(null);
+  const [renameFor, setRenameFor] = useState<RegionWithSlots | null>(null);
+  const [regionName, setRegionName] = useState("");
   const [occupied, setOccupied] = useState<{ id: string; building: string; region: string } | null>(
     null,
   );
@@ -90,6 +92,20 @@ function Regions() {
       setBuildFor(null);
       void queryClient.invalidateQueries({ queryKey: ["regions"] });
     void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const rename = useMutation({
+    mutationFn: () => {
+      if (!renameFor) throw new Error("Nie wybrano regionu");
+      return rpc("rename_region", { p_region_id: renameFor.id, p_name: regionName });
+    },
+    onSuccess: () => {
+      toast.success("Nazwa regionu została zmieniona");
+      setRenameFor(null);
+      setRegionName("");
+      void queryClient.invalidateQueries({ queryKey: ["regions"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -231,6 +247,20 @@ function Regions() {
                     {units(r.aa_defense)} OPL
                   </span>
                 </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  aria-label="Zmień nazwę regionu"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setRenameFor(r);
+                    setRegionName(r.name);
+                  }}
+                >
+                  <Pencil className="size-4" strokeWidth={1.5} />
+                </Button>
                 <ChevronDown
                   className={`text-muted-foreground size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
                   strokeWidth={1.5}
@@ -340,6 +370,36 @@ function Regions() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      <Dialog open={!!renameFor} onOpenChange={(o) => !o && !rename.isPending && setRenameFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Zmień nazwę regionu</DialogTitle>
+            <DialogDescription>Nowa nazwa będzie widoczna dla wszystkich graczy.</DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={(event) => {
+            event.preventDefault();
+            rename.mutate();
+          }}>
+            <Input
+              value={regionName}
+              onChange={(event) => setRegionName(event.target.value)}
+              minLength={2}
+              maxLength={60}
+              autoFocus
+              disabled={rename.isPending}
+            />
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button type="button" variant="outline" onClick={() => setRenameFor(null)} disabled={rename.isPending}>
+                Anuluj
+              </Button>
+              <Button type="submit" disabled={rename.isPending || regionName.trim().length < 2}>
+                {rename.isPending ? "Zapisywanie…" : "Zapisz nazwę"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!occupied} onOpenChange={(o) => !o && setOccupied(null)}>
         <DialogContent>
