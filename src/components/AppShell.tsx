@@ -54,7 +54,7 @@ export function AppShell({ me, title, subtitle, children }: {
         <Link
           key={item.to}
           to={item.to}
-          prefetch="intent"
+          preload="intent"
           onClick={() => mobile && setMobileOpen(false)}
           activeProps={{ className: "nav-active" }}
           className="nav-item"
@@ -97,7 +97,7 @@ export function AppShell({ me, title, subtitle, children }: {
       </main>
     </div>
     <nav className="mobile-nav lg:hidden" aria-label="Główna nawigacja">
-      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} prefetch="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
+      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} preload="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
         <item.icon className="size-5" strokeWidth={1.8}/><span>{item.label}</span>
       </Link>)}
       <button className="mobile-nav-item" onClick={() => setMobileOpen(true)} aria-label="Otwórz pełne menu"><Menu className="size-5"/><span>Menu</span></button>

@@ -79,7 +79,7 @@ async function readAllAuthUsers() {
 
 export const exportApplicationData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<ExportResult> => {
+  .handler(async ({ context }) => {
     const { data: isAdmin, error: roleError } = await context.supabase.rpc("is_admin", {
       _user_id: context.userId,
     });
@@ -106,10 +106,11 @@ export const exportApplicationData = createServerFn({ method: "POST" })
       });
     }
 
-    return {
+    const result: ExportResult = {
       generated_at: new Date().toISOString(),
       tables,
       errors,
       auth_users,
     };
+    return JSON.stringify(result);
   });

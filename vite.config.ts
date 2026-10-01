@@ -13,12 +13,12 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
-  define: {
+  vite: { define: {
     "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
       process.env.VITE_SUPABASE_URL ?? supabaseUrl ?? "",
     ),
     "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
       process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? supabasePublishableKey ?? "",
     ),
-  },
+  } },
 });

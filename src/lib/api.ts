@@ -308,7 +308,8 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
     enabled: !!countryId,
     queryFn: async (): Promise<OccupiedRegion[]> => {
       const occupations = await unwrap(
-        supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
           .from("region_occupations")
           .select("region_id, current_country_id, occupied_at, event_type, regions(country_id)")
           .eq("previous_country_id", countryId!)
@@ -455,7 +456,7 @@ export const economyRunsQuery = queryOptions({
 });
 
 export async function rpc<T = unknown>(
-  fn: Parameters<typeof supabase.rpc>[0],
+  fn: string,
   args: Record<string, unknown>,
 ): Promise<T> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -526,13 +527,15 @@ const COUNTRY_STATS_SELECT =
   "country_id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs,war_votes,fort_votes,total_votes,regions_count,gross_income,coal_upkeep,coal_prod,oil_prod,copper_prod,iron_prod,uranium_prod,forts,military_value,vote_potential,region_aa_total";
 
 async function readCountryStats(view: "world_country_stats" | "country_stats") {
-  const { data, error } = await supabase.from(view).select(COUNTRY_STATS_SELECT).order("name");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).from(view).select(COUNTRY_STATS_SELECT).order("name");
   if (error) throw error;
   return (data ?? []) as unknown as CountryStats[];
 }
 
 async function readCountryStatsById(view: "world_country_stats" | "country_stats", countryId: string) {
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from(view)
     .select(COUNTRY_STATS_SELECT)
     .eq("country_id", countryId)
@@ -562,7 +565,7 @@ async function readPublicCountryFallback(countryId?: string) {
     }
   }
 
-  return rows.map((row) => ({
+  return (rows.map((row) => ({
     country_id: row.id,
     name: row.name,
     flag: row.flag,
@@ -593,7 +596,7 @@ async function readPublicCountryFallback(countryId?: string) {
     military_value: "0",
     vote_potential: 0,
     region_aa_total: 0,
-  })) as CountryStats[];
+  }))) as unknown as CountryStats[];
 }
 
 function isMissingRelationError(error: unknown): boolean {

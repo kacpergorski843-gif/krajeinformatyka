@@ -20,6 +20,7 @@ import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedRegionyRouteImport } from './routes/_authenticated/regiony'
 import { Route as AuthenticatedSklepRouteImport } from './routes/_authenticated/sklep'
 import { Route as AuthenticatedSwiatRouteImport } from './routes/_authenticated/swiat'
+import { Route as AuthenticatedTransferRouteImport } from './routes/_authenticated/transfer'
 import { Route as AuthenticatedSwiatIdRouteImport } from './routes/_authenticated/swiat.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -76,6 +77,11 @@ const AuthenticatedSwiatRoute = AuthenticatedSwiatRouteImport.update({
   path: '/swiat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTransferRoute = AuthenticatedTransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSwiatIdRoute = AuthenticatedSwiatIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/regiony': typeof AuthenticatedRegionyRoute
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
+  '/transfer': typeof AuthenticatedTransferRoute
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
 export interface FileRoutesByTo {
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/regiony': typeof AuthenticatedRegionyRoute
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
+  '/transfer': typeof AuthenticatedTransferRoute
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
 export interface FileRoutesById {
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/_authenticated/regiony': typeof AuthenticatedRegionyRoute
   '/_authenticated/sklep': typeof AuthenticatedSklepRoute
   '/_authenticated/swiat': typeof AuthenticatedSwiatRouteWithChildren
+  '/_authenticated/transfer': typeof AuthenticatedTransferRoute
   '/_authenticated/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
 export interface FileRouteTypes {
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/regiony'
     | '/sklep'
     | '/swiat'
+    | '/transfer'
     | '/swiat/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/regiony'
     | '/sklep'
     | '/swiat'
+    | '/transfer'
     | '/swiat/$id'
   id:
     | '__root__'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/_authenticated/regiony'
     | '/_authenticated/sklep'
     | '/_authenticated/swiat'
+    | '/_authenticated/transfer'
     | '/_authenticated/swiat/$id'
   fileRoutesById: FileRoutesById
 }
@@ -252,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSwiatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/transfer': {
+      id: '/_authenticated/transfer'
+      path: '/transfer'
+      fullPath: '/transfer'
+      preLoaderRoute: typeof AuthenticatedTransferRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/swiat/$id': {
       id: '/_authenticated/swiat/$id'
       path: '/$id'
@@ -281,6 +300,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRegionyRoute: typeof AuthenticatedRegionyRoute
   AuthenticatedSklepRoute: typeof AuthenticatedSklepRoute
   AuthenticatedSwiatRoute: typeof AuthenticatedSwiatRouteWithChildren
+  AuthenticatedTransferRoute: typeof AuthenticatedTransferRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -291,6 +311,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRegionyRoute: AuthenticatedRegionyRoute,
   AuthenticatedSklepRoute: AuthenticatedSklepRoute,
   AuthenticatedSwiatRoute: AuthenticatedSwiatRouteWithChildren,
+  AuthenticatedTransferRoute: AuthenticatedTransferRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
