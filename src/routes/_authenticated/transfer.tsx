@@ -77,7 +77,7 @@ function Transfers() {
 
   const Icon = useMemo(() => resources.find((x) => x[0] === resource)?.[2] ?? Coins, [resource]);
 
-  return <AppShell me={me ?? null} title="Transfery" subtitle="Przekazuj pieniądze i surowce innym państwom">
+  return <AppShell me={me ?? null} title="Transfery" subtitle="Przekazuj pieniądze, surowce i jednostki wojskowe innym państwom">
     <div className="transfer-hero">
       <div>
         <p className="label-hud">LOGISTICS COMMAND</p>
@@ -112,7 +112,7 @@ function Transfers() {
               {resources.map(([key,label,I]) => <button key={key} type="button" onClick={() => setResource(key)} className={`flex min-h-12 items-center gap-2 rounded-lg border p-3 text-left text-sm transition-all ${resource===key ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"}`} aria-pressed={resource === key}><I className="size-4"/>{label}</button>)}
             </div>
           </div>
-          <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="numeric" type="number" min={isMoney ? "1000000000" : "0"} step={isMoney ? "1000000000" : "any"} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={isMoney ? "1 000 000 000" : "0"} aria-describedby="transfer-amount-help" /><p id="transfer-amount-help" className="mt-2 text-xs text-muted-foreground">Dostępne: <span className="num">{units(available)}</span>{isMoney ? " · przelewy KR muszą być wielokrotnością 1 mld" : isAa ? " · OPL jest przypisane do wybranego regionu" : isMilitary ? " · jednostki przesyłasz w całych pakietach" : ""}</p></div>
+          <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="numeric" type="number" min={isMoney ? "1000000000" : "0"} step={isMoney ? "1000000000" : isMilitary ? "1" : "any"} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={isMoney ? "1 000 000 000" : "0"} aria-describedby="transfer-amount-help" /><p id="transfer-amount-help" className="mt-2 text-xs text-muted-foreground">Dostępne: <span className="num">{units(available)}</span>{isMoney ? " · przelewy KR muszą być wielokrotnością 1 mld" : isAa ? " · OPL jest przypisane do wybranego regionu" : isMilitary ? " · jednostki przesyłasz w całych pakietach" : ""}</p></div>
           {isAa ? <div className="grid gap-4 sm:grid-cols-2"><div><p className="label-hud mb-2">4. Region źródłowy</p><Select value={sourceRegion} onValueChange={setSourceRegion}><SelectTrigger><SelectValue placeholder="Wybierz region źródłowy"/></SelectTrigger><SelectContent>{(sourceRegions ?? []).map((r) => <SelectItem key={r.id} value={r.id}>{r.name} · OPL {units(r.aa_defense)}</SelectItem>)}</SelectContent></Select></div><div><p className="label-hud mb-2">5. Region docelowy</p><Select value={targetRegion} onValueChange={setTargetRegion}><SelectTrigger><SelectValue placeholder="Wybierz region docelowy"/></SelectTrigger><SelectContent>{(targetRegions ?? []).map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select></div></div> : null}
         </div>
       </Panel>
