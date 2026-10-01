@@ -188,6 +188,19 @@ export function regionsQuery(countryId: string | null | undefined) {
   });
 }
 
+export function transferRegionsQuery(countryId: string | null | undefined) {
+  return queryOptions({
+    queryKey: ["transfer_regions", countryId],
+    enabled: !!countryId,
+    queryFn: async (): Promise<Array<{ id: string; name: string; country_id: string; aa_defense: number }>> => {
+      const rows = await unwrap(
+        supabase.from("regions").select("id,name,country_id,aa_defense").eq("country_id", countryId!).order("created_at"),
+      );
+      return (rows ?? []) as Array<{ id: string; name: string; country_id: string; aa_defense: number }>;
+    },
+  });
+}
+
 export type RegionOccupation = {
   id: string;
   region_id: string;
