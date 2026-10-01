@@ -498,8 +498,7 @@ function Update4Tools() {
                       try {
                         await rpc("admin_remove_income_bonus", { p_bonus_id: bonus.id });
                         toast.success("Bonus został usunięty");
-                        queryClient.invalidateQueries({ queryKey: ["active_income_bonuses"] });
-                        queryClient.invalidateQueries();
+                        void queryClient.invalidateQueries({ queryKey: ["active_income_bonuses"] });
                       } catch (error) {
                         toast.error(error instanceof Error ? error.message : "Nie udało się usunąć bonusu");
                       }
@@ -660,7 +659,8 @@ function AdminPanel() {
                 try {
                   await rpc("claim_main_admin", {});
                   toast.success("Jesteś głównym administratorem");
-                  queryClient.invalidateQueries();
+                  void queryClient.invalidateQueries({ queryKey: ["me"] });
+                  void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
                 } catch (error) {
                   toast.error(error instanceof Error ? error.message : "Nie udało się");
                 }
@@ -829,7 +829,9 @@ function CountriesTab() {
     onSuccess: () => {
       toast.success("Państwo utworzone");
       setNewName(""); setNewFlag(""); setCreating(false);
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["countries"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
+      void queryClient.invalidateQueries({ queryKey: ["all_region_options"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -1581,7 +1583,11 @@ function EconomyTab({ countdown }: { countdown: string }) {
   const [confirm, setConfirm] = useState(false);
   const runs = (runQuery.data ?? []) as unknown as EconomyRun[];
   const totals = (countryQuery.data ?? []).reduce((sum, country) => ({ income: sum.income + Number(country.gross_income), coal: sum.coal + Number(country.coal_prod), oil: sum.oil + Number(country.oil_prod), copper: sum.copper + Number(country.copper_prod), iron: sum.iron + Number(country.iron_prod), uranium: sum.uranium + Number(country.uranium_prod), upkeep: sum.upkeep + Number(country.coal_upkeep) }), { income: 0, coal: 0, oil: 0, copper: 0, iron: 0, uranium: 0, upkeep: 0 });
-  const run = useMutation({ mutationFn: () => rpc<{ ok: boolean; reason?: string }>("run_daily_economy", {}), onSuccess: (result) => { result?.ok ? toast.success("Cykl dobowy rozliczony") : toast.info("Cykl na dzisiaj został już rozliczony"); setConfirm(false); queryClient.invalidateQueries(); }, onError: (error: Error) => toast.error(error.message) });
+  const run = useMutation({ mutationFn: () => rpc<{ ok: boolean; reason?: string }>("run_daily_economy", {}), onSuccess: (result) => { result?.ok ? toast.success("Cykl dobowy rozliczony") : toast.info("Cykl na dzisiaj został już rozliczony"); setConfirm(false);
+        void queryClient.invalidateQueries({ queryKey: ["economy_runs"] });
+        void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+        void queryClient.invalidateQueries({ queryKey: ["countries"] });
+        void queryClient.invalidateQueries({ queryKey: ["transactions"] }); }, onError: (error: Error) => toast.error(error.message) });
   return <div className="space-y-4"><div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"><Panel className="hud-frame p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div><p className="label-hud">Następny automatyczny cykl</p><p className="num mt-2 text-3xl text-primary sm:text-4xl">{countdown}</p><p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p></div><CalendarClock className="size-7 text-primary" /></div><Button className="mt-5 w-full sm:w-auto" onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button></Panel><Panel className="p-4"><p className="label-hud">Prognoza kolejnego cyklu</p><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Przychód KR" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep)}`} tone="destructive" />{[["Węgiel",totals.coal],["Ropa",totals.oil],["Miedź",totals.copper],["Żelazo",totals.iron],["Uran",totals.uranium]].map(([label,value]) => <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(Number(value))}`} tone="success" />)}</div></Panel></div><SectionTitle>Ostatnie rozliczenia</SectionTitle><Panel className="divide-y divide-border p-0">{runs.filter((entry) => Number(entry.summary?.["total_kr"] ?? 0) !== 0).map((entry) => <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="text-sm">Cykl {entry.run_date}</p><p className="text-xs text-muted-foreground">{dateTime(entry.ran_at)}</p></div><p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.["total_kr"] ?? 0))}</p></div>)}{runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}</Panel><ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Uruchomić cykl dobowy?" description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`} confirmLabel="Uruchom cykl" destructive pending={run.isPending} onConfirm={() => run.mutate()}><div className="grid grid-cols-2 gap-2"><ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep)} węgla`} tone="destructive" /></div></ConfirmDialog></div>;
 }
 
