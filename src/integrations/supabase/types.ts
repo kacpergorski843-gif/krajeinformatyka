@@ -699,6 +699,10 @@ export type Database = {
         Args: { p_name: string; p_region_id: string }
         Returns: Json
       }
+      transfer_military: {
+        Args: { p_amount: number; p_from_country_id: string; p_from_region_id?: string; p_resource: string; p_to_country_id: string; p_to_region_id?: string }
+        Returns: Json
+      }
       admin_toggle_shop_item: {
         Args: { p_active: boolean; p_code: string }
         Returns: Json
