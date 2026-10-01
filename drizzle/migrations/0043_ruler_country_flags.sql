@@ -48,8 +48,6 @@ for insert
 to authenticated
 with check (
   bucket_id = 'country-flags'
-  and coalesce(metadata->>'mimetype', '') in ('image/png', 'image/jpeg', 'image/webp', 'image/gif')
-  and coalesce((metadata->>'size')::bigint, 0) <= 5242880
   and exists (
     select 1
     from public.profiles p
@@ -65,8 +63,6 @@ for update
 to authenticated
 using (
   bucket_id = 'country-flags'
-  and coalesce(metadata->>'mimetype', '') in ('image/png', 'image/jpeg', 'image/webp', 'image/gif')
-  and coalesce((metadata->>'size')::bigint, 0) <= 5242880
   and exists (
     select 1
     from public.profiles p
