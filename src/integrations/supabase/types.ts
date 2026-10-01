@@ -63,82 +63,6 @@ export type Database = {
           },
         ]
       }
-      region_occupations: {
-        Row: {
-          id: string
-          region_id: string
-          previous_country_id: string
-          current_country_id: string
-          occupied_at: string
-          actor_id: string
-        }
-        Insert: {
-          id?: string
-          region_id: string
-          previous_country_id: string
-          current_country_id: string
-          occupied_at?: string
-          actor_id: string
-        }
-        Update: {
-          id?: string
-          region_id?: string
-          previous_country_id?: string
-          current_country_id?: string
-          occupied_at?: string
-          actor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "region_occupations_region_id_fkey"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "regions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "region_occupations_previous_country_id_fkey"
-            columns: ["previous_country_id"]
-            isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "region_occupations_current_country_id_fkey"
-            columns: ["current_country_id"]
-            isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      economy_bonuses: {
-        Row: {
-          id: string
-          percent: number
-          starts_at: string
-          ends_at: string
-          created_by: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          percent: number
-          starts_at?: string
-          ends_at: string
-          created_by: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          percent?: number
-          starts_at?: string
-          ends_at?: string
-          created_by?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       countries: {
         Row: {
           aa_defense: number
@@ -195,6 +119,58 @@ export type Database = {
           uranium?: number
         }
         Relationships: []
+      }
+      economy_bonuses: {
+        Row: {
+          country_id: string | null
+          created_at: string
+          created_by: string
+          ends_at: string
+          id: string
+          percent: number
+          starts_at: string
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string
+          created_by: string
+          ends_at: string
+          id?: string
+          percent: number
+          starts_at?: string
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string
+          created_by?: string
+          ends_at?: string
+          id?: string
+          percent?: number
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "economy_bonuses_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "economy_bonuses_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "economy_bonuses_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+        ]
       }
       economy_runs: {
         Row: {
@@ -360,6 +336,80 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_ranking"
             referencedColumns: ["country_id"]
+          },
+        ]
+      }
+      region_occupations: {
+        Row: {
+          current_country_id: string
+          id: string
+          occupied_at: string
+          previous_country_id: string
+          region_id: string
+        }
+        Insert: {
+          current_country_id: string
+          id?: string
+          occupied_at?: string
+          previous_country_id: string
+          region_id: string
+        }
+        Update: {
+          current_country_id?: string
+          id?: string
+          occupied_at?: string
+          previous_country_id?: string
+          region_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "region_occupations_current_country_id_fkey"
+            columns: ["current_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "region_occupations_current_country_id_fkey"
+            columns: ["current_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "region_occupations_current_country_id_fkey"
+            columns: ["current_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "region_occupations_previous_country_id_fkey"
+            columns: ["previous_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "region_occupations_previous_country_id_fkey"
+            columns: ["previous_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "region_occupations_previous_country_id_fkey"
+            columns: ["previous_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "region_occupations_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -611,41 +661,6 @@ export type Database = {
         }
         Relationships: []
       }
-      world_country_stats: {
-        Row: {
-          aa_defense: number | null
-          balance: number | null
-          coal: number | null
-          coal_prod: number | null
-          coal_upkeep: number | null
-          copper: number | null
-          copper_prod: number | null
-          country_id: string | null
-          flag: string | null
-          fort_votes: number | null
-          forts: number | null
-          gross_income: number | null
-          iron: number | null
-          iron_prod: number | null
-          military_value: number | null
-          missile_1: number | null
-          missile_2: number | null
-          missile_3: number | null
-          name: string | null
-          oil: number | null
-          oil_prod: number | null
-          region_aa_total: number | null
-          regions_count: number | null
-          soldier_packs: number | null
-          tank_packs: number | null
-          total_votes: number | null
-          uranium: number | null
-          uranium_prod: number | null
-          vote_potential: number | null
-          war_votes: number | null
-        }
-        Relationships: []
-      }
       public_ranking: {
         Row: {
           country_id: string | null
@@ -673,12 +688,26 @@ export type Database = {
         Args: { p_flag?: string; p_name: string }
         Returns: string
       }
+      admin_create_country_for_user: {
+        Args: { p_flag?: string; p_name: string; p_user_id: string }
+        Returns: string
+      }
       admin_create_region: {
         Args: { p_country_id: string; p_name: string }
         Returns: string
       }
       admin_delete_country: { Args: { p_country_id: string }; Returns: Json }
       admin_delete_region: { Args: { p_region_id: string }; Returns: Json }
+      admin_grant_building: {
+        Args: {
+          p_building: string
+          p_country_id: string
+          p_quantity?: number
+          p_region_id: string
+          p_slot_index: number
+        }
+        Returns: Json
+      }
       admin_list_users: {
         Args: never
         Returns: {
@@ -690,19 +719,30 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      admin_occupy_region: {
+        Args: { p_new_country_id: string; p_region_id: string }
+        Returns: Json
+      }
       admin_purge_player: { Args: { p_user_id: string }; Returns: Json }
+      admin_remove_income_bonus: { Args: { p_bonus_id: string }; Returns: Json }
+      admin_revert_region_occupation: {
+        Args: { p_region_id: string }
+        Returns: Json
+      }
+      admin_set_country_flag: {
+        Args: { p_country_id: string; p_flag: string }
+        Returns: undefined
+      }
       admin_set_region_aa: {
         Args: { p_region_id: string; p_value: number }
         Returns: Json
       }
-      rename_region: {
-        Args: { p_name: string; p_region_id: string }
-        Returns: Json
-      }
-      transfer_military: {
-        Args: { p_amount: number; p_from_country_id: string; p_from_region_id?: string; p_resource: string; p_to_country_id: string; p_to_region_id?: string }
-        Returns: Json
-      }
+      admin_start_income_bonus:
+        | { Args: { p_hours: number; p_percent: number }; Returns: Json }
+        | {
+            Args: { p_country_id?: string; p_hours: number; p_percent: number }
+            Returns: Json
+          }
       admin_toggle_shop_item: {
         Args: { p_active: boolean; p_code: string }
         Returns: Json
@@ -771,6 +811,19 @@ export type Database = {
         Returns: Json
       }
       sync_country_aa: { Args: { p_country_id: string }; Returns: undefined }
+      transfer_resource: {
+        Args: {
+          p_amount: number
+          p_from_country_id: string
+          p_resource: string
+          p_to_country_id: string
+        }
+        Returns: Json
+      }
+      upgrade_building_in_slot: {
+        Args: { p_item_code: string; p_region_id: string; p_slot_index: number }
+        Returns: Json
+      }
       username_taken: { Args: { p_username: string }; Returns: boolean }
     }
     Enums: {
@@ -781,7 +834,6 @@ export type Database = {
         | "factory_3"
         | "factory_4"
         | "factory_5"
-        | "factory_6"
         | "mine_coal"
         | "mine_oil"
         | "mine_copper"
@@ -790,6 +842,7 @@ export type Database = {
         | "fort_1"
         | "fort_2"
         | "fort_3"
+        | "factory_6"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -924,7 +977,6 @@ export const Constants = {
         "factory_3",
         "factory_4",
         "factory_5",
-        "factory_6",
         "mine_coal",
         "mine_oil",
         "mine_copper",
@@ -933,6 +985,7 @@ export const Constants = {
         "fort_1",
         "fort_2",
         "fort_3",
+        "factory_6",
       ],
     },
   },
