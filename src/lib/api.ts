@@ -596,7 +596,7 @@ async function readPublicCountryFallback(countryId?: string) {
     military_value: "0",
     vote_potential: 0,
     region_aa_total: 0,
-  })) as CountryStats[];
+  }))) as unknown as CountryStats[];
 }
 
 function isMissingRelationError(error: unknown): boolean {
