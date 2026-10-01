@@ -593,7 +593,7 @@ function Update4Tools() {
                     <div>
                       <p className="text-sm font-semibold">{occupation.region_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">{occupation.occupier_country_name}</span> okupuje region od {dateTime(occupation.occupied_at)} · poprzedni właściciel: {occupation.previous_country_name}
+                        <span className="font-medium text-foreground">{occupation.occupier_country_name}</span> kontroluje region · poprzedni właściciel: {occupation.previous_country_name}
                       </p>
                     </div>
                     <Button size="sm" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => void revertOccupation(occupation.region_id)}>
