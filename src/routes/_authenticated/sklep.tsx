@@ -126,7 +126,9 @@ function Shop() {
       toast.success("Zakup zrealizowany");
       setItem(null);
       setQtyText("1");
-      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });\n      void queryClient.invalidateQueries({ queryKey: ["regions"] });\n      void queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["regions"] });
+      void queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
