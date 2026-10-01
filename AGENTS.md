@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Project architecture
+
+- Keep the shared institutional command visual system in `src/styles.css`; route screens compose semantic classes so every module stays visually consistent.
