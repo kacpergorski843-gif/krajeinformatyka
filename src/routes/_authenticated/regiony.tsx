@@ -5,7 +5,7 @@ import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel } from "@/components/stat";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";\nimport { Input } from "@/components/ui/input";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import {
   Dialog,
@@ -115,7 +115,7 @@ function Regions() {
     onSuccess: () => {
       toast.success("Obiekt rozebrany");
       setOccupied(null);
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["regions"] });\n      void queryClient.invalidateQueries({ queryKey: ["country_stats"] });\n      void queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
