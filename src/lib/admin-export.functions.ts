@@ -112,5 +112,5 @@ export const exportApplicationData = createServerFn({ method: "POST" })
       errors,
       auth_users,
     };
-    return JSON.parse(JSON.stringify(result)) as ExportResult & Record<string, any>;
+    return JSON.stringify(result);
   });
