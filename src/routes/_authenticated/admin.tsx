@@ -735,7 +735,7 @@ function AdminDataExportButton() {
     setPending(true);
     try {
       const data = await exportData();
-      openApplicationExportPdf(data);
+      openApplicationExportPdf(data as ApplicationExport);
       toast.success("Dane przygotowane do eksportu PDF");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udało się przygotować eksportu danych");
