@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, ChevronRight, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { supabase } from "@/integrations/supabase/client";
 import { CountryFlag } from "@/components/CountryFlag";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
@@ -46,6 +47,8 @@ function MyCountry() {
     (occupation) => occupation.current_country_id === me?.countryId,
   );
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
+  const [flagFile, setFlagFile] = useState<File | null>(null);
+  const [flagSaving, setFlagSaving] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setCountdown(timeToDailyCycle()), 1000);
@@ -122,15 +125,67 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
-      <Panel className="mb-4 flex items-center gap-3 p-3">
+      <Panel className="mb-4 flex flex-wrap items-center gap-3 p-3">
         <CountryFlag
           flag={country.flag}
           alt={"Flaga państwa " + country.name}
           className="h-12 w-20 rounded-sm text-2xl"
         />
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="label-hud">PAŃSTWO</p>
           <p className="font-display text-lg font-semibold">{country.name}</p>
+          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-sm border border-primary/30 bg-primary/5 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10">
+            Zmień flagę
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="sr-only"
+              disabled={flagSaving}
+              onChange={async (event) => {
+                const file = event.target.files?.[0] ?? null;
+                event.target.value = "";
+                if (!file) return;
+                if (!file.type.startsWith("image/")) {
+                  toast.error("Wybierz plik graficzny.");
+                  return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                  toast.error("Flaga może mieć maksymalnie 5 MB.");
+                  return;
+                }
+
+                setFlagFile(file);
+                setFlagSaving(true);
+                try {
+                  const extension = file.name.split(".").pop()?.toLowerCase() || "png";
+                  const path = country.country_id + "/flag-" + Date.now() + "." + extension;
+                  const upload = await supabase.storage.from("country-flags").upload(path, file, {
+                    upsert: true,
+                    contentType: file.type,
+                  });
+                  if (upload.error) throw upload.error;
+                  const { data } = supabase.storage.from("country-flags").getPublicUrl(path);
+                  const { error } = await supabase.rpc("ruler_set_country_flag", {
+                    p_country_id: country.country_id,
+                    p_flag: data.publicUrl,
+                  });
+                  if (error) throw error;
+                  toast.success("Flaga państwa została zmieniona.");
+                  void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+                  void queryClient.invalidateQueries({ queryKey: ["public_countries"] });
+                  void queryClient.invalidateQueries({ queryKey: ["countries"] });
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Nie udało się zmienić flagi.");
+                } finally {
+                  setFlagFile(null);
+                  setFlagSaving(false);
+                }
+              }}
+            />
+          </label>
+          {flagSaving && flagFile ? (
+            <p className="mt-1 text-[11px] text-muted-foreground">Wgrywanie: {flagFile.name}</p>
+          ) : null}
         </div>
       </Panel>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
