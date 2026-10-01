@@ -129,7 +129,7 @@ exception
 end;
 $function$;
 
-do $
+do $$
 declare
   v_job_id bigint;
 begin
