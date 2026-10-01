@@ -562,7 +562,7 @@ function Update4Tools() {
               <Label>Kraj</Label>
               <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); setOccupationTargetCountry(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz kraj" /></SelectTrigger>
-                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}>{item.flag} {item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
