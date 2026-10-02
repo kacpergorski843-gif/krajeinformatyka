@@ -52,3 +52,44 @@ export const resetPlayerPassword = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/**
+ * Zmiana flagi własnego państwa. Plik jest przesyłany na serwer i zapisywany
+ * przez service role, więc władca nie jest zależny od polityk Storage w kliencie.
+ */
+export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({
+    countryId: z.string().uuid(),
+    fileBase64: z.string().min(1).max(8_000_000),
+    contentType: z.enum(["image/png", "image/jpeg", "image/webp", "image/gif"]),
+    extension: z.enum(["png", "jpg", "jpeg", "webp", "gif"]),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: canChange, error: roleError } = await context.supabase.rpc("can_change_country_flag", {
+      p_country_id: data.countryId,
+    });
+    if (roleError) throw new Error(roleError.message);
+    if (canChange !== true) throw new Error("Możesz zmienić flagę tylko swojego państwa");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const bytes = Buffer.from(data.fileBase64, "base64");
+    if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) {
+      throw new Error("Flaga może mieć maksymalnie 5 MB.");
+    }
+
+    const path = data.countryId + "/flag-" + Date.now() + "." + data.extension;
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("country-flags")
+      .upload(path, bytes, { upsert: true, contentType: data.contentType });
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { data: publicUrl } = supabaseAdmin.storage.from("country-flags").getPublicUrl(path);
+    const { error: flagError } = await context.supabase.rpc("ruler_set_country_flag", {
+      p_country_id: data.countryId,
+      p_flag: publicUrl.publicUrl,
+    });
+    if (flagError) throw new Error(flagError.message);
+
+    return { ok: true };
+  });
