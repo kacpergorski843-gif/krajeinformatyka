@@ -177,7 +177,6 @@ export type Database = {
           id: string
           ran_at: string
           run_date: string
-          run_number: number
           summary: Json
           triggered_by: string | null
         }
@@ -185,7 +184,6 @@ export type Database = {
           id?: string
           ran_at?: string
           run_date: string
-          run_number?: number
           summary?: Json
           triggered_by?: string | null
         }
@@ -193,7 +191,6 @@ export type Database = {
           id?: string
           ran_at?: string
           run_date?: string
-          run_number?: number
           summary?: Json
           triggered_by?: string | null
         }
@@ -730,21 +727,6 @@ export type Database = {
       admin_remove_income_bonus: { Args: { p_bonus_id: string }; Returns: Json }
       admin_revert_region_occupation: {
         Args: { p_region_id: string }
-        Returns: Json
-      }
-      ruler_set_country_flag: {
-        Args: { p_country_id: string; p_flag: string }
-        Returns: undefined
-      }
-      transfer_military: {
-        Args: {
-          p_amount: number
-          p_from_country_id: string
-          p_from_region_id?: string | null
-          p_resource: string
-          p_to_country_id: string
-          p_to_region_id?: string | null
-        }
         Returns: Json
       }
       admin_set_country_flag: {
