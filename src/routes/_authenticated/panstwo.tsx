@@ -5,6 +5,7 @@ import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, ChevronRight, Timer } f
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
+import { rulerUploadCountryFlag } from "@/lib/admin.functions";
 import { CountryFlag } from "@/components/CountryFlag";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
@@ -158,18 +159,23 @@ function MyCountry() {
                 setFlagSaving(true);
                 try {
                   const extension = file.name.split(".").pop()?.toLowerCase() || "png";
-                  const path = country.country_id + "/flag-" + Date.now() + "." + extension;
-                  const upload = await supabase.storage.from("country-flags").upload(path, file, {
-                    upsert: true,
-                    contentType: file.type,
+                  const base64 = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const result = String(reader.result ?? "");
+                      resolve(result.includes(",") ? result.slice(result.indexOf(",") + 1) : result);
+                    };
+                    reader.onerror = () => reject(new Error("Nie udało się odczytać pliku."));
+                    reader.readAsDataURL(file);
                   });
-                  if (upload.error) throw upload.error;
-                  const { data } = supabase.storage.from("country-flags").getPublicUrl(path);
-                  const { error } = await supabase.rpc("ruler_set_country_flag", {
-                    p_country_id: country.country_id,
-                    p_flag: data.publicUrl,
+                  await rulerUploadCountryFlag({
+                    data: {
+                      countryId: country.country_id,
+                      fileBase64: base64,
+                      contentType: file.type as "image/png" | "image/jpeg" | "image/webp" | "image/gif",
+                      extension: extension as "png" | "jpg" | "jpeg" | "webp" | "gif",
+                    },
                   });
-                  if (error) throw error;
                   toast.success("Flaga państwa została zmieniona.");
                   void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
                   void queryClient.invalidateQueries({ queryKey: ["public_countries"] });
