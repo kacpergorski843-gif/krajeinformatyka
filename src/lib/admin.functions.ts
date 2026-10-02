@@ -66,11 +66,15 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
     extension: z.enum(["png", "jpg", "jpeg", "webp", "gif"]),
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: canChange, error: roleError } = await context.supabase.rpc("can_change_country_flag", {
-      p_country_id: data.countryId,
-    });
-    if (roleError) throw new Error(roleError.message);
-    if (canChange !== true) throw new Error("Możesz zmienić flagę tylko swojego państwa");
+    const { data: profile, error: profileError } = await context.supabase
+      .from("profiles")
+      .select("country_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (profileError) throw new Error(profileError.message);
+    if (profile?.country_id !== data.countryId) {
+      throw new Error("Możesz zmienić flagę tylko swojego państwa");
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const bytes = Buffer.from(data.fileBase64, "base64");
@@ -82,14 +86,14 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
     const { error: uploadError } = await supabaseAdmin.storage
       .from("country-flags")
       .upload(path, bytes, { upsert: true, contentType: data.contentType });
-    if (uploadError) throw new Error(uploadError.message);
+    if (uploadError) throw new Error("Upload flagi: " + uploadError.message);
 
     const { data: publicUrl } = supabaseAdmin.storage.from("country-flags").getPublicUrl(path);
-    const { error: flagError } = await context.supabase.rpc("ruler_set_country_flag", {
-      p_country_id: data.countryId,
-      p_flag: publicUrl.publicUrl,
-    });
-    if (flagError) throw new Error(flagError.message);
+    const { error: flagError } = await supabaseAdmin
+      .from("countries")
+      .update({ flag: publicUrl.publicUrl })
+      .eq("id", data.countryId);
+    if (flagError) throw new Error("Zapis flagi: " + flagError.message);
 
     return { ok: true };
   });
