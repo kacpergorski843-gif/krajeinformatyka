@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "sdk_version": "3.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://kbcofzdboyzgsquvtzfq.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "nation-dynamics",
+      "version": "0.1.0",
+      "title": "Nation Dynamics"
+    },
+    "tools": [
+      {
+        "name": "get_my_country",
+        "title": "Moje państwo",
+        "description": "Zwraca stan państwa zalogowanego gracza: skarbiec, surowce, wojsko, dochód i głosy.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_world_ranking",
+        "title": "Ranking państw",
+        "description": "Lista państw świata z dochodem i potencjałem głosów, posortowana malejąco.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "sort": {
+              "default": "income",
+              "description": "Kategoria rankingu.",
+              "type": "string",
+              "enum": [
+                "income",
+                "votes"
+              ]
+            },
+            "limit": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
