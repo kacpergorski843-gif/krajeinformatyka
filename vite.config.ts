@@ -1,4 +1,5 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 
 const supabaseUrl =
   process.env.VITE_SUPABASE_URL ??
@@ -13,7 +14,7 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
-  vite: { define: {
+  vite: { plugins: [mcpPlugin()], define: {
     "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
       process.env.VITE_SUPABASE_URL ?? supabaseUrl ?? "",
     ),
