@@ -258,7 +258,7 @@ export function adminActiveRegionOccupationsQuery() {
     queryKey: ["admin_active_region_occupations"],
     queryFn: async (): Promise<AdminActiveRegionOccupation[]> => {
       const rows = await unwrap(
-        supabase
+        (supabase as any)
           .from("region_control_state")
           .select("region_id, region_name, owner_country_id, owner_country_name, controller_country_id, controller_country_name, is_occupied")
           .eq("is_occupied", true)

@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as RankingPublicznyRouteImport } from './routes/ranking-publiczny'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedArsenalRouteImport } from './routes/_authenticated/arsenal'
 import { Route as AuthenticatedPanstwoRouteImport } from './routes/_authenticated/panstwo'
@@ -21,6 +23,7 @@ import { Route as AuthenticatedRegionyRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSklepRouteImport } from './routes/_authenticated/sklep'
 import { Route as AuthenticatedSwiatRouteImport } from './routes/_authenticated/swiat'
 import { Route as AuthenticatedTransferRouteImport } from './routes/_authenticated/transfer'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedSwiatIdRouteImport } from './routes/_authenticated/swiat.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -37,11 +40,22 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RankingPublicznyRoute = RankingPublicznyRouteImport.update({
   id: '/ranking-publiczny',
   path: '/ranking-publiczny',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -82,6 +96,11 @@ const AuthenticatedTransferRoute = AuthenticatedTransferRouteImport.update({
   path: '/transfer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSwiatIdRoute = AuthenticatedSwiatIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -91,7 +110,9 @@ const AuthenticatedSwiatIdRoute = AuthenticatedSwiatIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
@@ -100,12 +121,15 @@ export interface FileRoutesByFullPath {
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/transfer': typeof AuthenticatedTransferRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
@@ -114,6 +138,7 @@ export interface FileRoutesByTo {
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/transfer': typeof AuthenticatedTransferRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
 export interface FileRoutesById {
@@ -121,7 +146,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/arsenal': typeof AuthenticatedArsenalRoute
   '/_authenticated/panstwo': typeof AuthenticatedPanstwoRoute
@@ -130,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/sklep': typeof AuthenticatedSklepRoute
   '/_authenticated/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/_authenticated/transfer': typeof AuthenticatedTransferRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
 export interface FileRouteTypes {
@@ -137,7 +165,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/ranking-publiczny'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/arsenal'
     | '/panstwo'
@@ -146,12 +176,15 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/swiat'
     | '/transfer'
+    | '/.lovable/oauth/consent'
     | '/swiat/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/ranking-publiczny'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/arsenal'
     | '/panstwo'
@@ -160,13 +193,16 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/swiat'
     | '/transfer'
+    | '/.lovable/oauth/consent'
     | '/swiat/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/mcp'
     | '/ranking-publiczny'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
     | '/_authenticated/arsenal'
     | '/_authenticated/panstwo'
@@ -175,6 +211,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sklep'
     | '/_authenticated/swiat'
     | '/_authenticated/transfer'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/swiat/$id'
   fileRoutesById: FileRoutesById
 }
@@ -182,7 +219,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  McpRoute: typeof McpRoute
   RankingPublicznyRoute: typeof RankingPublicznyRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -208,11 +248,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ranking-publiczny': {
       id: '/ranking-publiczny'
       path: '/ranking-publiczny'
       fullPath: '/ranking-publiczny'
       preLoaderRoute: typeof RankingPublicznyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -271,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransferRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/swiat/$id': {
       id: '/_authenticated/swiat/$id'
       path: '/$id'
@@ -321,7 +382,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  McpRoute: McpRoute,
   RankingPublicznyRoute: RankingPublicznyRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
