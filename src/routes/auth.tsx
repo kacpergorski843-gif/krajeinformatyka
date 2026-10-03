@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const EMAIL_DOMAIN = "nationdynamics.internal.com";
+const EMAIL_DOMAIN = "kbcofzdboyzgsquvtzfq.supabase.co";
 const LEGACY_EMAIL_DOMAIN = "nationdynamics.internal";
 
 function normalizeUsername(raw: string) { return raw.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^\p{L}\p{N}._-]/gu, "").replace(/^[.\-_]+|[.\-_]+$/g, ""); }
