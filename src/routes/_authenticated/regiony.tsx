@@ -48,6 +48,18 @@ const RESOURCES = ["coal", "oil", "copper", "iron", "uranium"] as const;
 
 function slotBlockReason(region: RegionWithSlots, item: ShopItem): string | null {
   const b = item.building!;
+  if (b.startsWith("factory_")) {
+    const level = Number(b.split("_")[1]);
+    if (level > 1 && !region.slots.some((slot) => slot.building === `factory_${level - 1}`)) {
+      return `Wymagany jest najpierw poziom ${level - 1}`;
+    }
+  }
+  if (b === "fort_2" && !region.slots.some((slot) => slot.building === "fort_1")) {
+    return "Wymagany jest najpierw Fort I";
+  }
+  if (b === "fort_3" && !region.slots.some((slot) => slot.building === "fort_2")) {
+    return "Wymagany jest najpierw Fort II";
+  }
   if (b.startsWith("mine_")) {
     const existing = region.slots.find((s) => s.building.startsWith("mine_"));
     if (existing && existing.building !== b) {
@@ -82,12 +94,38 @@ function Regions() {
   );
 
   const build = useMutation({
-    mutationFn: (v: { regionId: string; index: number; code: string }) =>
-      rpc("build_in_slot", {
+    mutationFn: (v: { regionId: string; index: number; code: string }) => {
+      const region = (regions ?? []).find((candidate) => candidate.id === v.regionId);
+      const building = (shop ?? []).find((candidate) => candidate.code === v.code)?.building;
+
+      if (region && building) {
+        let required: string | null = null;
+        if (building.startsWith("factory_")) {
+          const level = Number(building.split("_")[1]);
+          if (level > 1) required = `factory_${level - 1}`;
+        } else if (building === "fort_2") {
+          required = "fort_1";
+        } else if (building === "fort_3") {
+          required = "fort_2";
+        }
+
+        if (required) {
+          const existing = region.slots.find((slot) => slot.building === required);
+          if (!existing) throw new Error(`W tym regionie wymagany jest najpierw ${required.replace("_", " ")}`);
+          return rpc("upgrade_building_in_slot", {
+            p_region_id: region.id,
+            p_slot_index: existing.slot_index,
+            p_item_code: v.code,
+          });
+        }
+      }
+
+      return rpc("build_in_slot", {
         p_region_id: v.regionId,
         p_slot_index: v.index,
         p_item_code: v.code,
-      }),
+      });
+    },
     onSuccess: () => {
       toast.success("Obiekt wybudowany");
       setBuildFor(null);
