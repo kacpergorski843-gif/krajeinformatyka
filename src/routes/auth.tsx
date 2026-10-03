@@ -22,6 +22,16 @@ const LEGACY_EMAIL_DOMAIN = "nationdynamics.internal";
 
 function normalizeUsername(raw: string) { return raw.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^\p{L}\p{N}._-]/gu, "").replace(/^[.\-_]+|[.\-_]+$/g, ""); }
 
+// Email addresses must be ASCII. Keep ASCII usernames unchanged (existing accounts);
+// for names with Polish/other letters, transliterate and add a deterministic hash so "łoś" and "los" stay distinct.
+function emailLocalPart(clean: string) {
+  if (/^[a-z0-9._-]+$/.test(clean)) return clean;
+  const map: Record<string, string> = { ą: "a", ć: "c", ę: "e", ł: "l", ń: "n", ó: "o", ś: "s", ź: "z", ż: "z" };
+  const ascii = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "").split("").map((ch) => map[ch] ?? ch).join("").replace(/[^a-z0-9._-]/g, "").slice(0, 40) || "u";
+  let h = 0x811c9dc5; for (const b of new TextEncoder().encode(clean)) { h ^= b; h = Math.imul(h, 0x01000193) >>> 0; }
+  return `${ascii}.u${h.toString(36)}`;
+}
+
 function AuthPage() {
   const router = useRouter();
   const initialMode = typeof window !== "undefined" && window.location.search.includes("mode=signup") ? "signup" : "login";
@@ -31,7 +41,7 @@ function AuthPage() {
   function goNext() { const n = new URLSearchParams(window.location.search).get("next"); if (n && n.startsWith("/") && !n.startsWith("//")) window.location.href = n; else router.navigate({ to: "/panstwo" }); }
   async function submit(e: React.FormEvent) {
     e.preventDefault(); const clean = normalizeUsername(username); if (clean.length < 3) { toast.error("Nazwa użytkownika musi mieć co najmniej 3 znaki (litery, cyfry, . _ -)"); usernameRef.current?.focus(); return; }
-    const email = `${clean}@${EMAIL_DOMAIN}`; const legacyEmail = `${clean}@${LEGACY_EMAIL_DOMAIN}`; setBusy(true);
+    const local = emailLocalPart(clean); const email = `${local}@${EMAIL_DOMAIN}`; const legacyEmail = `${local}@${LEGACY_EMAIL_DOMAIN}`; setBusy(true);
     try {
       if (mode === "login") { let { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) { const legacy = await supabase.auth.signInWithPassword({ email: legacyEmail, password }); error = legacy.error; } if (error) throw new Error(error.message.toLowerCase().includes("invalid login") ? "Nieprawidłowa nazwa użytkownika lub hasło" : error.message); toast.success("Zalogowano"); goNext(); }
       else { const { data: taken } = await supabase.rpc("username_taken", { p_username: clean }); if (taken) throw new Error("Ta nazwa użytkownika jest już zajęta"); const { error } = await supabase.auth.signUp({ email, password, options: { data: { username: clean, display_name: username.trim() || clean } } }); if (error) { const msg = error.message.toLowerCase(); throw new Error(msg.includes("already registered") || msg.includes("already been registered") ? "Ta nazwa użytkownika jest już zajęta" : error.message); } const { error: signInError } = await supabase.auth.signInWithPassword({ email, password }); if (signInError) throw signInError; toast.success("Konto utworzone"); goNext(); }
