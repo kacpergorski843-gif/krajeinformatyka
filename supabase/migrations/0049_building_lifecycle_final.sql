@@ -82,6 +82,8 @@ begin
 
   update public.region_slots
   set building = v_item.building,
+      built_at = now(),
+      built_by = auth.uid(),
       created_at = now()
   where id = v_current.id;
 
@@ -124,7 +126,8 @@ as $function$
 declare
   v_country uuid;
   v_building public.building_type;
-  v_created_at timestamptz;
+  v_built_at timestamptz;
+  v_built_by uuid;
   v_item public.shop_items;
   v_refund_percent numeric := 0;
   v_paid_build boolean := false;
@@ -135,8 +138,8 @@ declare
   v_refund_iron numeric := 0;
   v_refund_uranium numeric := 0;
 begin
-  select r.country_id, s.building, s.created_at
-    into v_country, v_building, v_created_at
+  select r.country_id, s.building, s.built_at, s.built_by
+    into v_country, v_building, v_built_at, v_built_by
   from public.region_slots s
   join public.regions r on r.id = s.region_id
   where s.id = p_slot_id
@@ -148,14 +151,7 @@ begin
 
   perform public.assert_can_manage(v_country);
 
-  select exists (
-    select 1
-    from public.transactions t
-    where t.country_id = v_country
-      and t.kind = 'BUILD'
-      and t.details ->> 'slot_id' = p_slot_id::text
-  )
-  into v_paid_build;
+  v_paid_build := v_built_by is not null;
 
   select *
     into v_item
@@ -170,7 +166,7 @@ begin
   end if;
 
   if v_paid_build then
-    if now() - v_created_at <= interval '24 hours' then
+    if now() - v_built_at <= interval '24 hours' then
       v_refund_percent := 1;
     else
       v_refund_percent := 0.75;
@@ -207,7 +203,7 @@ begin
     jsonb_build_object(
       'slot_id', p_slot_id,
       'building', v_building::text,
-      'built_at', v_created_at,
+      'built_at', v_built_at,
       'paid_build', v_paid_build,
       'refund_percent', v_refund_percent,
       'refund_kr', v_refund_kr,
