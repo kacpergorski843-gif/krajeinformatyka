@@ -17,7 +17,8 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const EMAIL_DOMAIN = "nationdynamics.internal";
+const EMAIL_DOMAIN = "nationdynamics.internal.com";
+const LEGACY_EMAIL_DOMAIN = "nationdynamics.internal";
 
 function normalizeUsername(raw: string) { return raw.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^\p{L}\p{N}._-]/gu, "").replace(/^[.\-_]+|[.\-_]+$/g, ""); }
 
@@ -30,9 +31,9 @@ function AuthPage() {
   function goNext() { const n = new URLSearchParams(window.location.search).get("next"); if (n && n.startsWith("/") && !n.startsWith("//")) window.location.href = n; else router.navigate({ to: "/panstwo" }); }
   async function submit(e: React.FormEvent) {
     e.preventDefault(); const clean = normalizeUsername(username); if (clean.length < 3) { toast.error("Nazwa użytkownika musi mieć co najmniej 3 znaki (litery, cyfry, . _ -)"); usernameRef.current?.focus(); return; }
-    const email = `${clean}@${EMAIL_DOMAIN}`; setBusy(true);
+    const email = `${clean}@${EMAIL_DOMAIN}`; const legacyEmail = `${clean}@${LEGACY_EMAIL_DOMAIN}`; setBusy(true);
     try {
-      if (mode === "login") { const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw new Error(error.message.toLowerCase().includes("invalid login") ? "Nieprawidłowa nazwa użytkownika lub hasło" : error.message); toast.success("Zalogowano"); goNext(); }
+      if (mode === "login") { let { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) { const legacy = await supabase.auth.signInWithPassword({ email: legacyEmail, password }); error = legacy.error; } if (error) throw new Error(error.message.toLowerCase().includes("invalid login") ? "Nieprawidłowa nazwa użytkownika lub hasło" : error.message); toast.success("Zalogowano"); goNext(); }
       else { const { data: taken } = await supabase.rpc("username_taken", { p_username: clean }); if (taken) throw new Error("Ta nazwa użytkownika jest już zajęta"); const { error } = await supabase.auth.signUp({ email, password, options: { data: { username: clean, display_name: username.trim() || clean } } }); if (error) { const msg = error.message.toLowerCase(); throw new Error(msg.includes("already registered") || msg.includes("already been registered") ? "Ta nazwa użytkownika jest już zajęta" : error.message); } const { error: signInError } = await supabase.auth.signInWithPassword({ email, password }); if (signInError) throw signInError; toast.success("Konto utworzone"); goNext(); }
     } catch (err) { toast.error(err instanceof Error ? err.message : "Nie udało się wykonać operacji"); } finally { setBusy(false); }
   }
