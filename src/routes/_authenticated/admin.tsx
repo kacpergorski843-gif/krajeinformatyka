@@ -919,6 +919,15 @@ function CountriesTab() {
 function CountryDashboard({ country, owners, onClose }: { country: CountryStats | null; owners: Array<{ country_id: string; user_id: string; display_name: string | null }>; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [countryTab, setCountryTab] = useState("quick");
+  const [ownerSearch, setOwnerSearch] = useState("");
+  const ownerUsersQuery = useInfiniteQuery({
+    queryKey: ["admin_country_user_options", ownerSearch.trim()],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => adminUsersPageQuery(ownerSearch, pageParam),
+    getNextPageParam: (lastPage, allPages) => lastPage.rows.length < 50 ? undefined : allPages.length * 50,
+    enabled: !!country && countryTab === "info",
+  });
+  const ownerUsers = ownerUsersQuery.data?.pages.flatMap((page) => page.rows) ?? [];
   const regions = useQuery({
     ...regionsQuery(country?.country_id ?? null),
     enabled: !!country && countryTab === "regions",
@@ -952,6 +961,7 @@ function CountryDashboard({ country, owners, onClose }: { country: CountryStats 
     setFlagFile(null);
     setFlagPreview(null);
     setRegionName("");
+    setOwnerSearch("");
   }, [country?.country_id]);
 
   const owner = country ? owners.find((user) => user.country_id === country.country_id) : undefined;
@@ -1047,7 +1057,19 @@ function CountryDashboard({ country, owners, onClose }: { country: CountryStats 
                   )}
                 </Field>
               </div>
-              <Panel className="p-4"><Label className="label-hud mb-2 block">Właściciel</Label><Select value={owner?.id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate(value)}><SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Wybierz gracza" /></SelectTrigger><SelectContent><SelectItem value="unassigned" disabled>Brak właściciela</SelectItem>{users.map((user) => <SelectItem key={user.id} value={user.id}>{user.display_name ?? "Użytkownik"}{user.country_name ? ` — ${user.country_name}` : ""}</SelectItem>)}</SelectContent></Select><p className="mt-2 text-xs text-muted-foreground">Wybranie gracza przypisze mu to państwo przez bezpieczną operację administracyjną.</p></Panel>
+              <Panel className="p-4">
+                <Label className="label-hud mb-2 block">Właściciel</Label>
+                <Input className="mb-2" placeholder="Szukaj gracza…" value={ownerSearch} onChange={(event) => setOwnerSearch(event.target.value)} />
+                <Select value={owner?.user_id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate(value)}>
+                  <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Wybierz gracza" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned" disabled>Brak właściciela</SelectItem>
+                    {ownerUsers.map((user) => <SelectItem key={user.id} value={user.id}>{user.display_name ?? "Użytkownik"}{user.country_name ? ` — ${user.country_name}` : ""}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {ownerUsersQuery.hasNextPage ? <Button type="button" variant="outline" className="mt-2 w-full" onClick={() => void ownerUsersQuery.fetchNextPage()} disabled={ownerUsersQuery.isFetchingNextPage}>{ownerUsersQuery.isFetchingNextPage ? "Ładowanie…" : "Pokaż kolejnych 50"}</Button> : null}
+                <p className="mt-2 text-xs text-muted-foreground">Wyszukaj gracza i przypisz go do państwa. Lista jest ładowana partiami.</p>
+              </Panel>
               <div className="grid gap-3 sm:grid-cols-3"><MiniStat label="Przychód dobowy" value={`+${fmtKR(country.gross_income)}`} tone="success" /><MiniStat label="Głosy wojenne" value={`${country.total_votes}`} /><MiniStat label="Wartość militarna" value={fmtKR(country.military_value)} tone="primary" /></div>
             </TabsContent>
             <TabsContent value="quick" className="m-0 space-y-6">
