@@ -369,59 +369,6 @@ export function transactionsQuery(countryId: string | null | undefined, limit = 
   });
 }
 
-export type AdminUser = {
-  id: string;
-  email: string | null;
-  display_name: string | null;
-  country_id: string | null;
-  country_name: string | null;
-  role: "PLAYER" | "ADMIN" | "MAIN_ADMIN";
-};
-
-export type AdminUserPage = {
-  rows: AdminUser[];
-  total: number;
-};
-
-export const adminUserSummaryQuery = queryOptions({
-  queryKey: ["admin_user_summary"],
-  queryFn: async () => {
-    const rows = await unwrap(supabase.rpc("admin_user_summary"));
-    const row = rows?.[0];
-    return {
-      total: Number(row?.total_users ?? 0),
-      assigned: Number(row?.assigned_users ?? 0),
-    };
-  },
-});
-
-export const adminCountryOwnersQuery = queryOptions({
-  queryKey: ["admin_country_owners"],
-  queryFn: async () => await unwrap(supabase.rpc("admin_country_owners")),
-});
-
-export async function fetchAdminUsersPage(search: string, offset: number): Promise<AdminUserPage> {
-  const rows = await unwrap(
-    supabase.rpc("admin_list_users_page", {
-      p_search: search.trim() || null,
-      p_limit: 50,
-      p_offset: offset,
-    }),
-  );
-  const typed = (rows ?? []) as Array<AdminUser & { total_count: number }>;
-  return {
-    rows: typed.map(({ total_count: _total, ...user }) => user),
-    total: Number(typed[0]?.total_count ?? 0),
-  };
-}
-
-export function adminUsersPageQuery(search: string, offset: number) {
-  return queryOptions({
-    queryKey: ["admin_users_page", search, offset],
-    queryFn: () => fetchAdminUsersPage(search, offset),
-  });
-}
-
 export type ActiveIncomeBonus = {
   id: string;
   percent: number;
