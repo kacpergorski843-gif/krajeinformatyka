@@ -57,8 +57,6 @@ import {
   adminActionsQuery,
   allRegionOptionsQuery,
   adminShopQuery,
-  adminCountryOwnersQuery,
-  adminUserSummaryQuery,
   adminUsersQuery,
   countriesQuery,
   economyRunsQuery,
@@ -68,7 +66,7 @@ import {
   strikesQuery,
   transactionsQuery,
 } from "@/lib/api";
-import type { AdminUser as ApiAdminUser, CountryStats, MissileStrike, RegionWithSlots, ShopItem } from "@/lib/api";
+import type { CountryStats, MissileStrike, RegionWithSlots, ShopItem } from "@/lib/api";
 import {
   BUILDING_LABELS,
   MISSILE_LABELS,
@@ -80,6 +78,8 @@ import {
   timeToDailyCycle,
   units,
 } from "@/lib/format";
+
+type AdminUser = { id: string; email: string | null; display_name: string | null; country_id: string | null; country_name: string | null; role: "PLAYER" | "ADMIN" | "MAIN_ADMIN" | null };
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
