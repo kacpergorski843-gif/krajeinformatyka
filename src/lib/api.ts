@@ -369,6 +369,11 @@ export function transactionsQuery(countryId: string | null | undefined, limit = 
   });
 }
 
+export const adminUsersQuery = queryOptions({
+  queryKey: ["admin_users"],
+  queryFn: async () => await unwrap(supabase.rpc("admin_list_users")),
+});
+
 export type ActiveIncomeBonus = {
   id: string;
   percent: number;
