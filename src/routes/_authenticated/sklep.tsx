@@ -50,7 +50,7 @@ function unitCost(item: ShopItem, r: Resource): number {
 }
 
 function buildBlockReason(region: RegionWithSlots, building: string): string | null {
-  if (region.slots.length >= 9) return "Brak wolnych slotów";
+  if (building !== "aa" && region.slots.length >= 9) return "Brak wolnych slotów";
   if (building.startsWith("mine_")) {
     const existing = region.slots.find((s) => s.building.startsWith("mine_"));
     if (existing && existing.building !== building) {
