@@ -35,7 +35,7 @@ function Ranking() {
   const fullList = useMemo(() => [...(countries ?? [])].sort((a, b) => Number(b.gross_income) - Number(a.gross_income)), [countries]);
   const list = useMemo(() => { const query = deferredSearch.trim().toLocaleLowerCase("pl-PL"); return fullList.filter((country) => !query || country.name.toLocaleLowerCase("pl-PL").includes(query)); }, [fullList, deferredSearch]);
   const myRank = me?.countryId ? fullList.findIndex((country) => country.country_id === me.countryId) + 1 : 0;
-  return <AppShell me={me ?? null} title="Ranking" subtitle="Zarobki dobowe i wartość militarna">
+  return <AppShell me={me ?? null} title="Ranking" subtitle="Produkcja KR, głosy i wartość militarna">
     <div className="relative"><Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Szukaj państwa…" aria-label="Szukaj państwa w rankingu" className="pl-9" /></div>
     {!isPending && !isError && me?.countryId && myRank > 0 ? <Panel className="mt-4 border-primary/30 bg-primary/[0.06] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">TWOJA POZYCJA</p><p className="mt-1 text-sm text-muted-foreground">{"Ranking sortowany według produkcji KR; pozostałe wartości są pokazane osobno"}</p></div><div className="flex items-center gap-3"><span className="font-display text-2xl font-bold text-primary">#{myRank}</span><span className="text-xs text-muted-foreground">z {fullList.length}</span></div></div></Panel> : null}
     {isPending || mePending ? <div className="mt-4"><PageSkeleton rows={5} cards={3} /></div> : null}
