@@ -757,7 +757,7 @@ function AdminTab({ value, icon, children }: { value: string; icon: ReactNode; c
   );
 }
 
-function Kpi({ icon, label, value, hint, loading }: { icon: ReactNode; label: string; value: string; hint: string; loading: boolean }) {
+function Kpi({ icon, label, value, hint, loading }: { icon: ReactNode; label: string; value: ReactNode; hint: string; loading: boolean }) {
   return (
     <Panel className="hud-frame min-w-0 p-3 sm:p-4">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
@@ -1628,7 +1628,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
   return <Dialog open={!!edit} onOpenChange={(open) => !open && onEdit(null)}><DialogContent className="admin-dialog max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl overflow-y-auto sm:w-[calc(100%-2rem)]"><DialogHeader><DialogTitle>{edit?.["code"] ? "Edycja produktu" : "Nowy produkt"}</DialogTitle><DialogDescription>Te wartości są wspólnym źródłem dla sklepu i walidacji zakupów.</DialogDescription></DialogHeader>{edit ? <div className="space-y-5"><section><p className="label-hud mb-3">Identyfikacja</p><div className="grid gap-3 sm:grid-cols-2">{([["code","Kod produktu"],["name","Nazwa"],["category","Kategoria"],["building","Typ budynku"],["produces","Produkowany surowiec"]] as const).map(([key,label]) => <Field key={key} label={label}><Input value={edit[key] ?? ""} disabled={key === "code" && items.some((item) => item.code === edit["code"])} onChange={(event) => onEdit({ ...edit, [key]: event.target.value })} /></Field>)}</div><Field label="Opis" className="mt-3"><Input value={edit["description"] ?? ""} onChange={(event) => onEdit({ ...edit, description: event.target.value })} /></Field></section><section><p className="label-hud mb-3">Koszty i efekty</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{SHOP_NUMERIC.map(([key,label]) => <Field key={key} label={label}><Input className="num" type="number" min="0" value={edit[key] ?? "0"} onChange={(event) => onEdit({ ...edit, [key]: event.target.value })} /></Field>)}</div></section><div className="flex items-center gap-3 border border-border p-3"><Switch checked={edit["active"] === "true"} onCheckedChange={(active) => onEdit({ ...edit, active: String(active) })} /><span className="text-sm">Produkt widoczny w sklepie</span></div><div className="grid gap-2 sm:grid-cols-2"><Button variant="outline" onClick={() => onEdit(null)}>Anuluj</Button><Button disabled={!(edit["code"] ?? "").trim() || !(edit["name"] ?? "").trim() || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button></div></div> : null}</DialogContent></Dialog>;
 }
 
-function EconomyTab({ countdown }: { countdown: string }) {
+function EconomyTab({ countdown }: { countdown: ReactNode }) {
   const runQuery = useQuery(economyRunsQuery);
   const countryQuery = useQuery(countriesQuery);
   const queryClient = useQueryClient();
