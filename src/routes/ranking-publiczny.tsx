@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Coins, Shield, Vote } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/stat";
 import { publicRankingQuery } from "@/lib/api";
 import { fmtKR, units } from "@/lib/format";
@@ -54,6 +56,7 @@ function RankingBlock({ metric, rows }: { metric: Metric; rows: Row[] }) {
 
 function PublicRanking() {
   const { data, isLoading, isError } = useQuery(publicRankingQuery);
+  const [activeMetric, setActiveMetric] = useState<Metric["key"]>("income");
   const rows = (data ?? []) as Row[];
 
   return <div className="tactical-bg min-h-screen">
@@ -64,7 +67,34 @@ function PublicRanking() {
       <p className="mt-5 text-sm text-muted-foreground">Każda wartość ma własną tabelę i własną kolejność miejsc.</p>
       {isLoading ? <p className="text-muted-foreground mt-6 text-sm">Wczytywanie…</p> : null}
       {isError ? <p className="text-destructive mt-6 text-sm">Nie udało się wczytać rankingów.</p> : null}
-      {!isLoading && !isError ? <div className="mt-5 grid gap-4 xl:grid-cols-3">{metrics.map((metric) => <RankingBlock key={metric.key} metric={metric} rows={rows} />)}</div> : null}
+      {!isLoading && !isError ? (
+        <>
+          <div className="mt-5 grid grid-cols-3 gap-1 rounded-xl border border-border/70 bg-secondary/20 p-1">
+            {metrics.map((metric) => {
+              const active = activeMetric === metric.key;
+              return (
+                <Button
+                  key={metric.key}
+                  type="button"
+                  variant={active ? "default" : "ghost"}
+                  size="sm"
+                  className="min-h-10 rounded-lg px-2 text-xs sm:text-sm"
+                  onClick={() => setActiveMetric(metric.key)}
+                  aria-pressed={active}
+                >
+                  <metric.Icon className="size-4 shrink-0" />
+                  <span className="truncate">{metric.label}</span>
+                </Button>
+              );
+            })}
+          </div>
+          <div className="mt-4">
+            {metrics.filter((metric) => metric.key === activeMetric).map((metric) => (
+              <RankingBlock key={metric.key} metric={metric} rows={rows} />
+            ))}
+          </div>
+        </>
+      ) : null}
     </div>
   </div>;
 }
