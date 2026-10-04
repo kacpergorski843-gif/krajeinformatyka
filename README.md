@@ -16,7 +16,7 @@ Główne wymagania:
 3. Państwa i surowce:
 - Startowe saldo: 1 500 000 000 000 KR (1,5 bln KR, typ NUMERIC/BIGINT).
 - 5 surowców: Węgiel (coal), Ropa (oil), Miedź (copper), Żelazo (iron), Uran (uranium).
-- Wojsko i obrona: OPL (obrona przeciwlotnicza, bez limitu slotów), Rakiety I-III w ekwipunku, Żołnierze (pakiety po 500 tys., +1 głos wojenny, max +6), Czołgi (pakiety po 50 szt., +1 głos wojenny, max +4; łącznie wojsko daje maks. 10 głosów).
+- Wojsko i obrona: OPL (obrona przeciwlotnicza, bez limitu slotów), Rakiety I-III w ekwipunku, Żołnierze (pakiety po 500 tys., każdy daje +1 głos wojenny, głosy z żołnierzy liczą się maks. do +6), Czołgi (pakiety po 50 szt., każdy daje +1 głos wojenny, głosy z czołgów liczą się maks. do +4; zakupy obu jednostek są bez limitu). Łącznie z żołnierzy i czołgów daje to maks. 10 głosów wojennych, ale liczba posiadanych jednostek może być większa.
 
 4. Regiony i sloty:
 - Każdy region ma 9 slotów.
@@ -32,7 +32,7 @@ Główne wymagania:
 - Wytwórnia uranu: koszt 3 bln KR, produkcja +25/dzień.
 
 6. Ekonomia dobowa i historia:
-- Jeden cykl dobowy o godz. 20:00 lub wyzwalany ręcznie/automatycznie, bez dublowania w tej samej dacie, przeliczający produkcję i zużycie węgla, rejestrujący logi audytowe/transakcyjne.
+- Jeden cykl dobowy o godz. 20:00 lub wyzwalany ręcznie/automatycznie; tego samego dnia można wykonać maksymalnie dwa rozliczenia (drugie jest awaryjną możliwością ponownego rozliczenia, gdy pierwsze było błędne). Każdy cykl ma osobny numer 1/2 i log audytowy/transakcyjny.
 - Pełna historia transakcji i akcji administracyjnych.
 
 7. Sklep (Shop):
@@ -42,7 +42,7 @@ Główne wymagania:
 - Pulpit gracza ("Moje państwo") z saldem, przychodem, kartami surowców, wojska i regionów.
 - Przeglądarka państw ("Świat / Państwa") ze szczegółowym podglądem każdego kraju (tylko do odczytu dla obcych państw).
 - Widok regionów z wizualizacją 9 slotów i blokadą błędnych kombinacji.
-- Ranking państw sortowany według produkcji KR i wartości militarnej.
+- Ranking państw sortowany według produkcji KR, z osobnym wyświetlaniem produkcji KR, liczby głosów wojennych i wartości militarnej.
 - Panel Administratora i Głównego Administratora do ręcznych korekt, zarządzania graczami i rolami.
 
 This project was built with [Lovable](https://lovable.dev).
