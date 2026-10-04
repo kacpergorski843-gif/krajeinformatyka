@@ -44,6 +44,7 @@ export type PublicRankingRow = {
   country_id: string;
   name: string;
   gross_income: string;
+  military_value: string;
   vote_potential: number;
   soldier_packs: number;
   tank_packs: number;
