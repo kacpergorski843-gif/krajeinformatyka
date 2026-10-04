@@ -447,7 +447,7 @@ function Regions() {
           <DialogHeader>
             <DialogTitle>{occupied ? BUILDING_LABELS[occupied.building] : ""}</DialogTitle>
             <DialogDescription>
-              {occupied?.region} — pierwsze 24 godziny: zwrot 100% kosztu budowy. Po 24 godzinach: zwrot 75%.
+              {occupied?.region} — przed pierwszym rozliczeniem dobowym: zwrot 100%. Po 24 godzinach, jeśli obiekt nie został jeszcze rozliczony: zwrot 75%. Po rozliczeniu dobowym: brak zwrotu.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2">
