@@ -7,6 +7,7 @@ import { CountryFlag } from "@/components/CountryFlag";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { Panel } from "@/components/stat";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { countriesQuery, meQuery } from "@/lib/api";
 import type { CountryStats } from "@/lib/api";
 import { fmtKR, units } from "@/lib/format";
@@ -71,6 +72,7 @@ function Ranking() {
   const { data: me, isPending: mePending } = useQuery(meQuery);
   const { data: countries, isPending, isError, error } = useQuery(countriesQuery);
   const [search, setSearch] = useState("");
+  const [activeMetric, setActiveMetric] = useState<Metric["key"]>("income");
   const deferredSearch = useDeferredValue(search);
   const filtered = useMemo(() => {
     const query = deferredSearch.trim().toLocaleLowerCase("pl-PL");
@@ -81,6 +83,33 @@ function Ranking() {
     <div className="relative"><Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Szukaj państwa…" aria-label="Szukaj państwa w rankingach" className="pl-9" /></div>
     {isPending || mePending ? <div className="mt-4"><PageSkeleton rows={5} cards={3} /></div> : null}
     {isError ? <Panel className="mt-4 border-destructive/40 bg-destructive/5 p-5"><p className="font-semibold text-destructive">Nie udało się wczytać rankingów</p><p className="mt-1 text-sm text-muted-foreground">{error instanceof Error ? error.message : "Spróbuj ponownie za chwilę."}</p></Panel> : null}
-    {!isPending && !isError ? <div className="mt-4 grid gap-4 xl:grid-cols-3">{metrics.map((metric) => <RankingBlock key={metric.key} metric={metric} countries={filtered} myCountryId={me?.countryId ?? null} />)}</div> : null}
+    {!isPending && !isError ? (
+      <>
+        <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl border border-border/70 bg-secondary/20 p-1">
+          {metrics.map((metric) => {
+            const active = activeMetric === metric.key;
+            return (
+              <Button
+                key={metric.key}
+                type="button"
+                variant={active ? "default" : "ghost"}
+                size="sm"
+                className="min-h-10 rounded-lg px-2 text-xs sm:text-sm"
+                onClick={() => setActiveMetric(metric.key)}
+                aria-pressed={active}
+              >
+                <metric.Icon className="size-4 shrink-0" />
+                <span className="truncate">{metric.label}</span>
+              </Button>
+            );
+          })}
+        </div>
+        <div className="mt-4">
+          {metrics.filter((metric) => metric.key === activeMetric).map((metric) => (
+            <RankingBlock key={metric.key} metric={metric} countries={filtered} myCountryId={me?.countryId ?? null} />
+          ))}
+        </div>
+      </>
+    ) : null}
   </AppShell>;
 }
