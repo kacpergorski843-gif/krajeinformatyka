@@ -833,6 +833,8 @@ function CountriesTab() {
       setNewName(""); setNewFlag(""); setCreating(false);
       void queryClient.invalidateQueries({ queryKey: ["countries"] });
       void queryClient.invalidateQueries({ queryKey: ["admin_users_page"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_user_summary"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_country_owners"] });
       void queryClient.invalidateQueries({ queryKey: ["all_region_options"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -994,7 +996,7 @@ function CountryDashboard({ country, owners, onClose }: { country: CountryStats 
   const removeRegion = useMutation({ mutationFn: (id: string) => rpc("admin_delete_region", { p_region_id: id }), onSuccess: () => { toast.success("Region usunięty"); setRegionToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const removeSlot = useMutation({ mutationFn: (id: string) => rpc("demolish_slot", { p_slot_id: id }), onSuccess: () => { toast.success("Obiekt wyburzony"); setSlotToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const setRegionAa = useMutation({ mutationFn: ({ regionId, value }: { regionId: string; value: number }) => rpc("admin_set_region_aa", { p_region_id: regionId, p_value: value }), onSuccess: () => { toast.success("OPL regionu zaktualizowane"); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const deleteCountry = useMutation({ mutationFn: () => country ? rpc("admin_delete_country", { p_country_id: country.country_id }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Państwo usunięte"); setConfirmDelete(false); onClose(); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); void queryClient.invalidateQueries({ queryKey: ["admin_users_page"] }); void queryClient.invalidateQueries({ queryKey: ["public_countries"] }); }, onError: (error: Error) => toast.error(error.message) });
+  const deleteCountry = useMutation({ mutationFn: () => country ? rpc("admin_delete_country", { p_country_id: country.country_id }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Państwo usunięte"); setConfirmDelete(false); onClose(); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); void queryClient.invalidateQueries({ queryKey: ["admin_users_page"] }); void queryClient.invalidateQueries({ queryKey: ["admin_user_summary"] }); void queryClient.invalidateQueries({ queryKey: ["admin_country_owners"] }); void queryClient.invalidateQueries({ queryKey: ["public_countries"] }); }, onError: (error: Error) => toast.error(error.message) });
 
   if (!country) return null;
   const countryStrikes = (strikes.data ?? []).filter((strike) => strike.attacker_country_id === country.country_id || strike.defender_country_id === country.country_id);
