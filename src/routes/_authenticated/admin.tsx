@@ -59,8 +59,7 @@ import {
   adminShopQuery,
   adminCountryOwnersQuery,
   adminUserSummaryQuery,
-  adminUsersPageQuery,
-  fetchAdminUsersPage,
+  adminUsersQuery,
   countriesQuery,
   economyRunsQuery,
   meQuery,
@@ -785,7 +784,7 @@ function HudState({ icon, title, description, children }: { icon: ReactNode; tit
 
 function CountriesTab() {
   const countryQuery = useQuery(countriesQuery);
-  const ownerQuery = useQuery(adminCountryOwnersQuery);
+  const ownerQuery = useQuery(adminUsersQuery);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
@@ -795,7 +794,9 @@ function CountriesTab() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newFlag, setNewFlag] = useState("");
-  const owners = (ownerQuery.data ?? []) as Array<{ country_id: string; user_id: string; display_name: string | null }>;
+  const owners = ((ownerQuery.data ?? []) as AdminUser[])
+    .filter((user) => user.country_id)
+    .map((user) => ({ country_id: user.country_id as string, user_id: user.id, display_name: user.display_name }));
   const assignedIds = useMemo(() => new Set(owners.map((owner) => owner.country_id)), [owners]);
 
   const list = useMemo(() => {
@@ -827,7 +828,7 @@ function CountriesTab() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  if (countryQuery.isError || ownerQuery.isError) return <HudState icon={<ShieldAlert />} title="Nie udało się pobrać państw" description="Odśwież stronę i spróbuj ponownie." />;
+  if (countryQuery.isError) return <HudState icon={<ShieldAlert />} title="Nie udało się pobrać państw" description="Odśwież stronę i spróbuj ponownie." />;
 
   return (
     <div className="min-w-0 space-y-4">
@@ -1229,12 +1230,7 @@ function CountryHistory({ transactions, strikes, countryId, loading }: { transac
 function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
-  const userQuery = useInfiniteQuery({
-    queryKey: ["admin_users_page", deferredSearch.trim()],
-    initialPageParam: 0,
-    queryFn: ({ pageParam }) => fetchAdminUsersPage(deferredSearch, pageParam),
-    getNextPageParam: (lastPage, allPages) => lastPage.rows.length < 50 ? undefined : allPages.length * 50,
-  });
+  const userQuery = useQuery(adminUsersQuery);
   const countryQuery = useQuery(countriesQuery);
   const queryClient = useQueryClient();
   const [newCountryFor, setNewCountryFor] = useState<AdminUser | null>(null);
@@ -1247,15 +1243,21 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [resetPasswordFor, setResetPasswordFor] = useState<AdminUser | null>(null);
   const [resetPassword, setResetPassword] = useState("");
 
-  const users = userQuery.data?.pages.flatMap((page) => page.rows) ?? [];
-  const totalUsers = userQuery.data?.pages[0]?.total ?? 0;
+  const allUsers = (userQuery.data ?? []) as AdminUser[];
+  const users = useMemo(() => {
+    const query = deferredSearch.trim().toLowerCase();
+    if (!query) return allUsers;
+    return allUsers.filter((user) =>
+      [user.display_name, user.email, user.country_name].filter(Boolean).join(" ").toLowerCase().includes(query),
+    );
+  }, [allUsers, deferredSearch]);
 
   const assign = useMutation({
     mutationFn: ({ userId, countryId }: { userId: string; countryId: string }) =>
       rpc("admin_assign_country", { p_user_id: userId, p_country_id: countryId }),
     onSuccess: () => {
       toast.success("Państwo przypisane");
-      void queryClient.invalidateQueries({ queryKey: ["admin_users_page"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
       void queryClient.invalidateQueries({ queryKey: ["admin_user_summary"] });
       void queryClient.invalidateQueries({ queryKey: ["admin_country_owners"] });
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
@@ -1293,7 +1295,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
       setNewCountryName("");
       setNewCountryFile(null);
       setNewCountryPreview(null);
-      void queryClient.invalidateQueries({ queryKey: ["admin_users_page"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
       void queryClient.invalidateQueries({ queryKey: ["public_countries"] });
     },
@@ -1333,7 +1335,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
       rpc("set_user_role", { p_user_id: userId, p_role: role }),
     onSuccess: () => {
       toast.success("Uprawnienia zmienione");
-      void queryClient.invalidateQueries({ queryKey: ["admin_users_page"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
       void queryClient.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -1346,7 +1348,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
     onSuccess: () => {
       toast.success("Konto gracza usunięte");
       setToDelete(null);
-      void queryClient.invalidateQueries({ queryKey: ["admin_users_page"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -1451,14 +1453,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
         </div>
       )}
 
-      {users.length < totalUsers ? (
-        <div className="flex flex-col items-center gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-between">
-          <p className="text-xs text-muted-foreground">Wyświetlono {users.length} z {totalUsers} użytkowników.</p>
-          <Button variant="outline" onClick={() => void userQuery.fetchNextPage()} disabled={userQuery.isFetchingNextPage}>
-            {userQuery.isFetchingNextPage ? "Ładowanie…" : "Pokaż kolejnych 50"}
-          </Button>
-        </div>
-      ) : null}
+) : null}
 
       {!isMainAdmin ? <p className="text-xs text-muted-foreground">Zmiana uprawnień jest dostępna wyłącznie dla głównego administratora.</p> : null}
 
