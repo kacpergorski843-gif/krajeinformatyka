@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Boxes,
@@ -57,7 +58,9 @@ import {
   adminActionsQuery,
   allRegionOptionsQuery,
   adminShopQuery,
-  adminUsersQuery,
+  adminCountryOwnersQuery,
+  adminUserSummaryQuery,
+  adminUsersPageQuery,
   countriesQuery,
   economyRunsQuery,
   meQuery,
@@ -637,7 +640,7 @@ function Update4Tools() {
 function AdminPanel() {
   const { data: me } = useQuery(meQuery);
   const countries = useQuery(countriesQuery);
-  const users = useQuery(adminUsersQuery);
+  const userSummary = useQuery(adminUserSummaryQuery);
   const runs = useQuery(economyRunsQuery);
   const queryClient = useQueryClient();
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
@@ -674,7 +677,6 @@ function AdminPanel() {
     );
   }
 
-  const userRows = (users.data ?? []) as AdminUser[];
   const runRows = (runs.data ?? []) as unknown as EconomyRun[];
   const latestRun = runRows[0];
 
@@ -684,7 +686,7 @@ function AdminPanel() {
         <AdminDataExportButton />
         <section className="grid min-w-0 gap-3 sm:grid-cols-3" aria-label="Najważniejsze wskaźniki">
           <Kpi icon={<Building2 />} label="Państwa" value={String(countries.data?.length ?? 0)} hint="aktywnych rekordów" loading={countries.isLoading} />
-          <Kpi icon={<Users />} label="Gracze" value={String(userRows.length)} hint={`${userRows.filter((u) => u.country_id).length} z przypisanym państwem`} loading={users.isLoading} />
+          <Kpi icon={<Users />} label="Gracze" value={String(userSummary.data?.total ?? 0)} hint={`${userSummary.data?.assigned ?? 0} z przypisanym państwem`} loading={userSummary.isLoading} />
           <Kpi icon={<CalendarClock />} label="Cykl dobowy" value={countdown} hint={latestRun ? `Ostatni: ${dateTime(latestRun.ran_at)}` : "Brak wcześniejszych rozliczeń"} loading={runs.isLoading} />
         </section>
 
@@ -796,7 +798,7 @@ function HudState({ icon, title, description, children }: { icon: ReactNode; tit
 
 function CountriesTab() {
   const countryQuery = useQuery(countriesQuery);
-  const userQuery = useQuery(adminUsersQuery);
+  const ownerQuery = useQuery(adminCountryOwnersQuery);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
@@ -806,9 +808,8 @@ function CountriesTab() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newFlag, setNewFlag] = useState("");
-  const users = (userQuery.data ?? []) as AdminUser[];
-  const ownerIds = useMemo(() => new Set(users.map((user) => user.country_id).filter(Boolean) as string[]), [users]);
-  const assignedIds = useMemo(() => new Set(users.flatMap((u) => u.country_id ? [u.country_id] : [])), [users]);
+  const owners = (ownerQuery.data ?? []) as Array<{ country_id: string; user_id: string; display_name: string | null }>;
+  const assignedIds = useMemo(() => new Set(owners.map((owner) => owner.country_id)), [owners]);
 
   const list = useMemo(() => {
     let rows = [...(countryQuery.data ?? [])];
@@ -837,7 +838,7 @@ function CountriesTab() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  if (countryQuery.isError || userQuery.isError) return <HudState icon={<ShieldAlert />} title="Nie udało się pobrać państw" description="Odśwież stronę i spróbuj ponownie." />;
+  if (countryQuery.isError || ownerQuery.isError) return <HudState icon={<ShieldAlert />} title="Nie udało się pobrać państw" description="Odśwież stronę i spróbuj ponownie." />;
 
   return (
     <div className="min-w-0 space-y-4">
@@ -864,7 +865,7 @@ function CountriesTab() {
         <>
         <div className="grid gap-2 sm:hidden">
           {list.map((country) => {
-            const owned = ownerIds.has(country.country_id);
+            const owned = assignedIds.has(country.country_id);
             return (
               <button key={country.country_id} type="button" onClick={() => setOpenId(country.country_id)} className="panel grid min-h-[4.5rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 text-left active:bg-secondary/40">
                 <span className="grid size-10 shrink-0 place-items-center overflow-hidden border border-border bg-secondary"><CountryFlag flag={country.flag} alt={`Flaga ${country.name}`} className="size-full rounded-sm" /></span>
@@ -885,7 +886,7 @@ function CountriesTab() {
                 <span>Państwo</span><span>Skarbiec</span><span>Regiony</span><span>Status</span><span />
               </div>
               {list.map((country) => {
-                const owner = ownerIds.has(country.country_id);
+                const owner = assignedIds.has(country.country_id);
                 return (
                   <Button key={country.country_id} variant="ghost" className="grid h-auto w-full grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] items-center gap-3 rounded-none border-b border-border/70 px-4 py-3 text-left last:border-b-0 hover:bg-secondary/40" onClick={() => setOpenId(country.country_id)}>
                     <span className="flex min-w-0 items-center gap-3"><span className="grid size-9 shrink-0 place-items-center border border-border bg-secondary text-lg"><CountryFlag flag={country.flag} alt={`Flaga ${country.name}`} className="size-full rounded-sm" /></span><span className="min-w-0"><span className="block truncate font-semibold">{country.name}</span><span className="block truncate text-[11px] font-normal text-muted-foreground">+{fmtKR(country.gross_income)} / doba</span></span></span>
@@ -902,7 +903,7 @@ function CountriesTab() {
         </>
       )}
 
-      <CountryDashboard country={countryQuery.data?.find((country) => country.country_id === openId) ?? null} users={users} onClose={() => setOpenId(null)} />
+      <CountryDashboard country={countryQuery.data?.find((country) => country.country_id === openId) ?? null} owners={owners} onClose={() => setOpenId(null)} />
       <ConfirmDialog open={creating} onOpenChange={setCreating} title="Utwórz nowe państwo" description="Nowe państwo zostanie dodane bez właściciela i będzie dostępne do przypisania graczowi." confirmLabel="Utwórz państwo" pending={create.isPending} disabled={!newName.trim()} onConfirm={() => create.mutate()}>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem]">
           <Field label="Nazwa państwa"><Input value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Nazwa" /></Field>
@@ -913,7 +914,7 @@ function CountriesTab() {
   );
 }
 
-function CountryDashboard({ country, users, onClose }: { country: CountryStats | null; users: AdminUser[]; onClose: () => void }) {
+function CountryDashboard({ country, owners, onClose }: { country: CountryStats | null; owners: Array<{ country_id: string; user_id: string; display_name: string | null }>; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [countryTab, setCountryTab] = useState("quick");
   const regions = useQuery({
@@ -951,7 +952,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
     setRegionName("");
   }, [country?.country_id]);
 
-  const owner = country ? users.find((user) => user.country_id === country.country_id) : undefined;
+  const owner = country ? owners.find((user) => user.country_id === country.country_id) : undefined;
 
   const prefetchCountryTab = (tab: string) => {
     if (!country) return;
@@ -1215,7 +1216,13 @@ function CountryHistory({ transactions, strikes, countryId, loading }: { transac
 }
 
 function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
-  const userQuery = useQuery(adminUsersQuery);
+
+  const userQuery = useInfiniteQuery({
+    queryKey: ["admin_users_page", deferredSearch.trim()],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => adminUsersPageQuery(deferredSearch, pageParam),
+    getNextPageParam: (lastPage, allPages) => lastPage.rows.length < 50 ? undefined : allPages.length * 50,
+  });
   const countryQuery = useQuery(countriesQuery);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -1229,9 +1236,9 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [editFlagPreview, setEditFlagPreview] = useState<string | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<AdminUser | null>(null);
   const [resetPassword, setResetPassword] = useState("");
-  const filteredUsers = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(deferredSearch.trim().toLowerCase()));
-  const [visibleUserCount, setVisibleUserCount] = useState(50);
-  const users = filteredUsers.slice(0, visibleUserCount);
+
+  const users = userQuery.data?.pages.flatMap((page) => page.rows) ?? [];
+  const totalUsers = userQuery.data?.pages[0]?.total ?? 0;
 
   const assign = useMutation({
     mutationFn: ({ userId, countryId }: { userId: string; countryId: string }) =>
@@ -1332,10 +1339,6 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
     },
     onError: (error: Error) => toast.error(error.message),
   });
-
-  useEffect(() => {
-    setVisibleUserCount(50);
-  }, [deferredSearch]);
 
   const resetPasswordMutation = useMutation({
     mutationFn: () => {
