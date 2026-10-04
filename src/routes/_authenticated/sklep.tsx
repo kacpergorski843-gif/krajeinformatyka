@@ -60,8 +60,16 @@ function buildBlockReason(region: RegionWithSlots, building: string): string | n
       return "Limit 3 wytwórni tego surowca";
     }
   }
-  if (building.startsWith("fort_") && region.slots.some((s) => s.building.startsWith("fort_"))) {
-    return "Region ma już fortyfikację";
+  if (building.startsWith("fort_")) {
+    const level = Number(building.split("_")[1]);
+    const existingFort = region.slots.find((s) => s.building.startsWith("fort_"));
+    if (level === 1 && existingFort) return "Region ma już fortyfikację";
+    if (level > 1) {
+      const required = `fort_${level - 1}`;
+      if (!region.slots.some((s) => s.building === required)) {
+        return `Wymagany jest najpierw Fort ${level - 1}`;
+      }
+    }
   }
   return null;
 }
