@@ -29,20 +29,47 @@ const SCALES: { limit: number; unit: string }[] = [
   { limit: 1e9, unit: "mld" },
 ];
 
-/** Skrót kwoty: pełne miliardy albo biliony z 3 miejscami po przecinku. */
+/** Skrót kwoty: pełne miliardy albo biliony z 3 miejscami po przecinku.
+ * Wartości NUMERIC z Supabase przychodzą jako string — dla nich nie używamy
+ * Number(), żeby nie tracić precyzji powyżej Number.MAX_SAFE_INTEGER.
+ */
 export function fmtNum(v: string | number | null | undefined): string {
+  if (typeof v === "string" && /^\s*-?\d+\s*$/.test(v)) {
+    const value = BigInt(v.trim());
+    const sign = value < 0n ? "-" : "";
+    const abs = value < 0n ? -value : value;
+
+    if (abs >= 1_000_000_000_000n) {
+      let whole = abs / 1_000_000_000_000n;
+      const remainder = abs % 1_000_000_000_000n;
+      let fraction = (remainder + 500_000_000n) / 1_000_000_000n;
+      if (fraction === 1000n) {
+        whole += 1n;
+        fraction = 0n;
+      }
+      return sign + whole.toString() + "," + fraction.toString().padStart(3, "0") + NBSP + "bln";
+    }
+
+    if (abs >= 1_000_000_000n) {
+      const billions = (abs + 500_000_000n) / 1_000_000_000n;
+      return sign + billions.toString() + NBSP + "mld";
+    }
+
+    return groupDigits(value.toString());
+  }
+
   const n = toNum(v);
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
 
   if (abs >= 1e12) {
     const x = abs / 1e12;
-    return `${sign}${x.toFixed(3).replace(".", ",")}${NBSP}bln`;
+    return sign + x.toFixed(3).replace(".", ",") + NBSP + "bln";
   }
 
   if (abs >= 1e9) {
     const x = Math.round(abs / 1e9);
-    return `${sign}${x}${NBSP}mld`;
+    return sign + x + NBSP + "mld";
   }
 
   return groupDigits(n);
