@@ -1,7 +1,9 @@
 -- Ensure the region rename RPC exists in the Supabase migration stream.
 -- The frontend calls this RPC when a country ruler renames a region.
 
-create or replace function public.rename_region(
+drop function if exists public.rename_region(uuid, text);
+
+create function public.rename_region(
   p_region_id uuid,
   p_name text
 )
