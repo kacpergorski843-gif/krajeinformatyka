@@ -720,6 +720,37 @@ export type Database = {
         }[]
       }
       admin_list_users_page: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_search?: string | null
+        }
+        Returns: {
+          country_id: string | null
+          country_name: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          total_count: number
+        }[]
+      }
+      admin_user_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_users: number
+          total_users: number
+        }[]
+      }
+      admin_country_owners: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          country_id: string
+          display_name: string | null
+          user_id: string
+        }[]
+      }
+      admin_list_users_page: {
         Args: { p_limit?: number; p_offset?: number; p_search?: string | null }
         Returns: {
           country_id: string
