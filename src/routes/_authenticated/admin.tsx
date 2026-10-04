@@ -807,6 +807,7 @@ function CountriesTab() {
   const [newName, setNewName] = useState("");
   const [newFlag, setNewFlag] = useState("");
   const users = (userQuery.data ?? []) as AdminUser[];
+  const ownerIds = useMemo(() => new Set(users.map((user) => user.country_id).filter(Boolean) as string[]), [users]);
   const assignedIds = useMemo(() => new Set(users.flatMap((u) => u.country_id ? [u.country_id] : [])), [users]);
 
   const list = useMemo(() => {
