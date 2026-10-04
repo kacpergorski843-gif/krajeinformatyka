@@ -50,17 +50,7 @@ function unitCost(item: ShopItem, r: Resource): number {
 }
 
 function buildBlockReason(region: RegionWithSlots, building: string): string | null {
-  const level = Number(building.split("_")[1]);
-  const upgradeRequired =
-    building.startsWith("factory_") && level > 1
-      ? `factory_${level - 1}`
-      : building === "fort_2"
-        ? "fort_1"
-        : building === "fort_3"
-          ? "fort_2"
-          : null;
-  const isUpgrade = !!upgradeRequired && region.slots.some((slot) => slot.building === upgradeRequired);
-  if (!isUpgrade && building !== "aa" && region.slots.length >= 9) return "Brak wolnych slotów";
+  if (building !== "aa" && region.slots.length >= 9) return "Brak wolnych slotów";
   if (building.startsWith("mine_")) {
     const existing = region.slots.find((s) => s.building.startsWith("mine_"));
     if (existing && existing.building !== building) {
@@ -97,13 +87,10 @@ function Shop() {
   const { data: shop } = useQuery(shopQuery);
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
-  const [item, setItem] = useState<ShopItem | null>(null);
   const countryId = selected ?? me?.countryId ?? null;
   const country = countries?.find((c) => c.country_id === countryId);
-  const { data: regions } = useQuery({
-    ...regionsQuery(countryId),
-    enabled: !!countryId && !!item?.building,
-  });
+  const { data: regions } = useQuery(regionsQuery(countryId));
+  const [item, setItem] = useState<ShopItem | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
   const [qtyText, setQtyText] = useState("1");
   const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
@@ -209,10 +196,10 @@ function Shop() {
     return null;
   }
 
-  const isBuildingUpgrade =
+  const isFactoryUpgrade =
     !!item?.building &&
-    ((item.building.startsWith("factory_") && Number(item.building.split("_")[1]) > 1) ||
-      (item.building.startsWith("fort_") && Number(item.building.split("_")[1]) > 1));
+    item.building.startsWith("factory_") &&
+    Number(item.building.split("_")[1]) > 1;
 
   const upgradeTarget =
     item?.building && region
@@ -404,7 +391,7 @@ function Shop() {
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="tracking-[0.14em] uppercase">
-            {isBuildingUpgrade ? "Potwierdzenie ulepszenia" : "Potwierdzenie zakupu"}
+            {isFactoryUpgrade ? "Potwierdzenie ulepszenia" : "Potwierdzenie zakupu"}
           </DialogTitle>
             <DialogDescription>{item?.name}</DialogDescription>
           </DialogHeader>
@@ -613,7 +600,7 @@ function Shop() {
                   disabled={buy.isPending || cannotBuy}
                   onClick={() => buy.mutate({ item, qty })}
                 >
-                  {buy.isPending ? "Realizuję…" : isBuildingUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
+                  {buy.isPending ? "Realizuję…" : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
                 </Button>
               </div>
             </div>
