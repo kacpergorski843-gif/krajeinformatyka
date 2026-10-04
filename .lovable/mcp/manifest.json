@@ -36,7 +36,7 @@
       {
         "name": "get_world_ranking",
         "title": "Ranking państw",
-        "description": "Lista państw świata z dochodem i potencjałem głosów, posortowana malejąco.",
+        "description": "Lista państw świata z produkcją KR, głosami wojennymi i wartością militarną.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -48,11 +48,12 @@
           "properties": {
             "sort": {
               "default": "income",
-              "description": "Kategoria rankingu.",
+              "description": "Kategoria sortowania rankingu.",
               "type": "string",
               "enum": [
                 "income",
-                "votes"
+                "votes",
+                "military"
               ]
             },
             "limit": {
