@@ -818,12 +818,12 @@ function CountriesTab() {
     if (filter === "free") rows = rows.filter((country) => !assignedIds.has(country.country_id));
     rows.sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name, "pl");
-      if (sort === "balance") return Number(b.balance) - Number(a.balance);
-      if (sort === "military") return Number(b.military_value) - Number(a.military_value);
-      return Number(b.gross_income) - Number(a.gross_income);
+      const left = BigInt(sort === "balance" ? a.balance || "0" : sort === "military" ? a.military_value || "0" : a.gross_income || "0");
+      const right = BigInt(sort === "balance" ? b.balance || "0" : sort === "military" ? b.military_value || "0" : b.gross_income || "0");
+      return right > left ? 1 : right < left ? -1 : a.name.localeCompare(b.name, "pl");
     });
     return rows;
-  }, [assignedIds, countryQuery.data, filter, search, sort]);
+  }, [assignedIds, countryQuery.data, deferredSearch, filter, sort]);
 
   const create = useMutation({
     mutationFn: () => rpc("admin_create_country", { p_name: newName.trim(), p_flag: newFlag.trim() }),
