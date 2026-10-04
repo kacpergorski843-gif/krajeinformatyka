@@ -400,23 +400,25 @@ export const adminCountryOwnersQuery = queryOptions({
   queryFn: async () => await unwrap(supabase.rpc("admin_country_owners")),
 });
 
+export async function fetchAdminUsersPage(search: string, offset: number): Promise<AdminUserPage> {
+  const rows = await unwrap(
+    supabase.rpc("admin_list_users_page", {
+      p_search: search.trim() || null,
+      p_limit: 50,
+      p_offset: offset,
+    }),
+  );
+  const typed = (rows ?? []) as Array<AdminUser & { total_count: number }>;
+  return {
+    rows: typed.map(({ total_count: _total, ...user }) => user),
+    total: Number(typed[0]?.total_count ?? 0),
+  };
+}
+
 export function adminUsersPageQuery(search: string, offset: number) {
   return queryOptions({
     queryKey: ["admin_users_page", search, offset],
-    queryFn: async (): Promise<AdminUserPage> => {
-      const rows = await unwrap(
-        supabase.rpc("admin_list_users_page", {
-          p_search: search.trim() || null,
-          p_limit: 50,
-          p_offset: offset,
-        }),
-      );
-      const typed = (rows ?? []) as Array<AdminUser & { total_count: number }>;
-      return {
-        rows: typed.map(({ total_count: _total, ...user }) => user),
-        total: Number(typed[0]?.total_count ?? 0),
-      };
-    },
+    queryFn: () => fetchAdminUsersPage(search, offset),
   });
 }
 
