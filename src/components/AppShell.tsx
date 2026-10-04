@@ -100,11 +100,11 @@ export function AppShell({ me, title, subtitle, children }: {
             <button className="mobile-menu-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Otwórz menu" aria-expanded={mobileOpen}><Menu className="size-5" /></button>
           </div>
         </header>
-        <div className="content-area"><div className="page-intro"><span>LIVE OPERATIONS</span><span className="page-intro-line" /></div>{children}</div>
+        <div className="content-area mobile-content"><div className="page-intro"><span>LIVE OPERATIONS</span><span className="page-intro-line" /></div>{children}</div>
       </main>
     </div>
     <nav className="mobile-nav lg:hidden" aria-label="Główna nawigacja">
-      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} preload="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
+      {items.filter((item) => ["/panstwo", "/regiony", "/arsenal", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} preload="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
         <item.icon className="size-5" strokeWidth={1.8}/><span>{item.label}</span>
       </Link>)}
       <button className="mobile-nav-item" onClick={() => setMobileOpen(true)} aria-label="Otwórz pełne menu"><Menu className="size-5"/><span>Menu</span></button>
