@@ -14,12 +14,12 @@ export const Route = createFileRoute("/ranking-publiczny")({
       {
         name: "description",
         content:
-          "Publiczny ranking państw: największe dzienne zarobki oraz potencjał głosów wojennych.",
+          "Publiczny ranking państw: największe dzienne zarobki oraz wartość militarna.",
       },
       { property: "og:title", content: "Ranking państw — Kraje Informatyka" },
       {
         property: "og:description",
-        content: "Największe zarobki dzienne i potencjał głosów wojennych państw.",
+        content: "Największe zarobki dzienne i wartość militarna państw.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -37,7 +37,7 @@ function PublicRanking() {
   const list = [...(data ?? [])].sort((a, b) =>
     mode === "income"
       ? Number(b.gross_income) - Number(a.gross_income)
-      : b.vote_potential - a.vote_potential,
+      : Number(b.military_value) - Number(a.military_value),
   );
 
   return (
@@ -53,7 +53,7 @@ function PublicRanking() {
           {(
             [
               ["income", "Największe zarobki", Coins],
-              ["votes", "Potencjał głosów", Vote],
+              ["military", "Wartość militarna", Shield],
             ] as const
           ).map(([key, label, Icon]) => (
             <button
@@ -120,5 +120,5 @@ function valueOf(c: PublicRankingRow, mode: Mode) {
 function hintOf(c: PublicRankingRow, mode: Mode) {
   return mode === "income"
     ? `Regiony: ${c.regions_count}`
-    : `Żołnierze ${units(c.soldier_packs * 500000)} · Czołgi ${units(c.tank_packs * 50)}`;
+    : `Wartość militarna · regiony: ${c.regions_count}`;
 }
