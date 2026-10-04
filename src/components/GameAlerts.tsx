@@ -5,8 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 function warsawHM(now = new Date()) {
   const parts = new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now);
-  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
-  return { h: get("hour"), m: get("minute"), day: now.toISOString().slice(0, 10) };
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const day = parts
+    .filter((part) => ["year", "month", "day"].includes(part.type))
+    .map((part) => part.value)
+    .join("-");
+  return { h: Number(get("hour")), m: Number(get("minute")), day };
 }
 
 function notifyBrowser(title: string, body: string) {
