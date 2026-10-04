@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:migration:list": "supabase migration list --linked",
+    "db:migration:push": "supabase db push --linked"
   },
   "overrides": {
     "rolldown": "1.2.1"
