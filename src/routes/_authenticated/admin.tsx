@@ -915,7 +915,10 @@ function CountriesTab() {
 
 function CountryDashboard({ country, users, onClose }: { country: CountryStats | null; users: AdminUser[]; onClose: () => void }) {
   const queryClient = useQueryClient();
-  const regions = useQuery(regionsQuery(country?.country_id ?? null));
+  const regions = useQuery({
+    ...regionsQuery(country?.country_id ?? null),
+    enabled: !!country && countryTab === "regions",
+  });
   const [countryTab, setCountryTab] = useState("quick");
   const history = useQuery({
     ...transactionsQuery(country?.country_id ?? null, 50),
@@ -1226,7 +1229,9 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [editFlagPreview, setEditFlagPreview] = useState<string | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<AdminUser | null>(null);
   const [resetPassword, setResetPassword] = useState("");
-  const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(deferredSearch.trim().toLowerCase()));
+  const filteredUsers = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(deferredSearch.trim().toLowerCase()));
+  const [visibleUserCount, setVisibleUserCount] = useState(50);
+  const users = filteredUsers.slice(0, visibleUserCount);
 
   const assign = useMutation({
     mutationFn: ({ userId, countryId }: { userId: string; countryId: string }) =>
@@ -1328,6 +1333,10 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  useEffect(() => {
+    setVisibleUserCount(50);
+  }, [deferredSearch]);
+
   const resetPasswordMutation = useMutation({
     mutationFn: () => {
       if (!resetPasswordFor) throw new Error("Nie wybrano użytkownika");
@@ -1426,6 +1435,17 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
           ))}
         </div>
       )}
+
+      {filteredUsers.length > users.length ? (
+        <div className="flex flex-col items-center gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-between">
+          <p className="text-xs text-muted-foreground">
+            Wyświetlono {users.length} z {filteredUsers.length} użytkowników.
+          </p>
+          <Button variant="outline" onClick={() => setVisibleUserCount((count) => count + 50)}>
+            Pokaż kolejnych 50
+          </Button>
+        </div>
+      ) : null}
 
       {!isMainAdmin ? <p className="text-xs text-muted-foreground">Zmiana uprawnień jest dostępna wyłącznie dla głównego administratora.</p> : null}
 
