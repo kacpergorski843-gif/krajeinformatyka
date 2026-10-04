@@ -636,14 +636,8 @@ function AdminPanel() {
   const userSummary = useQuery(adminUserSummaryQuery);
   const runs = useQuery(economyRunsQuery);
   const queryClient = useQueryClient();
-  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
   const [adminTab, setAdminTab] = useState("countries");
   const [, startAdminTabTransition] = useTransition();
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   if (me && !me.isAdmin) {
     return (
@@ -680,7 +674,7 @@ function AdminPanel() {
         <section className="grid min-w-0 gap-3 sm:grid-cols-3" aria-label="Najważniejsze wskaźniki">
           <Kpi icon={<Building2 />} label="Państwa" value={String(countries.data?.length ?? 0)} hint="aktywnych rekordów" loading={countries.isLoading} />
           <Kpi icon={<Users />} label="Gracze" value={String(userSummary.data?.total ?? 0)} hint={`${userSummary.data?.assigned ?? 0} z przypisanym państwem`} loading={userSummary.isLoading} />
-          <Kpi icon={<CalendarClock />} label="Cykl dobowy" value={countdown} hint={latestRun ? `Ostatni: ${dateTime(latestRun.ran_at)}` : "Brak wcześniejszych rozliczeń"} loading={runs.isLoading} />
+          <DailyCycleKpi latestRun={latestRun} loading={runs.isLoading} />
         </section>
 
         <Tabs value={adminTab} onValueChange={(value) => startAdminTabTransition(() => setAdminTab(value))} className="min-w-0">
@@ -712,7 +706,7 @@ function AdminPanel() {
           <TabsContent value="countries"><CountriesTab /></TabsContent>
           <TabsContent value="users"><UsersTab isMainAdmin={!!me?.isMainAdmin} /></TabsContent>
           <TabsContent value="shop"><ShopTab /></TabsContent>
-          <TabsContent value="economy"><EconomyTab countdown={countdown} /></TabsContent>
+          <TabsContent value="economy"><EconomyTab countdown={<DailyCountdownValue />} /></TabsContent>
           <TabsContent value="history"><HistoryTab /></TabsContent>
           <TabsContent value="update4"><Update4Tools /></TabsContent>
         </Tabs>
@@ -1703,3 +1697,16 @@ function MiniStat({ label, value, tone = "default" }: { label: string; value: st
 function Field({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) { return <div className={`min-w-0 space-y-1.5 ${className}`}><Label className="label-hud">{label}</Label>{children}</div>; }
 function LoadingRows() { return <Panel className="space-y-3 p-4" aria-label="Ładowanie"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-4/5" /></Panel>; }
 function EmptyLine({ text }: { text: string }) { return <p className="p-4 text-center text-sm text-muted-foreground">{text}</p>; }
+
+function DailyCountdownValue() {
+  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
+  useEffect(() => {
+    const timer = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return <>{countdown}</>;
+}
+
+function DailyCycleKpi({ latestRun, loading }: { latestRun?: EconomyRun; loading: boolean }) {
+  return <Kpi icon={<CalendarClock />} label="Cykl dobowy" value={<DailyCountdownValue />} hint={latestRun ? `Ostatni: ${dateTime(latestRun.ran_at)}` : "Brak wcześniejszych rozliczeń"} loading={loading} />;
+}
