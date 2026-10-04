@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  allRegionsQuery,
   countriesQuery,
   meQuery,
   regionsQuery,
@@ -83,8 +82,8 @@ const STEP_TITLES = [
 function Arsenal() {
   const { data: me } = useQuery(meQuery);
   const { data: countries } = useQuery(countriesQuery);
-  const { data: allRegions } = useQuery(allRegionsQuery);
   const { data: myRegions } = useQuery(regionsQuery(me?.countryId));
+  const [targetCountry, setTargetCountry] = useState("");
   const { data: strikes } = useQuery(strikesQuery);
   const queryClient = useQueryClient();
 
@@ -102,9 +101,9 @@ function Arsenal() {
 
   const count = Math.min(100, Math.max(1, Math.floor(Number(countText) || 0) || 1));
   const spec = MISSILES.find((m) => m.code === missile) ?? null;
-  const region = (allRegions ?? []).find((r) => r.id === regionId) ?? null;
+  const region = (myRegions ?? []).find((r) => r.id === regionId) ?? null;
   const enemyCountries = (countries ?? []).filter((c) => c.country_id !== me?.countryId);
-  const enemyRegions = (allRegions ?? []).filter((r) => r.country_id === targetCountry);
+  const enemyRegions = targetRegions;
   const stock = missile && country ? Number(country[missile]) : 0;
   const targetCountryName =
     countries?.find((c) => c.country_id === targetCountry)?.name ?? "";
