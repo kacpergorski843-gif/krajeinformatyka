@@ -68,7 +68,7 @@ import {
   strikesQuery,
   transactionsQuery,
 } from "@/lib/api";
-import type { CountryStats, MissileStrike, RegionWithSlots, ShopItem } from "@/lib/api";
+import type { AdminUser as ApiAdminUser, CountryStats, MissileStrike, RegionWithSlots, ShopItem } from "@/lib/api";
 import {
   BUILDING_LABELS,
   MISSILE_LABELS,
@@ -95,14 +95,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
 });
 
-type AdminUser = {
-  id: string;
-  email: string | null;
-  display_name: string | null;
-  country_id: string | null;
-  country_name: string | null;
-  role: "PLAYER" | "ADMIN" | "MAIN_ADMIN" | null;
-};
+type AdminUser = ApiAdminUser & { role: ApiAdminUser["role"] | null };
 
 type TransactionRow = {
   id: string;
@@ -1463,13 +1456,11 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
         </div>
       )}
 
-      {filteredUsers.length > users.length ? (
+      {users.length < totalUsers ? (
         <div className="flex flex-col items-center gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-between">
-          <p className="text-xs text-muted-foreground">
-            Wyświetlono {users.length} z {filteredUsers.length} użytkowników.
-          </p>
-          <Button variant="outline" onClick={() => setVisibleUserCount((count) => count + 50)}>
-            Pokaż kolejnych 50
+          <p className="text-xs text-muted-foreground">Wyświetlono {users.length} z {totalUsers} użytkowników.</p>
+          <Button variant="outline" onClick={() => void userQuery.fetchNextPage()} disabled={userQuery.isFetchingNextPage}>
+            {userQuery.isFetchingNextPage ? "Ładowanie…" : "Pokaż kolejnych 50"}
           </Button>
         </div>
       ) : null}
