@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
+import { GameAlerts } from "@/components/GameAlerts";
+import { Bell } from "lucide-react";
 
 const NAV = [
   { to: "/panstwo", label: "Państwo", icon: Landmark },
@@ -66,7 +68,11 @@ export function AppShell({ me, title, subtitle, children }: {
     </div>
   );
 
+  const [canAskNotify, setCanAskNotify] = useState(false);
+  useEffect(() => { setCanAskNotify(typeof Notification !== "undefined" && Notification.permission === "default"); }, []);
+
   return <div className="app-shell min-h-screen pb-20 lg:pb-0">
+    <GameAlerts countryId={me?.countryId ?? null} />
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
       <aside className="sidebar hidden w-[17rem] shrink-0 lg:flex">
         <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
@@ -81,6 +87,7 @@ export function AppShell({ me, title, subtitle, children }: {
               <div className="min-w-0"><p className="truncate text-sm font-semibold">{me?.displayName ?? me?.email ?? "Dowódca"}</p>
               <p className="text-primary text-[10px] tracking-[0.14em] uppercase">{me ? ROLE_LABELS[me.role] : ""}</p></div>
             </div>
+            {canAskNotify ? <button type="button" className="nav-item w-full" onClick={async () => { await Notification.requestPermission(); setCanAskNotify(false); }}><Bell className="size-[18px]" /> Włącz powiadomienia</button> : null}
             <button type="button" onClick={() => setConfirmOut(true)} className="nav-item w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
           </div>
         </div>
@@ -107,6 +114,8 @@ export function AppShell({ me, title, subtitle, children }: {
         <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Activity className="size-5"/></div><span className="font-display font-bold tracking-[0.18em]">COUNTRY RP</span></div>
         <button onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button></div>
         <div className="mt-5">{nav(true)}</div>
+        {canAskNotify ? <button type="button" className="nav-item mt-3 w-full" onClick={async () => { await Notification.requestPermission(); setCanAskNotify(false); }}><Bell className="size-[18px]" /> Włącz powiadomienia</button> : null}
+        <button type="button" onClick={() => { setMobileOpen(false); setConfirmOut(true); }} className="nav-item mt-1 w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
       </aside>
     </div> : null}
     <Dialog open={confirmOut} onOpenChange={setConfirmOut}><DialogContent className="admin-dialog">
