@@ -95,7 +95,6 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
 });
 
-type AdminUser = ApiAdminUser & { role: ApiAdminUser["role"] | null };
 
 type TransactionRow = {
   id: string;
