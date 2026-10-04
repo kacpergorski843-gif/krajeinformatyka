@@ -38,7 +38,8 @@ function MyCountry() {
   const country = countries?.find((c) => c.country_id === me?.countryId);
   const { data: economyBonus } = useQuery(economyBonusQuery(me?.countryId));
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
-  const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 20));
+  const { data: shop } = useQuery(shopQuery);
+  const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 50));
   const { data: occupationHistory } = useQuery(regionOccupationsQuery(me?.countryId));
   const occupiedByMe = [...(occupationHistory ?? []).reduce((map, occupation) => {
     if (!map.has(occupation.region_id)) map.set(occupation.region_id, occupation);
@@ -46,8 +47,14 @@ function MyCountry() {
   }, new Map<string, NonNullable<typeof occupationHistory>[number]>()).values()].filter(
     (occupation) => occupation.current_country_id === me?.countryId,
   );
+  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
   const [flagFile, setFlagFile] = useState<File | null>(null);
   const [flagSaving, setFlagSaving] = useState(false);
+
+  useEffect(() => {
+    const t = setInterval(() => setCountdown(timeToDailyCycle()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   if (!me) return null;
 
@@ -352,18 +359,9 @@ function MyCountry() {
 
       <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
         <Timer className="size-3.5" strokeWidth={1.5} /> Do rozliczenia dobowego:{" "}
-        <DailyCountdown />
+        <span className="num text-primary">{countdown}</span>
       </div>
       {claimPanel}
     </AppShell>
   );
-}
-
-function DailyCountdown() {
-  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
-  useEffect(() => {
-    const t = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
-    return () => window.clearInterval(t);
-  }, []);
-  return <span className="num text-primary">{countdown}</span>;
 }
