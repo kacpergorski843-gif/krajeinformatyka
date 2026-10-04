@@ -915,11 +915,11 @@ function CountriesTab() {
 
 function CountryDashboard({ country, users, onClose }: { country: CountryStats | null; users: AdminUser[]; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const [countryTab, setCountryTab] = useState("quick");
   const regions = useQuery({
     ...regionsQuery(country?.country_id ?? null),
     enabled: !!country && countryTab === "regions",
   });
-  const [countryTab, setCountryTab] = useState("quick");
   const history = useQuery({
     ...transactionsQuery(country?.country_id ?? null, 50),
     enabled: !!country && countryTab === "history",
