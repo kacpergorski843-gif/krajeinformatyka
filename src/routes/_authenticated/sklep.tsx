@@ -104,12 +104,18 @@ function Shop() {
     mutationFn: async (v: { item: ShopItem; qty: number }) => {
       if (v.item.building) {
         if (!region) throw new Error("Wybierz region");
-        if (v.item.building.startsWith("factory_")) {
+        if (v.item.building.startsWith("factory_") || v.item.building.startsWith("fort_")) {
           const level = Number(v.item.building.split("_")[1]);
           if (level > 1) {
-            const required = `factory_${level - 1}`;
+            const required = v.item.building.startsWith("fort_") ? `fort_${level - 1}` : `factory_${level - 1}`;
             const existing = region.slots.find((slot) => slot.building === required);
-            if (!existing) throw new Error(`W tym regionie wymagany jest najpierw poziom ${level - 1}`);
+            if (!existing) {
+              throw new Error(
+                v.item.building.startsWith("fort_")
+                  ? `W tym regionie wymagany jest najpierw Fort ${level - 1}`
+                  : `W tym regionie wymagany jest najpierw poziom ${level - 1}`,
+              );
+            }
             return rpc("upgrade_building_in_slot", {
               p_region_id: region.id,
               p_slot_index: existing.slot_index,
