@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Boxes,
