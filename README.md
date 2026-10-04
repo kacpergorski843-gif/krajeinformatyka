@@ -67,3 +67,48 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Migracje Supabase
+
+**Źródłem prawdy dla produkcyjnej bazy jest `supabase/migrations/`.** Pliki w
+`drizzle/migrations/` są utrzymywane jako kopia dla istniejącego workflow
+Drizzle/Cloud IDE i nie są mechanizmem wdrażania zmian do produkcyjnego
+Supabase.
+
+Supabase zapisuje historię wykonanych migracji w
+`supabase_migrations.schema_migrations`. Sam commit pliku SQL do GitHuba nie
+wykonuje migracji na zdalnej bazie.
+
+### Ręczne wdrożenie
+
+Po zalogowaniu do Supabase CLI:
+
+```sh
+supabase link --project-ref kbcofzdboyzgsquvtzfq
+supabase migration list --linked
+supabase db push --linked --dry-run
+supabase db push --linked
+```
+
+W repo są też skróty:
+
+```sh
+npm run db:migration:list
+npm run db:migration:push
+```
+
+### Automatyczne wdrożenie
+
+Workflow `.github/workflows/supabase-migrations.yml` uruchamia się po zmianie
+`supabase/migrations/**` na `main` i wykonuje `supabase db push`.
+W GitHubie trzeba ustawić sekrety środowiska `production`:
+
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_DB_PASSWORD`
+
+Workflow ma `concurrency`, więc dwa wdrożenia migracji nie wykonują się
+równocześnie.
+
+Jeżeli `supabase migration list --linked` pokaże rozjazd historii lokalnej i
+zdalnej, **nie należy usuwać wpisów z tabeli migracji ręcznie**. Najpierw
+zdiagnozuj rozjazd, a w razie potrzeby użyj `supabase migration repair`.
