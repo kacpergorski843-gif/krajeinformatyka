@@ -632,7 +632,6 @@ function Update4Tools() {
 function AdminPanel() {
   const { data: me } = useQuery(meQuery);
   const countries = useQuery(countriesQuery);
-  const userSummary = useQuery(adminUserSummaryQuery);
   const runs = useQuery(economyRunsQuery);
   const queryClient = useQueryClient();
   const [adminTab, setAdminTab] = useState("countries");
@@ -820,9 +819,7 @@ function CountriesTab() {
       toast.success("Państwo utworzone");
       setNewName(""); setNewFlag(""); setCreating(false);
       void queryClient.invalidateQueries({ queryKey: ["countries"] });
-      void queryClient.invalidateQueries({ queryKey: ["admin_users_page"] });
-      void queryClient.invalidateQueries({ queryKey: ["admin_user_summary"] });
-      void queryClient.invalidateQueries({ queryKey: ["admin_country_owners"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_users"] });
       void queryClient.invalidateQueries({ queryKey: ["all_region_options"] });
     },
     onError: (error: Error) => toast.error(error.message),
