@@ -69,7 +69,7 @@ function slotBlockReason(region: RegionWithSlots, item: ShopItem): string | null
       return "Limit 3 wytwórni tego surowca w regionie";
     }
   }
-  if (b.startsWith("fort_") && region.slots.some((s) => s.building.startsWith("fort_"))) {
+  if (b === "fort_1" && region.slots.some((s) => s.building.startsWith("fort_"))) {
     return "W regionie może stać tylko jedna fortyfikacja";
   }
   return null;
@@ -373,7 +373,22 @@ function Regions() {
                   disabled={blocked || build.isPending}
                   onClick={() => {
                     if (!buildFor) return;
-                    const index = firstFreeSlot(buildFor);
+                    const required =
+                      item.building?.startsWith("factory_") && Number(item.building.split("_")[1]) > 1
+                        ? `factory_${Number(item.building.split("_")[1]) - 1}`
+                        : item.building === "fort_2"
+                          ? "fort_1"
+                          : item.building === "fort_3"
+                            ? "fort_2"
+                            : null;
+                    const upgradeTarget = required
+                      ? buildFor.slots.find((slot) => slot.building === required)
+                      : null;
+                    if (required && !upgradeTarget) {
+                      toast.error(`W tym regionie wymagany jest najpierw ${required.replace("_", " ")}`);
+                      return;
+                    }
+                    const index = upgradeTarget?.slot_index ?? firstFreeSlot(buildFor);
                     if (!index) {
                       toast.error("Region nie ma wolnych slotów");
                       return;
