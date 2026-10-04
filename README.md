@@ -16,7 +16,7 @@ Główne wymagania:
 3. Państwa i surowce:
 - Startowe saldo: 1 500 000 000 000 KR (1,5 bln KR, typ NUMERIC/BIGINT).
 - 5 surowców: Węgiel (coal), Ropa (oil), Miedź (copper), Żelazo (iron), Uran (uranium).
-- Wojsko i obrona: OPL (obrona przeciwlotnicza, bez limitu slotów), Rakiety I-III w ekwipunku, Żołnierze (pakiety po 500 tys., każdy daje +1 głos wojenny, głosy z żołnierzy liczą się maks. do +6), Czołgi (pakiety po 50 szt., każdy daje +1 głos wojenny, głosy z czołgów liczą się maks. do +4; zakupy obu jednostek są bez limitu). Łącznie z żołnierzy i czołgów daje to maks. 10 głosów wojennych, ale liczba posiadanych jednostek może być większa.
+- Wojsko i obrona: OPL (obrona przeciwlotnicza, bez limitu slotów), Rakiety I-III w ekwipunku, Żołnierze (pakiety po 500 tys., każdy daje +1 głos wojenny, głosy z żołnierzy liczą się maks. do +6), Czołgi (pakiety po 50 szt., każdy daje +1 głos wojenny, głosy z czołgów liczą się maks. do +4; zakupy obu jednostek są bez limitu). Łącznie z żołnierzy i czołgów daje to maks. 10 głosów wojennych, ale liczba posiadanych jednostek może być dowolnie większa.
 
 4. Regiony i sloty:
 - Każdy region ma 9 slotów.
