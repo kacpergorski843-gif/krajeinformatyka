@@ -199,10 +199,10 @@ function Shop() {
     return null;
   }
 
-  const isFactoryUpgrade =
+  const isBuildingUpgrade =
     !!item?.building &&
-    item.building.startsWith("factory_") &&
-    Number(item.building.split("_")[1]) > 1;
+    ((item.building.startsWith("factory_") && Number(item.building.split("_")[1]) > 1) ||
+      (item.building.startsWith("fort_") && Number(item.building.split("_")[1]) > 1));
 
   const upgradeTarget =
     item?.building && region
@@ -394,7 +394,7 @@ function Shop() {
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="tracking-[0.14em] uppercase">
-            {isFactoryUpgrade ? "Potwierdzenie ulepszenia" : "Potwierdzenie zakupu"}
+            {isBuildingUpgrade ? "Potwierdzenie ulepszenia" : "Potwierdzenie zakupu"}
           </DialogTitle>
             <DialogDescription>{item?.name}</DialogDescription>
           </DialogHeader>
@@ -603,7 +603,7 @@ function Shop() {
                   disabled={buy.isPending || cannotBuy}
                   onClick={() => buy.mutate({ item, qty })}
                 >
-                  {buy.isPending ? "Realizuję…" : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
+                  {buy.isPending ? "Realizuję…" : isBuildingUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
                 </Button>
               </div>
             </div>
