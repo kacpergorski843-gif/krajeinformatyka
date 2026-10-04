@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Coins, Vote, ArrowLeft } from "lucide-react";
+import { Coins, Shield, ArrowLeft } from "lucide-react";
 import { Panel } from "@/components/stat";
 import { publicRankingQuery } from "@/lib/api";
 import type { PublicRankingRow } from "@/lib/api";
-import { fmtKR, units } from "@/lib/format";
+import { fmtKR } from "@/lib/format";
 
 export const Route = createFileRoute("/ranking-publiczny")({
   head: () => ({
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/ranking-publiczny")({
   component: PublicRanking,
 });
 
-type Mode = "income" | "votes";
+type Mode = "income" | "military";
 
 function PublicRanking() {
   const { data, isLoading, isError } = useQuery(publicRankingQuery);
@@ -114,7 +114,7 @@ function PublicRanking() {
 }
 
 function valueOf(c: PublicRankingRow, mode: Mode) {
-  return mode === "income" ? fmtKR(c.gross_income) : `${units(c.vote_potential)} gł.`;
+  return mode === "income" ? fmtKR(c.gross_income) : fmtKR(c.military_value);
 }
 
 function hintOf(c: PublicRankingRow, mode: Mode) {
