@@ -413,20 +413,47 @@ function Shop() {
 
               {isBuilding || item.code === "aa" ? (
                 <div className="space-y-2">
-                  <p className="label-hud">{isBuilding ? "Region budowy" : "Region obrony"}</p>
-                  <Select value={regionId ?? ""} onValueChange={setRegionId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Wybierz region" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(regions ?? []).map((r) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          {r.name} — sloty {r.slots.length}/9 · {units(r.aa_defense)} OPL
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {blockReason ? (
+                  <p className="label-hud">{isBuilding ? "Wybierz region budowy" : "Wybierz region obrony"}</p>
+                  <div className="grid gap-2">
+                    {(regions ?? []).map((r) => {
+                      const selectedRegion = regionId === r.id;
+                      const reason = isBuilding
+                        ? buildBlockReason(r, item.building ?? "") ?? levelLockForRegion(r, item.building ?? "")
+                        : buildBlockReason(r, "aa");
+                      return (
+                        <button
+                          key={r.id}
+                          type="button"
+                          className={[
+                            "w-full rounded-xl border p-3 text-left transition",
+                            selectedRegion
+                              ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                              : "border-border/70 bg-card/40 hover:border-primary/50",
+                          ].join(" ")}
+                          onClick={() => setRegionId(r.id)}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="font-semibold">{r.name}</span>
+                            <span className="num shrink-0 text-xs text-muted-foreground">
+                              {r.slots.length}/9 slotów
+                            </span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                            <span>OPL: {units(r.aa_defense)}</span>
+                            <span>Budynki: {r.slots.length}</span>
+                          </div>
+                          {reason ? (
+                            <p className="mt-2 text-xs font-medium text-destructive">{reason}</p>
+                          ) : (
+                            <p className="mt-2 text-xs font-medium text-success">
+                              {isBuilding ? "Można budować tutaj" : "Można rozmieścić OPL"}
+                            </p>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {regionId && blockReason ? (
                     <p className="text-destructive text-xs">{blockReason}</p>
                   ) : null}
                 </div>
