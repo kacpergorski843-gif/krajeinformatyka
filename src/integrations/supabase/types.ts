@@ -719,6 +719,33 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      admin_list_users_page: {
+        Args: { p_limit?: number; p_offset?: number; p_search?: string | null }
+        Returns: {
+          country_id: string
+          country_name: string
+          display_name: string
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          total_count: number
+        }[]
+      }
+      admin_user_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_users: number
+          total_users: number
+        }[]
+      }
+      admin_country_owners: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          country_id: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       admin_occupy_region: {
         Args: { p_new_country_id: string; p_region_id: string }
         Returns: Json
