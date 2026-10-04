@@ -16,22 +16,23 @@ Główne wymagania:
 3. Państwa i surowce:
 - Startowe saldo: 1 500 000 000 000 KR (1,5 bln KR, typ NUMERIC/BIGINT).
 - 5 surowców: Węgiel (coal), Ropa (oil), Miedź (copper), Żelazo (iron), Uran (uranium).
-- Wojsko i obrona: OPL (obrona przeciwlotnicza, bez limitu slotów), Rakiety I-III w ekwipunku, Żołnierze (pakiety po 500 tys., +1 głos wojenny, max +6), Czołgi (pakiety po 50 szt., +1 głos wojenny, max +4).
+- Wojsko i obrona: OPL (obrona przeciwlotnicza, bez limitu slotów), Rakiety I-III w ekwipunku, Żołnierze (pakiety po 500 tys., +1 głos wojenny, max +6), Czołgi (pakiety po 50 szt., +1 głos wojenny, max +4; łącznie wojsko daje maks. 10 głosów).
 
 4. Regiony i sloty:
 - Każdy region ma 9 slotów.
 - Zasada wytwórni surowców: w jednym regionie mogą stać wytwórnie tylko jednego surowca (max 3 sztuki na region).
 - Fortyfikacje I-III (max 1 na region, zajmuje 1 slot).
-- Fabryki I-V (zajmują po 1 slocie).
+- Fabryki I-VI (zajmują po 1 slocie).
 - OPL, rakiety, żołnierze i czołgi nie zajmują slotów w regionie.
 
 5. Fabryki i wytwórnie:
-- Fabryki I (150 mld KR, +20 mld KR/d), II (300 mld KR, +50 mld KR/d), III (600 mld KR, +80 mld KR/d), IV (1,5 bln KR, +150 mld KR/d, -50 węgla/d), V (3,5 bln KR, +250 mld KR/d, -100 węgla/d). Brak węgla = brak produkcji dla fabryki IV/V w danym cyklu.
+- Fabryki I (150 mld KR, +20 mld KR/d), II (300 mld KR, +50 mld KR/d), III (600 mld KR, +80 mld KR/d), IV (1,5 bln KR, +150 mld KR/d, -50 węgla/d), V (3,5 bln KR, +250 mld KR/d, -100 węgla/d), VI (400 mld KR, +400 mld KR/d, -150 węgla/d).
+- Brak węgla = brak produkcji dla fabryk IV-VI w danym cyklu.
 - Wytwórnie węgla, ropy, miedzi, żelaza: koszt 300 mld KR, produkcja +100/dzień.
 - Wytwórnia uranu: koszt 3 bln KR, produkcja +25/dzień.
 
 6. Ekonomia dobowa i historia:
-- Cykl dobowy (o godz. 20:00 lub wyzwalany ręcznie/automatycznie bez dublowania) przeliczający produkcję i zużycie węgla, rejestrujący logi audytowe/transakcyjne.
+- Jeden cykl dobowy o godz. 20:00 lub wyzwalany ręcznie/automatycznie, bez dublowania w tej samej dacie, przeliczający produkcję i zużycie węgla, rejestrujący logi audytowe/transakcyjne.
 - Pełna historia transakcji i akcji administracyjnych.
 
 7. Sklep (Shop):
@@ -52,13 +53,13 @@ This project was built with [Lovable](https://lovable.dev).
 
 Continue developing this project in the [Lovable editor](https://lovable.dev/projects/aaff7254-ff04-4b16-9676-22ae61956297).
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Ship faster**: describe what you want to build and Lovable handles it.
 - **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- **Full ownership**: This project is committed straight to this repository. Push to `main` on GitHub and changes sync back into Lovable.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Prefer working locally? You need Node.js and npm — [install from nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
 git clone <this-repository-url>
