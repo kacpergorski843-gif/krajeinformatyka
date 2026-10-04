@@ -860,14 +860,31 @@ function CountriesTab() {
       </Panel>
 
       {countryQuery.isLoading ? <LoadingRows /> : list.length === 0 ? <HudState icon={<Search />} title="Brak wyników" description="Zmień wyszukiwanie lub wybrane filtry." /> : (
-        <Panel className="min-w-0 overflow-hidden p-0">
+        <>
+        <div className="grid gap-2 sm:hidden">
+          {list.map((country) => {
+            const owned = ownerIds.has(country.country_id);
+            return (
+              <button key={country.country_id} type="button" onClick={() => setOpenId(country.country_id)} className="panel grid min-h-[4.5rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 text-left active:bg-secondary/40">
+                <span className="grid size-10 shrink-0 place-items-center overflow-hidden border border-border bg-secondary"><CountryFlag flag={country.flag} alt={`Flaga ${country.name}`} className="size-full rounded-sm" /></span>
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold">{country.name}</span>
+                  <span className="num block truncate text-sm text-primary">{fmtKR(country.balance)}</span>
+                  <span className="block truncate text-[11px] text-muted-foreground">+{fmtKR(country.gross_income)} / doba · {country.regions_count} reg. · {owned ? "Przypisane" : "Wolne"}</span>
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+            );
+          })}
+        </div>
+        <Panel className="hidden min-w-0 overflow-hidden p-0 sm:block">
           <div className="admin-scrollbar max-w-full overflow-x-auto">
             <div className="min-w-[46rem]">
               <div className="grid grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] gap-3 border-b border-border bg-secondary/40 px-4 py-2 text-[10px] uppercase text-muted-foreground">
                 <span>Państwo</span><span>Skarbiec</span><span>Regiony</span><span>Status</span><span />
               </div>
               {list.map((country) => {
-                const owner = users.find((user) => user.country_id === country.country_id);
+                const owner = ownerIds.has(country.country_id);
                 return (
                   <Button key={country.country_id} variant="ghost" className="grid h-auto w-full grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] items-center gap-3 rounded-none border-b border-border/70 px-4 py-3 text-left last:border-b-0 hover:bg-secondary/40" onClick={() => setOpenId(country.country_id)}>
                     <span className="flex min-w-0 items-center gap-3"><span className="grid size-9 shrink-0 place-items-center border border-border bg-secondary text-lg"><CountryFlag flag={country.flag} alt={`Flaga ${country.name}`} className="size-full rounded-sm" /></span><span className="min-w-0"><span className="block truncate font-semibold">{country.name}</span><span className="block truncate text-[11px] font-normal text-muted-foreground">+{fmtKR(country.gross_income)} / doba</span></span></span>
@@ -881,6 +898,7 @@ function CountriesTab() {
             </div>
           </div>
         </Panel>
+        </>
       )}
 
       <CountryDashboard country={countryQuery.data?.find((country) => country.country_id === openId) ?? null} users={users} onClose={() => setOpenId(null)} />
@@ -1035,7 +1053,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
             <TabsContent value="history" className="m-0 space-y-4"><CountryHistory transactions={(history.data ?? []) as unknown as TransactionRow[]} strikes={countryStrikes} countryId={country.country_id} loading={history.isLoading || strikes.isLoading} /></TabsContent>
           </div>
         </Tabs>
-        <div className="grid shrink-0 gap-2 border-t border-border bg-card p-3 sm:grid-cols-[1fr_auto_auto] sm:p-4"><p className="self-center text-xs text-muted-foreground">{changedFields.length ? `${changedFields.length} niezapisane zmiany` : "Brak niezapisanych zmian"}</p><Button variant="destructive" onClick={() => setConfirmDelete(true)}><Trash2 />Usuń państwo</Button><Button disabled={!hasChanges} onClick={() => setConfirmChanges(true)}>Zapisz zmiany</Button></div>
+        <div className="sticky bottom-0 z-10 grid shrink-0 grid-cols-2 gap-2 border-t border-border bg-card/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_oklch(0.05_0.02_250/35%)] backdrop-blur sm:grid-cols-[1fr_auto_auto] sm:p-4"><p className="col-span-2 self-center text-xs text-muted-foreground sm:col-span-1">{changedFields.length ? `${changedFields.length} niezapisane zmiany` : "Brak niezapisanych zmian"}</p><Button variant="destructive" onClick={() => setConfirmDelete(true)}><Trash2 />Usuń państwo</Button><Button disabled={!hasChanges} onClick={() => setConfirmChanges(true)}>Zapisz zmiany</Button></div>
 
         <ConfirmDialog open={confirmChanges} onOpenChange={setConfirmChanges} title={destructive ? "Potwierdź operację zmniejszającą wartości" : "Potwierdź korektę państwa"} description={`Państwo: ${country.name}. Zmiana zostanie zapisana w dzienniku audytowym.`} confirmLabel="Zatwierdź korektę" destructive={destructive} pending={save.isPending} onConfirm={() => save.mutate()}>
           <div className="space-y-2">{changedFields.map(([key,value]) => <ChangePreview key={key} label={FIELD_LABELS[key as FieldKey] ?? (key === "name" ? "Nazwa" : "Flaga")} current={String(country[key as keyof CountryStats] ?? "")} next={String(value ?? "")} currency={key === "balance"} />)}</div>
