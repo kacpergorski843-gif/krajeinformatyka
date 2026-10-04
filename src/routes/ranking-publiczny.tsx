@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Coins, Shield, ArrowLeft } from "lucide-react";
+import { Coins, Shield, Vote, ArrowLeft } from "lucide-react";
 import { Panel } from "@/components/stat";
 import { publicRankingQuery } from "@/lib/api";
 import type { PublicRankingRow } from "@/lib/api";
-import { fmtKR } from "@/lib/format";
+import { fmtKR, units } from "@/lib/format";
 
 export const Route = createFileRoute("/ranking-publiczny")({
   head: () => ({
@@ -28,17 +28,10 @@ export const Route = createFileRoute("/ranking-publiczny")({
   component: PublicRanking,
 });
 
-type Mode = "income" | "military";
 
 function PublicRanking() {
   const { data, isLoading, isError } = useQuery(publicRankingQuery);
-  const [mode, setMode] = useState<Mode>("income");
-
-  const list = [...(data ?? [])].sort((a, b) =>
-    mode === "income"
-      ? Number(b.gross_income) - Number(a.gross_income)
-      : Number(b.military_value) - Number(a.military_value),
-  );
+  const list = [...(data ?? [])].sort((a, b) => Number(b.gross_income) - Number(a.gross_income));
 
   return (
     <div className="tactical-bg min-h-screen">
@@ -49,30 +42,7 @@ function PublicRanking() {
         <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Ranking państw</h1>
         <p className="label-hud">Podgląd publiczny, tylko do odczytu</p>
 
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          {(
-            [
-              ["income", "Największe zarobki", Coins],
-              ["military", "Wartość militarna", Shield],
-            ] as const
-          ).map(([key, label, Icon]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setMode(key)}
-              className={`flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs tracking-[0.1em] uppercase ${
-                mode === key
-                  ? "border-primary/70 text-primary bg-secondary"
-                  : "border-border text-muted-foreground"
-              }`}
-            >
-              <Icon className="size-4 shrink-0" strokeWidth={1.5} />
-              <span className="truncate">{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {isLoading ? <p className="text-muted-foreground mt-6 text-sm">Wczytywanie…</p> : null}
+        <p className="mt-5 text-sm text-muted-foreground">Ranking sortowany według produkcji KR. Każde państwo pokazuje osobno produkcję KR, głosy wojenne i wartość militarną.</p>\n\n        {isLoading ? <p className="text-muted-foreground mt-6 text-sm">Wczytywanie…</p> : null}
         {isError ? (
           <p className="text-destructive mt-6 text-sm">Nie udało się wczytać rankingu.</p>
         ) : null}
