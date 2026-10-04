@@ -83,7 +83,6 @@ function Arsenal() {
   const { data: me } = useQuery(meQuery);
   const { data: countries } = useQuery(countriesQuery);
   const { data: myRegions } = useQuery(regionsQuery(me?.countryId));
-  const [targetCountry, setTargetCountry] = useState("");
   const { data: strikes } = useQuery(strikesQuery);
   const queryClient = useQueryClient();
 
@@ -92,6 +91,8 @@ function Arsenal() {
   const [step, setStep] = useState(1);
   const [missile, setMissile] = useState<MissileCode | null>(null);
   const [targetCountry, setTargetCountry] = useState<string | null>(null);
+  const targetRegionsQuery = useQuery(regionsQuery(targetCountry));
+  const targetRegions = targetRegionsQuery.data ?? [];
   const [regionId, setRegionId] = useState<string | null>(null);
   const [slotIds, setSlotIds] = useState<string[]>([]);
   const [mode, setMode] = useState<"factories" | "mines">("factories");
