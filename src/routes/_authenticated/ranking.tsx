@@ -13,33 +13,74 @@ import { fmtKR, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/ranking")({
   head: () => ({ meta: [
-    { title: "Ranking państw — Kraje Informatyka" },
-    { name: "description", content: "Ranking państw: produkcja KR, głosy wojenne i wartość militarna." },
-    { property: "og:title", content: "Ranking państw — Kraje Informatyka" },
-    { property: "og:description", content: "Zarobki dobowe i wartość militarna wszystkich państw." },
+    { title: "Rankingi państw — Kraje Informatyka" },
+    { name: "description", content: "Trzy osobne rankingi państw: produkcja KR, głosy wojenne i wartość militarna." },
+    { property: "og:title", content: "Rankingi państw — Kraje Informatyka" },
+    { property: "og:description", content: "Trzy osobne rankingi: produkcja KR, głosy wojenne i wartość militarna." },
   ]}),
   component: Ranking,
 });
 
-const rankingMetrics = (c: CountryStats) => [
-  { label: "Produkcja KR", value: fmtKR(c.gross_income), Icon: Coins },
-  { label: "Głosy", value: units(c.war_votes), Icon: Vote },
-  { label: "Wartość militarna", value: fmtKR(c.military_value), Icon: Shield },
-] as const;
+type Metric = { key: "income" | "votes" | "military"; label: string; Icon: typeof Coins; value: (c: CountryStats) => string };
+
+const metrics: Metric[] = [
+  { key: "income", label: "Produkcja KR", Icon: Coins, value: (c) => fmtKR(c.gross_income) },
+  { key: "votes", label: "Głosy wojenne", Icon: Vote, value: (c) => units(c.war_votes) },
+  { key: "military", label: "Wartość militarna", Icon: Shield, value: (c) => fmtKR(c.military_value) },
+];
+
+function metricNumber(c: CountryStats, key: Metric["key"]) {
+  if (key === "income") return BigInt(c.gross_income || "0");
+  if (key === "military") return BigInt(c.military_value || "0");
+  return BigInt(c.war_votes || 0);
+}
+
+function RankingBlock({ metric, countries, myCountryId }: { metric: Metric; countries: CountryStats[]; myCountryId: string | null }) {
+  const ranked = [...countries].sort((a, b) => {
+    const av = metricNumber(a, metric.key);
+    const bv = metricNumber(b, metric.key);
+    return bv > av ? 1 : bv < av ? -1 : a.name.localeCompare(b.name, "pl");
+  });
+  const myRank = myCountryId ? ranked.findIndex((c) => c.country_id === myCountryId) + 1 : 0;
+  return (
+    <Panel className="p-0 overflow-hidden">
+      <div className="border-b border-border/70 bg-secondary/20 px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <metric.Icon className="size-4 text-primary" />
+          <div><p className="font-display text-sm font-semibold">{metric.label}</p><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Ranking #1 → #N</p></div>
+        </div>
+        {myRank > 0 ? <span className="text-xs text-primary font-semibold">Twoje miejsce: #{myRank}</span> : null}
+      </div>
+      <div className="divide-y divide-border/70">
+        {ranked.map((c, index) => (
+          <div key={c.country_id} className={`grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 ${c.country_id === myCountryId ? "bg-primary/[0.06]" : ""}`}>
+            <span className="num text-muted-foreground text-sm">{index + 1}</span>
+            <span className="flex min-w-0 items-center gap-2.5">
+              <CountryFlag flag={c.flag} alt="" className="h-6 w-9 shrink-0 rounded-sm text-lg" />
+              <span className="min-w-0 truncate text-sm font-semibold">{c.name}</span>
+            </span>
+            <span className="num text-right text-sm font-semibold text-primary">{metric.value(c)}</span>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
 
 function Ranking() {
   const { data: me, isPending: mePending } = useQuery(meQuery);
   const { data: countries, isPending, isError, error } = useQuery(countriesQuery);
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
-  const fullList = useMemo(() => [...(countries ?? [])].sort((a, b) => Number(b.gross_income) - Number(a.gross_income)), [countries]);
-  const list = useMemo(() => { const query = deferredSearch.trim().toLocaleLowerCase("pl-PL"); return fullList.filter((country) => !query || country.name.toLocaleLowerCase("pl-PL").includes(query)); }, [fullList, deferredSearch]);
-  const myRank = me?.countryId ? fullList.findIndex((country) => country.country_id === me.countryId) + 1 : 0;
-  return <AppShell me={me ?? null} title="Ranking" subtitle="Produkcja KR, głosy i wartość militarna">
-    <div className="relative"><Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Szukaj państwa…" aria-label="Szukaj państwa w rankingu" className="pl-9" /></div>
-    {!isPending && !isError && me?.countryId && myRank > 0 ? <Panel className="mt-4 border-primary/30 bg-primary/[0.06] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">TWOJA POZYCJA</p><p className="mt-1 text-sm text-muted-foreground">{"Ranking sortowany według produkcji KR; pozostałe wartości są pokazane osobno"}</p></div><div className="flex items-center gap-3"><span className="font-display text-2xl font-bold text-primary">#{myRank}</span><span className="text-xs text-muted-foreground">z {fullList.length}</span></div></div></Panel> : null}
+  const filtered = useMemo(() => {
+    const query = deferredSearch.trim().toLocaleLowerCase("pl-PL");
+    return (countries ?? []).filter((c) => !query || c.name.toLocaleLowerCase("pl-PL").includes(query));
+  }, [countries, deferredSearch]);
+
+  return <AppShell me={me ?? null} title="Rankingi" subtitle="Trzy niezależne rankingi: produkcja KR, głosy i wartość militarna">
+    <div className="relative"><Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Szukaj państwa…" aria-label="Szukaj państwa w rankingach" className="pl-9" /></div>
     {isPending || mePending ? <div className="mt-4"><PageSkeleton rows={5} cards={3} /></div> : null}
-    {isError ? <Panel className="mt-4 border-destructive/40 bg-destructive/5 p-5"><p className="font-semibold text-destructive">Nie udało się wczytać rankingu</p><p className="mt-1 text-sm text-muted-foreground">{error instanceof Error ? error.message : "Spróbuj ponownie za chwilę."}</p></Panel> : null}
-    {!isPending && !isError ? list.length === 0 ? <Panel className="mt-4 p-8 text-center"><p className="font-semibold">Nie znaleziono państwa</p><p className="mt-1 text-sm text-muted-foreground">Zmień frazę wyszukiwania.</p></Panel> : <><div className="mt-4 grid gap-3 sm:grid-cols-3">{list.slice(0,3).map((c) => { const rank = fullList.findIndex((row) => row.country_id === c.country_id)+1; return <Panel key={c.country_id} className={`hud-frame relative overflow-hidden ${c.country_id === me?.countryId ? "border-primary/60 bg-primary/[0.05]" : ""}`}><div className="flex items-start justify-between gap-3"><p className="text-primary font-display text-xs tracking-[0.24em] uppercase">RANK {String(rank).padStart(2,"0")}</p>{c.country_id === me?.countryId ? <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary">Twoje</span> : null}</div><div className="mt-3 flex items-center gap-3"><CountryFlag flag={c.flag} alt={`Flaga państwa ${c.name}`} className="h-8 w-12 shrink-0 rounded-sm text-2xl" /><p className="truncate text-base font-semibold">{c.name}</p></div><div className="mt-4 grid gap-2 sm:grid-cols-3">{rankingMetrics(c).map(({ label, value, Icon }) => <div key={label} className="rounded-sm border border-border/70 bg-secondary/30 px-2.5 py-2"><div className="flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-muted-foreground"><Icon className="size-3" />{label}</div><p className="num mt-1 text-sm font-semibold text-primary">{value}</p></div>)}</div></Panel>; })}</div><Panel className="divide-border mt-3 divide-y p-0">{list.slice(3).map((c) => { const rank = fullList.findIndex((row) => row.country_id === c.country_id)+1; return <div key={c.country_id} className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 transition-colors hover:bg-secondary/40 ${c.country_id === me?.countryId ? "bg-secondary/60" : ""}`}><span className="num text-inactive w-7 shrink-0 text-sm">{rank}</span><span className="flex min-w-0 items-center gap-3"><CountryFlag flag={c.flag} alt="" className="h-6 w-9 shrink-0 rounded-sm text-lg" /><span className="min-w-0"><span className="block truncate text-sm font-semibold">{c.name}{c.country_id === me?.countryId ? <span className="ml-2 text-[9px] uppercase text-primary">Twoje</span> : null}</span><span className="text-inactive text-[11px] uppercase">Produkcja KR · głosy · wartość militarna</span></span></span><span className="grid grid-cols-3 gap-2 text-right"><span><span className="block text-[9px] text-muted-foreground">KR</span><span className="num text-primary text-xs">{fmtKR(c.gross_income)}</span></span><span><span className="block text-[9px] text-muted-foreground">Głosy</span><span className="num text-primary text-xs">{units(c.war_votes)}</span></span><span><span className="block text-[9px] text-muted-foreground">Mil.</span><span className="num text-primary text-xs">{fmtKR(c.military_value)}</span></span></span></div>; })}</Panel></> : null}
+    {isError ? <Panel className="mt-4 border-destructive/40 bg-destructive/5 p-5"><p className="font-semibold text-destructive">Nie udało się wczytać rankingów</p><p className="mt-1 text-sm text-muted-foreground">{error instanceof Error ? error.message : "Spróbuj ponownie za chwilę."}</p></Panel> : null}
+    {!isPending && !isError ? <div className="mt-4 grid gap-4 xl:grid-cols-3">{metrics.map((metric) => <RankingBlock key={metric.key} metric={metric} countries={filtered} myCountryId={me?.countryId ?? null} />)}</div> : null}
   </AppShell>;
 }
