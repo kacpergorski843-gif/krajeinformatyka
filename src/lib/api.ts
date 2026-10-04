@@ -36,6 +36,7 @@ export type CountryStats = {
   uranium_prod: string;
   forts: number;
   military_value: string;
+  war_votes: number;
   vote_potential: number;
   region_aa_total: number;
 };
