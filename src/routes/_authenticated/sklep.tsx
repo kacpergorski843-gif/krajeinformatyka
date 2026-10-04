@@ -87,10 +87,13 @@ function Shop() {
   const { data: shop } = useQuery(shopQuery);
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
+  const [item, setItem] = useState<ShopItem | null>(null);
   const countryId = selected ?? me?.countryId ?? null;
   const country = countries?.find((c) => c.country_id === countryId);
-  const { data: regions } = useQuery(regionsQuery(countryId));
-  const [item, setItem] = useState<ShopItem | null>(null);
+  const { data: regions } = useQuery({
+    ...regionsQuery(countryId),
+    enabled: !!countryId && !!item?.building,
+  });
   const [regionId, setRegionId] = useState<string | null>(null);
   const [qtyText, setQtyText] = useState("1");
   const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
