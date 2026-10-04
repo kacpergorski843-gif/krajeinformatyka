@@ -60,6 +60,7 @@ import {
   adminCountryOwnersQuery,
   adminUserSummaryQuery,
   adminUsersPageQuery,
+  fetchAdminUsersPage,
   countriesQuery,
   economyRunsQuery,
   meQuery,
@@ -1237,7 +1238,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const userQuery = useInfiniteQuery({
     queryKey: ["admin_users_page", deferredSearch.trim()],
     initialPageParam: 0,
-    queryFn: ({ pageParam }) => adminUsersPageQuery(deferredSearch, pageParam),
+    queryFn: ({ pageParam }) => fetchAdminUsersPage(deferredSearch, pageParam),
     getNextPageParam: (lastPage, allPages) => lastPage.rows.length < 50 ? undefined : allPages.length * 50,
   });
   const countryQuery = useQuery(countriesQuery);
