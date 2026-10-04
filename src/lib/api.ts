@@ -36,7 +36,6 @@ export type CountryStats = {
   uranium_prod: string;
   forts: number;
   military_value: string;
-  war_votes: number;
   vote_potential: number;
   region_aa_total: number;
 };
@@ -46,9 +45,7 @@ export type PublicRankingRow = {
   name: string;
   gross_income: string;
   military_value: string;
-  vote_potential: number;
-  soldier_packs: number;
-  tank_packs: number;
+  war_votes: number;
   regions_count: number;
 };
 
