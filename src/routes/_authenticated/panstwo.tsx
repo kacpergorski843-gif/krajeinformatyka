@@ -38,7 +38,6 @@ function MyCountry() {
   const country = countries?.find((c) => c.country_id === me?.countryId);
   const { data: economyBonus } = useQuery(economyBonusQuery(me?.countryId));
   const { data: regions } = useQuery(regionsQuery(me?.countryId));
-  const { data: shop } = useQuery({ ...shopQuery, enabled: occupiedByMe.length > 0 });
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 20));
   const { data: occupationHistory } = useQuery(regionOccupationsQuery(me?.countryId));
   const occupiedByMe = [...(occupationHistory ?? []).reduce((map, occupation) => {
