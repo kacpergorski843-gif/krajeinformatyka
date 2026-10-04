@@ -908,14 +908,17 @@ function CountryDashboard({ country, owners, onClose }: { country: CountryStats 
   const queryClient = useQueryClient();
   const [countryTab, setCountryTab] = useState("quick");
   const [ownerSearch, setOwnerSearch] = useState("");
-  const ownerUsersQuery = useInfiniteQuery({
-    queryKey: ["admin_country_user_options", ownerSearch.trim()],
-    initialPageParam: 0,
-    queryFn: ({ pageParam }) => adminUsersPageQuery(ownerSearch, pageParam),
-    getNextPageParam: (lastPage, allPages) => lastPage.rows.length < 50 ? undefined : allPages.length * 50,
+  const ownerUsersQuery = useQuery({
+    ...adminUsersQuery,
     enabled: !!country && countryTab === "info",
   });
-  const ownerUsers = ownerUsersQuery.data?.pages.flatMap((page) => page.rows) ?? [];
+  const ownerUsers = useMemo(() => {
+    const query = ownerSearch.trim().toLowerCase();
+    const rows = (ownerUsersQuery.data ?? []) as AdminUser[];
+    return query
+      ? rows.filter((user) => [user.display_name, user.email, user.country_name].filter(Boolean).join(" ").toLowerCase().includes(query))
+      : rows;
+  }, [ownerSearch, ownerUsersQuery.data]);
   const regions = useQuery({
     ...regionsQuery(country?.country_id ?? null),
     enabled: !!country && countryTab === "regions",
