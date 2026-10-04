@@ -50,7 +50,17 @@ function unitCost(item: ShopItem, r: Resource): number {
 }
 
 function buildBlockReason(region: RegionWithSlots, building: string): string | null {
-  if (building !== "aa" && region.slots.length >= 9) return "Brak wolnych slotów";
+  const level = Number(building.split("_")[1]);
+  const upgradeRequired =
+    building.startsWith("factory_") && level > 1
+      ? `factory_${level - 1}`
+      : building === "fort_2"
+        ? "fort_1"
+        : building === "fort_3"
+          ? "fort_2"
+          : null;
+  const isUpgrade = !!upgradeRequired && region.slots.some((slot) => slot.building === upgradeRequired);
+  if (!isUpgrade && building !== "aa" && region.slots.length >= 9) return "Brak wolnych slotów";
   if (building.startsWith("mine_")) {
     const existing = region.slots.find((s) => s.building.startsWith("mine_"));
     if (existing && existing.building !== building) {
