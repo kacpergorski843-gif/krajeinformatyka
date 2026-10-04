@@ -5,12 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 function warsawHM(now = new Date()) {
   const parts = new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now);
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
-  const day = parts
-    .filter((part) => ["year", "month", "day"].includes(part.type))
-    .map((part) => part.value)
-    .join("-");
-  return { h: Number(get("hour")), m: Number(get("minute")), day };
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  return { h: get("hour"), m: get("minute"), day: now.toISOString().slice(0, 10) };
 }
 
 function notifyBrowser(title: string, body: string) {
@@ -34,10 +30,7 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
       };
       if (h === 19 && m >= 55) once("payout-soon", () => toast.info("Wypłata dzienna za kilka minut (20:00)."));
       if (h === 20 && m >= 10) once("payout-done", () => {
-        void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
-        void queryClient.invalidateQueries({ queryKey: ["public_countries"] });
-        void queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        void queryClient.invalidateQueries({ queryKey: ["regions"] });
+        void queryClient.invalidateQueries();
         toast.success("Wypłata dzienna została rozliczona. Sprawdź skarbiec.");
         notifyBrowser("Wypłata dzienna", "Twoje państwo otrzymało dzisiejszy dochód.");
       });
