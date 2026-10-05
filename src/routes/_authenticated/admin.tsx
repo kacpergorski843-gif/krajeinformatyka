@@ -873,7 +873,7 @@ function CountriesTab() {
           </Select>
           <Button onClick={() => setCreating(true)}><PackagePlus />Dodaj państwo</Button>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">Widoczne: <span className="num text-foreground">{list.length}</span> z {countryQuery.data?.length ?? 0}</p>
+        <p className="mt-3 text-xs text-muted-foreground">Widoczne: <span className="num text-foreground">{Math.min(list.length, visibleCount)}</span> z {list.length} wyników</p>
       </Panel>
 
       {countryQuery.isLoading ? <LoadingRows /> : list.length === 0 ? <HudState icon={<Search />} title="Brak wyników" description="Zmień wyszukiwanie lub wybrane filtry." /> : (
@@ -915,6 +915,7 @@ function CountriesTab() {
             </div>
           </div>
         </Panel>
+        {list.length > visibleCount ? <Button variant="outline" className="w-full" onClick={() => setVisibleCount((count) => count + 40)}>Pokaż kolejne państwa ({list.length - visibleCount})</Button> : null}
         </>
       )}
 
