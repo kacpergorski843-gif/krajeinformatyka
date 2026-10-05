@@ -640,14 +640,8 @@ function AdminPanel() {
   const users = useQuery(adminUsersQuery);
   const runs = useQuery(economyRunsQuery);
   const queryClient = useQueryClient();
-  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
   const [adminTab, setAdminTab] = useState("countries");
   const [, startAdminTabTransition] = useTransition();
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   if (me && !me.isAdmin) {
     return (
@@ -685,7 +679,7 @@ function AdminPanel() {
         <section className="grid min-w-0 gap-3 sm:grid-cols-3" aria-label="Najważniejsze wskaźniki">
           <Kpi icon={<Building2 />} label="Państwa" value={String(countries.data?.length ?? 0)} hint="aktywnych rekordów" loading={countries.isLoading} />
           <Kpi icon={<Users />} label="Gracze" value={String(userRows.length)} hint={`${userRows.filter((u) => u.country_id).length} z przypisanym państwem`} loading={users.isLoading} />
-          <Kpi icon={<CalendarClock />} label="Cykl dobowy" value={countdown} hint={latestRun ? `Ostatni: ${dateTime(latestRun.ran_at)}` : "Brak wcześniejszych rozliczeń"} loading={runs.isLoading} />
+          <CountdownKpi latestRun={latestRun} loading={runs.isLoading} />
         </section>
 
         <Tabs value={adminTab} onValueChange={(value) => startAdminTabTransition(() => setAdminTab(value))} className="min-w-0">
@@ -717,7 +711,7 @@ function AdminPanel() {
           <TabsContent value="countries"><CountriesTab /></TabsContent>
           <TabsContent value="users"><UsersTab isMainAdmin={!!me?.isMainAdmin} /></TabsContent>
           <TabsContent value="shop"><ShopTab /></TabsContent>
-          <TabsContent value="economy"><EconomyTab countdown={countdown} /></TabsContent>
+          <TabsContent value="economy"><EconomyCountdownTab /></TabsContent>
           <TabsContent value="history"><HistoryTab /></TabsContent>
           <TabsContent value="update4"><Update4Tools /></TabsContent>
         </Tabs>

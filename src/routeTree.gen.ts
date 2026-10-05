@@ -23,6 +23,7 @@ import { Route as AuthenticatedRegionyRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSklepRouteImport } from './routes/_authenticated/sklep'
 import { Route as AuthenticatedSwiatRouteImport } from './routes/_authenticated/swiat'
 import { Route as AuthenticatedTransferRouteImport } from './routes/_authenticated/transfer'
+import { Route as AuthenticatedUmowyRouteImport } from './routes/_authenticated/umowy'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedSwiatIdRouteImport } from './routes/_authenticated/swiat.$id'
 
@@ -96,6 +97,11 @@ const AuthenticatedTransferRoute = AuthenticatedTransferRouteImport.update({
   path: '/transfer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUmowyRoute = AuthenticatedUmowyRouteImport.update({
+  id: '/umowy',
+  path: '/umowy',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/transfer': typeof AuthenticatedTransferRoute
+  '/umowy': typeof AuthenticatedUmowyRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/transfer': typeof AuthenticatedTransferRoute
+  '/umowy': typeof AuthenticatedUmowyRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/_authenticated/sklep': typeof AuthenticatedSklepRoute
   '/_authenticated/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/_authenticated/transfer': typeof AuthenticatedTransferRoute
+  '/_authenticated/umowy': typeof AuthenticatedUmowyRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/swiat'
     | '/transfer'
+    | '/umowy'
     | '/.lovable/oauth/consent'
     | '/swiat/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/swiat'
     | '/transfer'
+    | '/umowy'
     | '/.lovable/oauth/consent'
     | '/swiat/$id'
   id:
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sklep'
     | '/_authenticated/swiat'
     | '/_authenticated/transfer'
+    | '/_authenticated/umowy'
     | '/.lovable/oauth/consent'
     | '/_authenticated/swiat/$id'
   fileRoutesById: FileRoutesById
@@ -325,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransferRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/umowy': {
+      id: '/_authenticated/umowy'
+      path: '/umowy'
+      fullPath: '/umowy'
+      preLoaderRoute: typeof AuthenticatedUmowyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
       path: '/.lovable/oauth/consent'
@@ -362,6 +381,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSklepRoute: typeof AuthenticatedSklepRoute
   AuthenticatedSwiatRoute: typeof AuthenticatedSwiatRouteWithChildren
   AuthenticatedTransferRoute: typeof AuthenticatedTransferRoute
+  AuthenticatedUmowyRoute: typeof AuthenticatedUmowyRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -373,6 +393,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSklepRoute: AuthenticatedSklepRoute,
   AuthenticatedSwiatRoute: AuthenticatedSwiatRouteWithChildren,
   AuthenticatedTransferRoute: AuthenticatedTransferRoute,
+  AuthenticatedUmowyRoute: AuthenticatedUmowyRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
