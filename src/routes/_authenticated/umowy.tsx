@@ -59,8 +59,7 @@ function AgreementsPage() {
     const amount = Number(value);
     return Number.isFinite(amount) && amount >= 0 && (resource !== "balance" || amount % 1_000_000_000 === 0);
   };
-  const hasAnyAmount = (amounts: Record<string, string>) => resourceCodes.some((code) => Number(amounts[code]) > 0);
-  const canCreate = !!a && !!b && a !== b && hasAnyAmount(aAmounts) && hasAnyAmount(bAmounts) &&
+  const canCreate = !!a && !!b && a !== b &&
     resourceCodes.every((code) => validAmount(aAmounts[code] ?? "", code) && validAmount(bAmounts[code] ?? "", code)) &&
     Number.isInteger(Number(days)) && Number(days) >= 1 && Number(days) <= 365 && !!end && end >= today;
 
