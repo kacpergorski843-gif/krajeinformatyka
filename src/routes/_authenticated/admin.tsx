@@ -636,18 +636,9 @@ function Update4Tools() {
 
 function AdminPanel() {
   const { data: me } = useQuery(meQuery);
-  const countries = useQuery(countriesQuery);
-  const users = useQuery(adminUsersQuery);
-  const runs = useQuery(economyRunsQuery);
   const queryClient = useQueryClient();
-  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
   const [adminTab, setAdminTab] = useState("countries");
   const [, startAdminTabTransition] = useTransition();
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   if (me && !me.isAdmin) {
     return (
@@ -674,19 +665,11 @@ function AdminPanel() {
     );
   }
 
-  const userRows = (users.data ?? []) as AdminUser[];
-  const runRows = (runs.data ?? []) as unknown as EconomyRun[];
-  const latestRun = runRows[0];
-
   return (
     <AppShell me={me ?? null} title="Centrum dowodzenia" subtitle="Administracja Nation Dynamics">
       <div className="min-w-0 space-y-4 overflow-x-clip">
         <AdminDataExportButton />
-        <section className="grid min-w-0 gap-3 sm:grid-cols-3" aria-label="Najważniejsze wskaźniki">
-          <Kpi icon={<Building2 />} label="Państwa" value={String(countries.data?.length ?? 0)} hint="aktywnych rekordów" loading={countries.isLoading} />
-          <Kpi icon={<Users />} label="Gracze" value={String(userRows.length)} hint={`${userRows.filter((u) => u.country_id).length} z przypisanym państwem`} loading={users.isLoading} />
-          <Kpi icon={<CalendarClock />} label="Cykl dobowy" value={countdown} hint={latestRun ? `Ostatni: ${dateTime(latestRun.ran_at)}` : "Brak wcześniejszych rozliczeń"} loading={runs.isLoading} />
-        </section>
+        <AdminKpis />
 
         <Tabs value={adminTab} onValueChange={(value) => startAdminTabTransition(() => setAdminTab(value))} className="min-w-0">
           <div className="admin-tabs-mobile sm:hidden">
@@ -717,13 +700,45 @@ function AdminPanel() {
           <TabsContent value="countries"><CountriesTab /></TabsContent>
           <TabsContent value="users"><UsersTab isMainAdmin={!!me?.isMainAdmin} /></TabsContent>
           <TabsContent value="shop"><ShopTab /></TabsContent>
-          <TabsContent value="economy"><EconomyTab countdown={countdown} /></TabsContent>
+          <TabsContent value="economy"><EconomyCountdownTab /></TabsContent>
           <TabsContent value="history"><HistoryTab /></TabsContent>
           <TabsContent value="update4"><Update4Tools /></TabsContent>
         </Tabs>
       </div>
     </AppShell>
   );
+}
+
+function AdminKpis() {
+  const countries = useQuery(countriesQuery);
+  const users = useQuery(adminUsersQuery);
+  const runs = useQuery(economyRunsQuery);
+  const userRows = (users.data ?? []) as AdminUser[];
+  const latestRun = (runs.data ?? [])[0] as EconomyRun | undefined;
+  return <section className="grid min-w-0 gap-3 sm:grid-cols-3" aria-label="Najważniejsze wskaźniki">
+    <Kpi icon={<Building2 />} label="Państwa" value={String(countries.data?.length ?? 0)} hint="aktywnych rekordów" loading={countries.isLoading} />
+    <Kpi icon={<Users />} label="Gracze" value={String(userRows.length)} hint={`${userRows.filter((u) => u.country_id).length} z przypisanym państwem`} loading={users.isLoading} />
+    <CountdownKpi latestRun={latestRun} loading={runs.isLoading} />
+  </section>;
+}
+
+function useCycleCountdown() {
+  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
+  useEffect(() => {
+    const timer = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return countdown;
+}
+
+function CountdownKpi({ latestRun, loading }: { latestRun?: EconomyRun; loading: boolean }) {
+  const countdown = useCycleCountdown();
+  return <Kpi icon={<CalendarClock />} label="Cykl dobowy" value={countdown} hint={latestRun ? `Ostatni: ${dateTime(latestRun.ran_at)}` : "Brak wcześniejszych rozliczeń"} loading={loading} />;
+}
+
+function EconomyCountdownTab() {
+  const countdown = useCycleCountdown();
+  return <EconomyTab countdown={countdown} />;
 }
 
 
@@ -803,6 +818,7 @@ function CountriesTab() {
   const [filter, setFilter] = useState<"all" | "assigned" | "free">("all");
   const [sort, setSort] = useState<"name" | "balance" | "income" | "military">("income");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(40);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newFlag, setNewFlag] = useState("");
@@ -823,7 +839,7 @@ function CountriesTab() {
       return Number(b.gross_income) - Number(a.gross_income);
     });
     return rows;
-  }, [assignedIds, countryQuery.data, filter, search, sort]);
+  }, [assignedIds, countryQuery.data, filter, deferredSearch, sort]);
 
   const create = useMutation({
     mutationFn: () => rpc("admin_create_country", { p_name: newName.trim(), p_flag: newFlag.trim() }),
@@ -857,13 +873,13 @@ function CountriesTab() {
           </Select>
           <Button onClick={() => setCreating(true)}><PackagePlus />Dodaj państwo</Button>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">Widoczne: <span className="num text-foreground">{list.length}</span> z {countryQuery.data?.length ?? 0}</p>
+        <p className="mt-3 text-xs text-muted-foreground">Widoczne: <span className="num text-foreground">{Math.min(list.length, visibleCount)}</span> z {list.length} wyników</p>
       </Panel>
 
       {countryQuery.isLoading ? <LoadingRows /> : list.length === 0 ? <HudState icon={<Search />} title="Brak wyników" description="Zmień wyszukiwanie lub wybrane filtry." /> : (
         <>
         <div className="grid gap-2 sm:hidden">
-          {list.map((country) => {
+          {list.slice(0, visibleCount).map((country) => {
             const owned = ownerIds.has(country.country_id);
             return (
               <button key={country.country_id} type="button" onClick={() => setOpenId(country.country_id)} className="panel grid min-h-[4.5rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 text-left active:bg-secondary/40">
@@ -884,7 +900,7 @@ function CountriesTab() {
               <div className="grid grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] gap-3 border-b border-border bg-secondary/40 px-4 py-2 text-[10px] uppercase text-muted-foreground">
                 <span>Państwo</span><span>Skarbiec</span><span>Regiony</span><span>Status</span><span />
               </div>
-              {list.map((country) => {
+              {list.slice(0, visibleCount).map((country) => {
                 const owner = ownerIds.has(country.country_id);
                 return (
                   <Button key={country.country_id} variant="ghost" className="grid h-auto w-full grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] items-center gap-3 rounded-none border-b border-border/70 px-4 py-3 text-left last:border-b-0 hover:bg-secondary/40" onClick={() => setOpenId(country.country_id)}>
@@ -899,10 +915,11 @@ function CountriesTab() {
             </div>
           </div>
         </Panel>
+        {list.length > visibleCount ? <Button variant="outline" className="w-full" onClick={() => setVisibleCount((count) => count + 40)}>Pokaż kolejne państwa ({list.length - visibleCount})</Button> : null}
         </>
       )}
 
-      <CountryDashboard country={countryQuery.data?.find((country) => country.country_id === openId) ?? null} users={users} onClose={() => setOpenId(null)} />
+      {openId ? <CountryDashboard country={countryQuery.data?.find((country) => country.country_id === openId) ?? null} users={users} onClose={() => setOpenId(null)} /> : null}
       <ConfirmDialog open={creating} onOpenChange={setCreating} title="Utwórz nowe państwo" description="Nowe państwo zostanie dodane bez właściciela i będzie dostępne do przypisania graczowi." confirmLabel="Utwórz państwo" pending={create.isPending} disabled={!newName.trim()} onConfirm={() => create.mutate()}>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem]">
           <Field label="Nazwa państwa"><Input value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Nazwa" /></Field>
@@ -1226,7 +1243,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
   const [editFlagPreview, setEditFlagPreview] = useState<string | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<AdminUser | null>(null);
   const [resetPassword, setResetPassword] = useState("");
-  const users = ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(deferredSearch.trim().toLowerCase()));
+  const users = useMemo(() => ((userQuery.data ?? []) as AdminUser[]).filter((user) => `${user.display_name ?? ""} ${user.country_name ?? ""}`.toLowerCase().includes(deferredSearch.trim().toLowerCase())), [userQuery.data, deferredSearch]);
 
   const assign = useMutation({
     mutationFn: ({ userId, countryId }: { userId: string; countryId: string }) =>
@@ -1582,8 +1599,8 @@ function ShopTab() {
   const [category, setCategory] = useState("all");
   const [visibility, setVisibility] = useState("all");
   const [edit, setEdit] = useState<Record<string, string> | null>(null);
-  const categories = [...new Set((itemQuery.data ?? []).map((item) => item.category))];
-  const items = (itemQuery.data ?? []).filter((item) => item.name.toLowerCase().includes(deferredSearch.toLowerCase()) && (category === "all" || item.category === category) && (visibility === "all" || String(item.active) === visibility));
+  const categories = useMemo(() => [...new Set((itemQuery.data ?? []).map((item) => item.category))], [itemQuery.data]);
+  const items = useMemo(() => (itemQuery.data ?? []).filter((item) => item.name.toLowerCase().includes(deferredSearch.toLowerCase()) && (category === "all" || item.category === category) && (visibility === "all" || String(item.active) === visibility)), [itemQuery.data, deferredSearch, category, visibility]);
   const save = useMutation({ mutationFn: (payload: Record<string, string>) => rpc("admin_upsert_shop_item", { p_item: payload }), onSuccess: () => { toast.success("Produkt zapisany"); setEdit(null); void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] }); void queryClient.invalidateQueries({ queryKey: ["shop_items"] }); }, onError: (error: Error) => toast.error(error.message) });
   const toggle = useMutation({ mutationFn: ({ code, active }: { code: string; active: boolean }) => rpc("admin_toggle_shop_item", { p_code: code, p_active: active }), onSuccess: () => { toast.success("Widoczność zmieniona"); void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] }); void queryClient.invalidateQueries({ queryKey: ["shop_items"] }); }, onError: (error: Error) => toast.error(error.message) });
   const emptyForm = { code: "", name: "", category: "INNE", description: "", building: "", produces: "", active: "true", cost_kr: "0", cost_coal: "0", cost_oil: "0", cost_copper: "0", cost_iron: "0", cost_uranium: "0", income_kr: "0", upkeep_coal: "0", produces_amount: "0", sort_order: "100" };
@@ -1618,10 +1635,10 @@ function HistoryTab() {
   const countryQuery = useQuery(countriesQuery);
   const [filter, setFilter] = useState<HistoryFilter>("all");
   const [hideZero, setHideZero] = useState(true);
-  const countries = new Map((countryQuery.data ?? []).map((country) => [country.country_id, country.name]));
-  const transactions = ((txQuery.data ?? []) as unknown as TransactionRow[]).filter((transaction) => !hideZero || Number(transaction.amount_kr) !== 0).filter((transaction) => filter === "all" || classifyTransaction(transaction) === filter);
-  const actions = ((actionQuery.data ?? []) as unknown as AdminActionRow[]).filter(() => filter === "all" || filter === "adjustments");
-  const strikes = (strikeQuery.data ?? []).filter(() => filter === "all" || filter === "missiles");
+  const countries = useMemo(() => new Map((countryQuery.data ?? []).map((country) => [country.country_id, country.name])), [countryQuery.data]);
+  const transactions = useMemo(() => ((txQuery.data ?? []) as unknown as TransactionRow[]).filter((transaction) => (!hideZero || Number(transaction.amount_kr) !== 0) && (filter === "all" || classifyTransaction(transaction) === filter)), [txQuery.data, hideZero, filter]);
+  const actions = useMemo(() => ((actionQuery.data ?? []) as unknown as AdminActionRow[]).filter(() => filter === "all" || filter === "adjustments"), [actionQuery.data, filter]);
+  const strikes = useMemo(() => (strikeQuery.data ?? []).filter(() => filter === "all" || filter === "missiles"), [strikeQuery.data, filter]);
   const loading = txQuery.isLoading || actionQuery.isLoading || strikeQuery.isLoading;
   return <div className="space-y-4"><Panel className="hud-frame p-3"><div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div className="admin-scrollbar overflow-x-auto"><div className="flex min-w-max gap-1">{([['all','Wszystkie'],['adjustments','Korekty'],['build','Budowa'],['cycles','Cykle'],['military','Wojsko'],['missiles','Rakiety']] as [HistoryFilter,string][]).map(([value,label]) => <Button key={value} size="sm" variant={filter === value ? "secondary" : "ghost"} className={filter === value ? "text-primary" : "text-muted-foreground"} onClick={() => setFilter(value)}>{label}</Button>)}</div></div><div className="flex items-center gap-2"><Switch checked={hideZero} onCheckedChange={setHideZero} /><span className="whitespace-nowrap text-xs">Ukryj 0 KR</span></div></div></Panel>{loading ? <LoadingRows /> : <div className="space-y-4">{(filter === "all" || filter !== "adjustments" && filter !== "missiles") ? <><SectionTitle>Operacje</SectionTitle><Panel className="divide-y divide-border p-0">{transactions.map((transaction) => <TransactionItem key={transaction.id} transaction={transaction} country={transaction.country_id ? countries.get(transaction.country_id) : undefined} />)}{transactions.length === 0 ? <EmptyLine text="Brak operacji dla wybranego filtra." /> : null}</Panel></> : null}{filter === "all" || filter === "adjustments" ? <><SectionTitle>Zmiany administracyjne</SectionTitle><Panel className="divide-y divide-border p-0">{actions.map((action) => <AuditItem key={action.id} action={action} country={action.country_id ? countries.get(action.country_id) : undefined} />)}{actions.length === 0 ? <EmptyLine text="Brak zmian administracyjnych." /> : null}</Panel></> : null}{filter === "all" || filter === "missiles" ? <><SectionTitle>Operacje rakietowe</SectionTitle><Panel className="divide-y divide-border p-0">{strikes.map((strike) => <div key={strike.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{MISSILE_LABELS[strike.missile_code] ?? strike.missile_code} · {strike.region_name}</p><p className="truncate text-xs text-muted-foreground">{countries.get(strike.attacker_country_id ?? "") ?? "Nieznane"} → {countries.get(strike.defender_country_id ?? "") ?? "Nieznane"} · {dateTime(strike.created_at)}</p></div><Badge variant={strike.result === "PRZECHWYCONA" ? "outline" : "destructive"} className={strike.result === "PRZECHWYCONA" ? "border-success/40 text-success" : ""}>{strike.result}</Badge></div>)}{strikes.length === 0 ? <EmptyLine text="Brak operacji rakietowych." /> : null}</Panel></> : null}</div>}</div>;
 }

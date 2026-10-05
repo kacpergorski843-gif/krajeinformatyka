@@ -138,6 +138,28 @@ export const countriesQuery = queryOptions({
     )) as unknown as CountryStats[],
 });
 
+export type BilateralAgreement = {
+  id: string;
+  country_a_id: string;
+  country_b_id: string;
+  a_resource: string;
+  a_amount: string;
+  b_resource: string;
+  b_amount: string;
+  interval_days: number;
+  next_run_date: string;
+  ends_at: string;
+  status: "ACTIVE" | "CANCELLED" | "EXPIRED";
+  created_at: string;
+};
+
+export const agreementsQuery = queryOptions({
+  queryKey: ["bilateral_agreements"],
+  queryFn: async (): Promise<BilateralAgreement[]> =>
+    (await unwrap(supabase.from("bilateral_agreements").select("id,country_a_id,country_b_id,a_resource,a_amount,b_resource,b_amount,interval_days,next_run_date,ends_at,status,created_at").order("created_at", { ascending: false }).limit(200))) as unknown as BilateralAgreement[],
+  staleTime: 60_000,
+});
+
 export const shopQuery = queryOptions({
   queryKey: ["shop_items"],
   queryFn: async () =>
