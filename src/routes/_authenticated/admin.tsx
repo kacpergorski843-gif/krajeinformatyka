@@ -818,6 +818,7 @@ function CountriesTab() {
   const [filter, setFilter] = useState<"all" | "assigned" | "free">("all");
   const [sort, setSort] = useState<"name" | "balance" | "income" | "military">("income");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(40);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newFlag, setNewFlag] = useState("");
@@ -878,7 +879,7 @@ function CountriesTab() {
       {countryQuery.isLoading ? <LoadingRows /> : list.length === 0 ? <HudState icon={<Search />} title="Brak wyników" description="Zmień wyszukiwanie lub wybrane filtry." /> : (
         <>
         <div className="grid gap-2 sm:hidden">
-          {list.map((country) => {
+          {list.slice(0, visibleCount).map((country) => {
             const owned = ownerIds.has(country.country_id);
             return (
               <button key={country.country_id} type="button" onClick={() => setOpenId(country.country_id)} className="panel grid min-h-[4.5rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 text-left active:bg-secondary/40">
@@ -899,7 +900,7 @@ function CountriesTab() {
               <div className="grid grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] gap-3 border-b border-border bg-secondary/40 px-4 py-2 text-[10px] uppercase text-muted-foreground">
                 <span>Państwo</span><span>Skarbiec</span><span>Regiony</span><span>Status</span><span />
               </div>
-              {list.map((country) => {
+              {list.slice(0, visibleCount).map((country) => {
                 const owner = ownerIds.has(country.country_id);
                 return (
                   <Button key={country.country_id} variant="ghost" className="grid h-auto w-full grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] items-center gap-3 rounded-none border-b border-border/70 px-4 py-3 text-left last:border-b-0 hover:bg-secondary/40" onClick={() => setOpenId(country.country_id)}>
