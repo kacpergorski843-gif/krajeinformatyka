@@ -63,6 +63,135 @@ export type Database = {
           },
         ]
       }
+      bilateral_agreement_runs: {
+        Row: {
+          agreement_id: string
+          created_at: string
+          id: string
+          run_date: string
+          status: string
+        }
+        Insert: {
+          agreement_id: string
+          created_at?: string
+          id?: string
+          run_date: string
+          status: string
+        }
+        Update: {
+          agreement_id?: string
+          created_at?: string
+          id?: string
+          run_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bilateral_agreement_runs_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "bilateral_agreements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bilateral_agreements: {
+        Row: {
+          a_amount: number
+          a_resource: string
+          b_amount: number
+          b_resource: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          country_a_id: string
+          country_b_id: string
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          interval_days: number
+          next_run_date: string
+          status: string
+        }
+        Insert: {
+          a_amount: number
+          a_resource: string
+          b_amount: number
+          b_resource: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          country_a_id: string
+          country_b_id: string
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          interval_days: number
+          next_run_date: string
+          status?: string
+        }
+        Update: {
+          a_amount?: number
+          a_resource?: string
+          b_amount?: number
+          b_resource?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          country_a_id?: string
+          country_b_id?: string
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          interval_days?: number
+          next_run_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bilateral_agreements_country_a_id_fkey"
+            columns: ["country_a_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bilateral_agreements_country_a_id_fkey"
+            columns: ["country_a_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "bilateral_agreements_country_a_id_fkey"
+            columns: ["country_a_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "bilateral_agreements_country_b_id_fkey"
+            columns: ["country_b_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bilateral_agreements_country_b_id_fkey"
+            columns: ["country_b_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "bilateral_agreements_country_b_id_fkey"
+            columns: ["country_b_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           aa_defense: number
@@ -684,6 +813,23 @@ export type Database = {
         Args: { p_country_id: string; p_user_id: string }
         Returns: Json
       }
+      admin_cancel_bilateral_agreement: {
+        Args: { p_agreement_id: string }
+        Returns: Json
+      }
+      admin_create_bilateral_agreement: {
+        Args: {
+          p_a_amount: number
+          p_a_resource: string
+          p_b_amount: number
+          p_b_resource: string
+          p_country_a_id: string
+          p_country_b_id: string
+          p_ends_at: string
+          p_interval_days: number
+        }
+        Returns: string
+      }
       admin_create_country: {
         Args: { p_flag?: string; p_name: string }
         Returns: string
@@ -802,6 +948,7 @@ export type Database = {
         Args: { p_country_id: string; p_item_code: string; p_qty?: number }
         Returns: Json
       }
+      run_bilateral_agreements: { Args: { p_run_date?: string }; Returns: Json }
       run_daily_economy: { Args: { p_run_date?: string }; Returns: Json }
       set_user_role: {
         Args: {
