@@ -138,14 +138,21 @@ export const countriesQuery = queryOptions({
     )) as unknown as CountryStats[],
 });
 
+export type AgreementAmounts = {
+  balance: string;
+  coal: string;
+  oil: string;
+  copper: string;
+  iron: string;
+  uranium: string;
+};
+
 export type BilateralAgreement = {
   id: string;
   country_a_id: string;
   country_b_id: string;
-  a_resource: string;
-  a_amount: string;
-  b_resource: string;
-  b_amount: string;
+  a_amounts: AgreementAmounts;
+  b_amounts: AgreementAmounts;
   interval_days: number;
   next_run_date: string;
   ends_at: string;
@@ -155,8 +162,34 @@ export type BilateralAgreement = {
 
 export const agreementsQuery = queryOptions({
   queryKey: ["bilateral_agreements"],
-  queryFn: async (): Promise<BilateralAgreement[]> =>
-    (await unwrap(supabase.from("bilateral_agreements").select("id,country_a_id,country_b_id,a_resource,a_amount,b_resource,b_amount,interval_days,next_run_date,ends_at,status,created_at").order("created_at", { ascending: false }).limit(200))) as unknown as BilateralAgreement[],
+  queryFn: async (): Promise<BilateralAgreement[]> => {
+    const rows = await unwrap(
+      supabase
+        .from("bilateral_agreements")
+        .select("id,country_a_id,country_b_id,a_balance,a_coal,a_oil,a_copper,a_iron,a_uranium,b_balance,b_coal,b_oil,b_copper,b_iron,b_uranium,interval_days,next_run_date,ends_at,status,created_at")
+        .order("created_at", { ascending: false })
+        .limit(200),
+    ) as Array<Record<string, unknown>>;
+
+    return rows.map((row) => ({
+      id: row.id as string,
+      country_a_id: row.country_a_id as string,
+      country_b_id: row.country_b_id as string,
+      a_amounts: {
+        balance: String(row.a_balance ?? 0), coal: String(row.a_coal ?? 0), oil: String(row.a_oil ?? 0),
+        copper: String(row.a_copper ?? 0), iron: String(row.a_iron ?? 0), uranium: String(row.a_uranium ?? 0),
+      },
+      b_amounts: {
+        balance: String(row.b_balance ?? 0), coal: String(row.b_coal ?? 0), oil: String(row.b_oil ?? 0),
+        copper: String(row.b_copper ?? 0), iron: String(row.b_iron ?? 0), uranium: String(row.b_uranium ?? 0),
+      },
+      interval_days: row.interval_days as number,
+      next_run_date: row.next_run_date as string,
+      ends_at: row.ends_at as string,
+      status: row.status as BilateralAgreement["status"],
+      created_at: row.created_at as string,
+    }));
+  },
   staleTime: 60_000,
 });
 
