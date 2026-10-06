@@ -71,6 +71,13 @@
       "when": 1791174656187,
       "tag": "0009_secure_agreement_scheduler",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791307952962,
+      "tag": "0010_fix_bilateral_agreements_multi_resource",
+      "breakpoints": true
     }
   ]
 }
