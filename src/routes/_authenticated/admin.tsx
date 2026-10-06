@@ -310,6 +310,12 @@ function Update4Tools() {
       await rpc(fn, args);
       toast.success(label);
       setConfirm(null);
+      if (fn === "admin_occupy_region") {
+        await queryClient.invalidateQueries({ queryKey: ["admin_active_region_occupations"] });
+        await queryClient.invalidateQueries({ queryKey: ["regions"] });
+        await queryClient.invalidateQueries({ queryKey: ["region_occupations"] });
+        await queryClient.invalidateQueries({ queryKey: ["occupied_regions"] });
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Operacja nie powiodła się");
     }
