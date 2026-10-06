@@ -97,10 +97,22 @@ export type Database = {
       }
       bilateral_agreements: {
         Row: {
-          a_amount: number
-          a_resource: string
-          b_amount: number
-          b_resource: string
+          a_amount: number | null
+          a_balance: number
+          a_coal: number
+          a_copper: number
+          a_iron: number
+          a_oil: number
+          a_resource: string | null
+          a_uranium: number
+          b_amount: number | null
+          b_balance: number
+          b_coal: number
+          b_copper: number
+          b_iron: number
+          b_oil: number
+          b_resource: string | null
+          b_uranium: number
           cancelled_at: string | null
           cancelled_by: string | null
           country_a_id: string
@@ -114,10 +126,22 @@ export type Database = {
           status: string
         }
         Insert: {
-          a_amount: number
-          a_resource: string
-          b_amount: number
-          b_resource: string
+          a_amount?: number | null
+          a_balance?: number
+          a_coal?: number
+          a_copper?: number
+          a_iron?: number
+          a_oil?: number
+          a_resource?: string | null
+          a_uranium?: number
+          b_amount?: number | null
+          b_balance?: number
+          b_coal?: number
+          b_copper?: number
+          b_iron?: number
+          b_oil?: number
+          b_resource?: string | null
+          b_uranium?: number
           cancelled_at?: string | null
           cancelled_by?: string | null
           country_a_id: string
@@ -131,10 +155,22 @@ export type Database = {
           status?: string
         }
         Update: {
-          a_amount?: number
-          a_resource?: string
-          b_amount?: number
-          b_resource?: string
+          a_amount?: number | null
+          a_balance?: number
+          a_coal?: number
+          a_copper?: number
+          a_iron?: number
+          a_oil?: number
+          a_resource?: string | null
+          a_uranium?: number
+          b_amount?: number | null
+          b_balance?: number
+          b_coal?: number
+          b_copper?: number
+          b_iron?: number
+          b_oil?: number
+          b_resource?: string | null
+          b_uranium?: number
           cancelled_at?: string | null
           cancelled_by?: string | null
           country_a_id?: string
@@ -823,6 +859,27 @@ export type Database = {
           p_a_resource: string
           p_b_amount: number
           p_b_resource: string
+          p_country_a_id: string
+          p_country_b_id: string
+          p_ends_at: string
+          p_interval_days: number
+        }
+        Returns: string
+      }
+      admin_create_bilateral_agreement_v2: {
+        Args: {
+          p_a_balance: number
+          p_a_coal: number
+          p_a_copper: number
+          p_a_iron: number
+          p_a_oil: number
+          p_a_uranium: number
+          p_b_balance: number
+          p_b_coal: number
+          p_b_copper: number
+          p_b_iron: number
+          p_b_oil: number
+          p_b_uranium: number
           p_country_a_id: string
           p_country_b_id: string
           p_ends_at: string
