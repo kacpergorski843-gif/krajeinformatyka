@@ -41,11 +41,8 @@ function MyCountry() {
   const { data: shop } = useQuery(shopQuery);
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 50));
   const { data: occupationHistory } = useQuery(regionOccupationsQuery(me?.countryId));
-  const occupiedByMe = [...(occupationHistory ?? []).reduce((map, occupation) => {
-    if (!map.has(occupation.region_id)) map.set(occupation.region_id, occupation);
-    return map;
-  }, new Map<string, NonNullable<typeof occupationHistory>[number]>()).values()].filter(
-    (occupation) => occupation.current_country_id === me?.countryId,
+  const occupiedByMe = (occupationHistory ?? []).filter(
+    (occupation) => occupation.is_active && occupation.controller_country_id === me?.countryId,
   );
   const [countdown, setCountdown] = useState(() => timeToDailyCycle());
   const [flagFile, setFlagFile] = useState<File | null>(null);
@@ -226,8 +223,12 @@ function MyCountry() {
         </Panel>
       ) : null}
       {occupationHistory?.slice(0, 3).map((occupation) => {
-        const isCurrent = occupation.current_country_id === me.countryId;
-        const label = isCurrent ? "REGION PRZEJĘTY" : "REGION OKUPOWANY";
+        const isCurrent = occupation.is_active && occupation.controller_country_id === me.countryId;
+        const label = occupation.event_type === "REVERT"
+          ? "REGION ODBLOKOWANY"
+          : isCurrent
+            ? "REGION PRZEJĘTY"
+            : "REGION OKUPOWANY";
         return (
           <Panel key={occupation.id} className={`mb-3 border-primary/30 ${isCurrent ? "bg-primary/5" : "bg-destructive/5"}`}>
             <p className="label-hud">{label}</p>
@@ -236,9 +237,11 @@ function MyCountry() {
               <p className="text-xs text-muted-foreground">{new Date(occupation.occupied_at).toLocaleString("pl-PL")}</p>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {isCurrent
-                ? `Poprzedni właściciel: ${countries?.find((countryRow) => countryRow.country_id === occupation.previous_country_id)?.name ?? "Nieznane państwo"}`
-                : `Nowy właściciel: ${countries?.find((countryRow) => countryRow.country_id === occupation.current_country_id)?.name ?? "Nieznane państwo"}`}
+              {occupation.event_type === "REVERT"
+                ? `Region wrócił pod kontrolę: ${countries?.find((countryRow) => countryRow.country_id === occupation.current_country_id)?.name ?? "Nieznane państwo"}`
+                : isCurrent
+                  ? `Poprzedni kontroler: ${countries?.find((countryRow) => countryRow.country_id === occupation.previous_country_id)?.name ?? "Nieznane państwo"}`
+                  : `Nowy kontroler: ${countries?.find((countryRow) => countryRow.country_id === occupation.current_country_id)?.name ?? "Nieznane państwo"}`}
             </p>
           </Panel>
         );
