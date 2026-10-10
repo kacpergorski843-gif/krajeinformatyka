@@ -87,6 +87,15 @@ export const exportApplicationData = createServerFn({ method: "POST" })
     if (roleError) throw new Error(roleError.message);
     if (isAdmin !== true) throw new Error("Brak uprawnień administratora");
 
+    const { data: isMainAdmin, error: mainAdminError } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "MAIN_ADMIN",
+    });
+    if (mainAdminError) throw new Error(mainAdminError.message);
+    if (isMainAdmin !== true) {
+      throw new Error("Pełny eksport danych jest dostępny wyłącznie dla głównego administratora");
+    }
+
     const tables: Record<string, unknown[]> = {};
     const errors: { table: string; message: string }[] = [];
 
