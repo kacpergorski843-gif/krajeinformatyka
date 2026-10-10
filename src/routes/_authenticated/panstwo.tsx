@@ -9,6 +9,7 @@ import { rulerUploadCountryFlag } from "@/lib/admin.functions";
 import { CountryFlag } from "@/components/CountryFlag";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
+import { SuggestCountryPanel } from "@/components/CountrySuggestions";
 import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, shopQuery, transactionsQuery } from "@/lib/api";
 import { fmtKR, kr, timeToDailyCycle, units, RESOURCE_LABELS } from "@/lib/format";
 
@@ -91,6 +92,7 @@ function MyCountry() {
             <Link to="/ranking" className="text-primary">ranking</Link>.
           </p>
         </Panel>
+        {me.id ? <SuggestCountryPanel userId={me.id} /> : null}
         {claimPanel}
       </AppShell>
     );
