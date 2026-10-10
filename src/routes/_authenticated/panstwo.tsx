@@ -92,7 +92,7 @@ function MyCountry() {
             <Link to="/ranking" className="text-primary">ranking</Link>.
           </p>
         </Panel>
-        {me.id ? <SuggestCountryPanel userId={me.id} /> : null}
+        <SuggestCountryPanel userId={me.userId} />
         {claimPanel}
       </AppShell>
     );
