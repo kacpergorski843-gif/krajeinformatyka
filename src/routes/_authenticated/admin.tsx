@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
+import { AdminSuggestionsTab } from "@/components/CountrySuggestions";
+import { Flag } from "lucide-react";
 import { CountryFlag } from "@/components/CountryFlag";
 import { supabase } from "@/integrations/supabase/client";
 import { deletePlayerAccount, resetPlayerPassword } from "@/lib/admin.functions";
@@ -686,6 +688,7 @@ function AdminPanel() {
               <SelectContent>
                 <SelectItem value="countries">Państwa</SelectItem>
                 <SelectItem value="users">Użytkownicy</SelectItem>
+                <SelectItem value="suggestions">Propozycje państw</SelectItem>
                 <SelectItem value="shop">Sklep / Produkty</SelectItem>
                 <SelectItem value="economy">Cykl dobowy</SelectItem>
                 <SelectItem value="history">Historia / Audyt</SelectItem>
@@ -694,9 +697,10 @@ function AdminPanel() {
             </Select>
           </div>
           <div className="admin-tabs-desktop hidden sm:block">
-            <TabsList className="grid h-auto w-full grid-cols-6 border border-border/70 bg-card/80 p-1">
+            <TabsList className="grid h-auto w-full grid-cols-7 border border-border/70 bg-card/80 p-1">
               <AdminTab value="countries" icon={<Building2 />}>Państwa</AdminTab>
               <AdminTab value="users" icon={<UserCog />}>Użytkownicy</AdminTab>
+              <AdminTab value="suggestions" icon={<Flag />}>Propozycje</AdminTab>
               <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
               <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
               <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
@@ -705,6 +709,7 @@ function AdminPanel() {
           </div>
           <TabsContent value="countries"><CountriesTab /></TabsContent>
           <TabsContent value="users"><UsersTab isMainAdmin={!!me?.isMainAdmin} /></TabsContent>
+          <TabsContent value="suggestions"><AdminSuggestionsTab /></TabsContent>
           <TabsContent value="shop"><ShopTab /></TabsContent>
           <TabsContent value="economy"><EconomyCountdownTab /></TabsContent>
           <TabsContent value="history"><HistoryTab /></TabsContent>

@@ -285,6 +285,71 @@ export type Database = {
         }
         Relationships: []
       }
+      country_suggestions: {
+        Row: {
+          country_id: string | null
+          created_at: string
+          id: string
+          name: string
+          note: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          note?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          note?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "country_suggestions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "country_suggestions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "country_suggestions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "country_suggestions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       economy_bonuses: {
         Row: {
           country_id: string | null
@@ -932,6 +997,10 @@ export type Database = {
         Args: { p_region_id: string }
         Returns: Json
       }
+      admin_review_country_suggestion: {
+        Args: { p_accept: boolean; p_id: string }
+        Returns: Json
+      }
       admin_set_country_flag: {
         Args: { p_country_id: string; p_flag: string }
         Returns: undefined
@@ -956,6 +1025,7 @@ export type Database = {
         Args: { p_item_code: string; p_region_id: string; p_slot_index: number }
         Returns: Json
       }
+      cancel_country_suggestion: { Args: { p_id: string }; Returns: undefined }
       charge_country: {
         Args: {
           p_country_id: string
@@ -1013,6 +1083,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      suggest_country: {
+        Args: { p_name: string; p_note?: string }
+        Returns: string
       }
       sync_country_aa: { Args: { p_country_id: string }; Returns: undefined }
       transfer_resource: {
