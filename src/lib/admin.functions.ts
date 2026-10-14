@@ -17,6 +17,18 @@ export const deletePlayerAccount = createServerFn({ method: "POST" })
     if (isAdmin !== true) throw new Error("Brak uprawnień administratora");
     if (data.userId === context.userId) throw new Error("Nie można usunąć własnego konta");
 
+    const [targetAdmin, targetMainAdmin, actorMainAdmin] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: data.userId, _role: "ADMIN" }),
+      context.supabase.rpc("has_role", { _user_id: data.userId, _role: "MAIN_ADMIN" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "MAIN_ADMIN" }),
+    ]);
+    if (targetAdmin.error || targetMainAdmin.error || actorMainAdmin.error) {
+      throw new Error("Nie udało się zweryfikować uprawnień konta");
+    }
+    if ((targetAdmin.data === true || targetMainAdmin.data === true) && actorMainAdmin.data !== true) {
+      throw new Error("Tylko główny administrator może usunąć konto administratora");
+    }
+
     const { error: purgeError } = await context.supabase.rpc("admin_purge_player", {
       p_user_id: data.userId,
     });
@@ -27,6 +39,7 @@ export const deletePlayerAccount = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 /**
  * Ustawia nowe hasło wskazanemu użytkownikowi z poziomu panelu administratora.
  * Hasło trafia wyłącznie do Supabase Auth Admin API po stronie serwera.
@@ -44,12 +57,23 @@ export const resetPlayerPassword = createServerFn({ method: "POST" })
     if (roleError) throw new Error(roleError.message);
     if (isAdmin !== true) throw new Error("Brak uprawnień administratora");
 
+    const [targetAdmin, targetMainAdmin, actorMainAdmin] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: data.userId, _role: "ADMIN" }),
+      context.supabase.rpc("has_role", { _user_id: data.userId, _role: "MAIN_ADMIN" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "MAIN_ADMIN" }),
+    ]);
+    if (targetAdmin.error || targetMainAdmin.error || actorMainAdmin.error) {
+      throw new Error("Nie udało się zweryfikować uprawnień konta");
+    }
+    if ((targetAdmin.data === true || targetMainAdmin.data === true) && actorMainAdmin.data !== true) {
+      throw new Error("Tylko główny administrator może zmienić hasło administratora");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.password,
     });
     if (error) throw new Error(error.message);
-
     return { ok: true };
   });
 
