@@ -4,6 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
 type OAuthResult = { data: any; error: { message: string } | null };
+
+function getSafeRedirectTarget(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const target = new URL(value, window.location.origin);
+    if (target.protocol !== "https:" && target.protocol !== "http:") return null;
+    if (target.username || target.password) return null;
+    return target.href;
+  } catch {
+    return null;
+  }
+}
 const oauth = (supabase.auth as any).oauth as {
   getAuthorizationDetails: (id: string) => Promise<OAuthResult>;
   approveAuthorization: (id: string) => Promise<OAuthResult>;
@@ -34,7 +46,11 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
     const { data, error } = await oauth.getAuthorizationDetails(id);
     if (error) throw new Error(error.message);
     const immediate = data?.redirect_url ?? data?.redirect_to;
-    if (immediate && !data?.client) throw redirect({ href: immediate });
+    if (immediate && !data?.client) {
+      const target = getSafeRedirectTarget(immediate);
+      if (!target) throw new Error("Nieprawidłowy adres powrotu autoryzacji.");
+      throw redirect({ href: target });
+    }
     return data;
   },
   component: Consent,
@@ -58,9 +74,9 @@ function Consent() {
       ? await oauth.approveAuthorization(authorization_id)
       : await oauth.denyAuthorization(authorization_id);
     if (error) { setBusy(false); setError(error.message); return; }
-    const target = data?.redirect_url ?? data?.redirect_to;
-    if (!target) { setBusy(false); setError("Brak adresu powrotu."); return; }
-    window.location.href = target;
+    const target = getSafeRedirectTarget(data?.redirect_url ?? data?.redirect_to);
+    if (!target) { setBusy(false); setError("Nieprawidłowy adres powrotu."); return; }
+    window.location.assign(target);
   }
 
   return (
