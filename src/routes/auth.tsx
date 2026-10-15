@@ -28,7 +28,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [username, setUsername] = useState(""); const [password, setPassword] = useState(""); const [showPassword, setShowPassword] = useState(false); const [busy, setBusy] = useState(false); const usernameRef = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState(false); useEffect(() => { setReady(true); }, []); useEffect(() => { usernameRef.current?.focus(); }, [mode]);
-  function goNext() { const n = new URLSearchParams(window.location.search).get("next"); if (n && n.startsWith("/") && !n.startsWith("//")) window.location.href = n; else router.navigate({ to: "/panstwo" }); }
+  function goNext() { const n = new URLSearchParams(window.location.search).get("next"); if (n && n.startsWith("/") && !n.startsWith("//") && !n.startsWith("/\\\\") && !/[\\u0000-\\u001f\\u007f]/.test(n)) { try { const target = new URL(n, window.location.origin); if (target.origin === window.location.origin) { window.location.replace(target.href); return; } } catch { /* Fall back to the default route for malformed targets. */ } } router.navigate({ to: "/panstwo" }); }
   async function submit(e: React.FormEvent) {
     e.preventDefault(); const clean = normalizeUsername(username); if (clean.length < 3) { toast.error("Nazwa użytkownika musi mieć co najmniej 3 znaki (litery, cyfry, . _ -)"); usernameRef.current?.focus(); return; }
     const email = `${clean}@${EMAIL_DOMAIN}`; const legacyEmail = `${clean}@${LEGACY_EMAIL_DOMAIN}`; setBusy(true);
