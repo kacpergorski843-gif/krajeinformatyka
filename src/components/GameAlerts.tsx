@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 function warsawHM(now = new Date()) {
   const parts = new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now);
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
-  return { h: get("hour"), m: get("minute"), day: now.toISOString().slice(0, 10) };
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  return { h: get("hour"), m: get("minute"), day };
 }
 
 function notifyBrowser(title: string, body: string) {
