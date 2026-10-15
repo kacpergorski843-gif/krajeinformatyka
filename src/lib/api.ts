@@ -99,16 +99,19 @@ export type Me = {
 export const meQuery = queryOptions({
   queryKey: ["me"],
   queryFn: async (): Promise<Me | null> => {
-    const { data: auth } = await supabase.auth.getUser();
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError) throw new Error(authError.message);
     const user = auth.user;
     if (!user) return null;
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("display_name, country_id")
       .eq("id", user.id)
       .maybeSingle();
+    if (profileError) throw new Error(profileError.message);
     const roles = await unwrap(supabase.from("user_roles").select("role").eq("user_id", user.id));
-    const { data: mainAdminExists } = await supabase.rpc("main_admin_exists");
+    const { data: mainAdminExists, error: mainAdminError } = await supabase.rpc("main_admin_exists");
+    if (mainAdminError) throw new Error(mainAdminError.message);
 
 
     const list = (roles ?? []).map((r) => r.role as Me["role"]);
