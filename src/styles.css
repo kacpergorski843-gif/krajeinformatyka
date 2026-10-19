@@ -1731,3 +1731,185 @@ table { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* ── Premium refresh · restrained dark surfaces, calm spacing, clear type ── */
+:root {
+  --radius: .8rem;
+  --background: oklch(.17 .008 250);
+  --foreground: oklch(.92 .008 250);
+  --card: oklch(.205 .009 250);
+  --card-foreground: oklch(.92 .008 250);
+  --popover: oklch(.22 .009 250);
+  --popover-foreground: oklch(.92 .008 250);
+  --secondary: oklch(.255 .009 250);
+  --secondary-foreground: oklch(.91 .008 250);
+  --muted: oklch(.255 .009 250);
+  --muted-foreground: oklch(.68 .012 250);
+  --brass: oklch(.69 .045 155);
+  --primary: oklch(.74 .065 155);
+  --primary-foreground: oklch(.17 .012 250);
+  --accent: oklch(.79 .05 155);
+  --accent-foreground: oklch(.17 .012 250);
+  --success: oklch(.72 .11 155);
+  --destructive: oklch(.63 .14 25);
+  --destructive-foreground: oklch(.96 .005 250);
+  --info: oklch(.72 .055 225);
+  --inactive: oklch(.48 .012 250);
+  --border: oklch(.31 .009 250);
+  --input: oklch(.31 .009 250);
+  --ring: oklch(.74 .065 155);
+  --chart-1: oklch(.74 .065 155);
+  --chart-2: oklch(.72 .055 225);
+  --chart-3: oklch(.72 .11 155);
+  --chart-4: oklch(.63 .14 25);
+  --chart-5: oklch(.69 .045 155);
+  --sidebar: oklch(.19 .008 250);
+  --sidebar-foreground: oklch(.92 .008 250);
+  --sidebar-primary: oklch(.74 .065 155);
+  --sidebar-primary-foreground: oklch(.17 .012 250);
+  --sidebar-accent: oklch(.255 .009 250);
+  --sidebar-accent-foreground: oklch(.92 .008 250);
+  --sidebar-border: oklch(.29 .009 250);
+  --sidebar-ring: oklch(.74 .065 155);
+}
+html { scroll-behavior: smooth; }
+body {
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -.008em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, h4, .font-display {
+  letter-spacing: -.035em;
+  line-height: 1.2;
+}
+h1 { font-weight: 650; }
+h2, h3 { font-weight: 600; }
+.tactical-bg::before, .tactical-bg::after { display: none !important; }
+.panel, .resource-command {
+  background: var(--color-card);
+  border-color: color-mix(in oklab, var(--color-border) 78%, transparent);
+  border-radius: 1rem;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.hud-frame::before, .hud-frame::after { display: none; }
+.brand-mark {
+  width: 40px; height: 40px; border: 1px solid var(--color-border);
+  border-radius: .85rem; background: var(--color-secondary); color: var(--color-primary);
+}
+.nav-caption, .label-hud, .page-intro, .stat-label {
+  letter-spacing: .11em;
+}
+.nav-caption { font-size: .65rem; color: var(--color-muted-foreground); }
+.nav-item {
+  min-height: 44px; padding: .72rem .85rem; border-radius: .75rem;
+  border-color: transparent; transition: background-color .16s ease, color .16s ease;
+}
+.nav-item:hover { background: color-mix(in oklab, var(--color-secondary) 76%, transparent); border-color: transparent; }
+.nav-active {
+  color: var(--color-foreground) !important;
+  background: color-mix(in oklab, var(--color-primary) 10%, var(--color-card));
+  border-color: transparent;
+  box-shadow: inset 2px 0 0 var(--color-primary);
+}
+.profile-strip { border-color: transparent; background: var(--color-secondary); border-radius: .9rem; }
+.profile-avatar { border-radius: .7rem; }
+.page-header {
+  border-bottom-color: color-mix(in oklab, var(--color-border) 72%, transparent);
+  padding-bottom: 1.5rem; margin-bottom: 2rem;
+}
+.page-title { font-weight: 650; letter-spacing: -.045em; line-height: 1.12; }
+.page-subtitle { margin-top: .45rem; font-size: .9rem; line-height: 1.5; }
+.page-intro { display: none; }
+.command-pulse { background: var(--color-primary); box-shadow: none; }
+.system-status { border: 0; background: var(--color-secondary); letter-spacing: .08em; }
+.system-status span { box-shadow: none; }
+.mobile-menu-button {
+  width: 44px; height: 44px; border: 1px solid var(--color-border);
+  border-radius: .85rem; background: var(--color-card);
+}
+.mobile-nav {
+  background: color-mix(in oklab, var(--color-background) 94%, transparent);
+  border-top-color: color-mix(in oklab, var(--color-border) 82%, transparent);
+  backdrop-filter: blur(20px);
+  padding-left: .5rem; padding-right: .5rem;
+}
+.mobile-nav-item { min-height: 3.6rem; font-size: .68rem; gap: .28rem; }
+.mobile-nav-active { color: var(--color-primary); }
+.mobile-drawer { background: var(--color-background); border-right-color: var(--color-border); box-shadow: 20px 0 50px oklch(.05 .005 250 / 25%); }
+.command-overview, .shop-hero, .region-overview, .transfer-hero,
+.command-hero, .command-v3-hero, .admin-v4-intro {
+  border-color: color-mix(in oklab, var(--color-border) 80%, transparent);
+  border-radius: 1.15rem; box-shadow: none;
+  background: var(--color-card);
+}
+.command-v3-hero:after { display: none; }
+.command-v3-country-mark, .command-v3-resource-icon, .command-kpi-icon,
+.command-resource-icon, .stat-icon, .empty-state-icon {
+  border-color: transparent; box-shadow: none; border-radius: .75rem;
+  background: color-mix(in oklab, var(--color-primary) 9%, var(--color-card));
+}
+.command-kpi, .command-v3-economy, .command-v3-territory,
+.command-v3-history, .command-v3-readiness, .command-v3-force-list,
+.command-v3-actions, .command-alert, .command-v3-notice {
+  box-shadow: none;
+  border-color: color-mix(in oklab, var(--color-border) 82%, transparent);
+  border-radius: .95rem;
+}
+.command-kpi { background: var(--color-card); min-height: 138px; }
+.command-kpi::after, .stat-card-command::after { display: none; }
+.command-kpi:hover, .shop-card:hover, .stat-card:hover {
+  transform: none; box-shadow: none;
+  border-color: color-mix(in oklab, var(--color-primary) 35%, var(--color-border));
+}
+.command-kpi-primary { background: color-mix(in oklab, var(--color-primary) 5%, var(--color-card)); }
+.command-kpi strong { font-weight: 600; }
+.command-v3-treasury { border-color: var(--color-border); }
+.command-v3-treasury strong, .shop-balance strong, .region-overview-count strong {
+  color: var(--color-foreground);
+}
+.command-v3-readiness { background: var(--color-card); }
+.command-v3-readiness-ring { background: conic-gradient(var(--color-primary) 0 72%, var(--color-secondary) 72% 100%); }
+.section-heading, .section-heading-command { margin-top: 2rem; }
+.section-heading-command { border-bottom-color: var(--color-border); }
+button, [role="button"], a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--color-ring); outline-offset: 3px;
+}
+input, textarea, select {
+  border-radius: .75rem;
+}
+.admin-dialog {
+  border-color: var(--color-border); background: var(--color-card);
+  box-shadow: 0 24px 70px oklch(.05 .005 250 / 35%);
+}
+@media (min-width: 1024px) {
+  .sidebar { background: var(--color-background); border-right-color: color-mix(in oklab, var(--color-border) 72%, transparent); }
+  .content-area { max-width: 1240px; }
+  .page-header { margin-bottom: 2.15rem; }
+}
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  .app-shell { padding-bottom: calc(5.2rem + env(safe-area-inset-bottom)); }
+  .page-header { gap: .8rem; }
+  .command-header { padding: .6rem 0 1.2rem; margin-bottom: 1.45rem; }
+  .page-title { font-size: clamp(1.65rem, 7vw, 2rem); }
+  .page-subtitle { font-size: .86rem; }
+  .command-kpi-grid { gap: .7rem; }
+  .command-kpi { min-height: 120px; padding: .9rem; }
+  .command-v3-hero-main { padding: 1.25rem; }
+  .command-v3-country-mark { width: 52px; height: 52px; }
+  .command-v3-copy h1 { font-size: clamp(1.8rem, 8vw, 2.5rem); }
+  .command-v3-grid { gap: 1.1rem; margin-top: 1.25rem; }
+  .command-v3-section-title h2 { font-size: 1.05rem; }
+  .command-v3-resource-row { grid-template-columns: minmax(0,1fr) auto; gap: .6rem; padding: .8rem; }
+  .command-v3-resource-track { grid-column: 1 / -1; grid-row: 2; }
+  .command-v3-resource-value { font-size: .82rem; }
+  .command-v3-territory { grid-template-columns: 1fr; }
+  .command-v3-territory-overview { padding: 1.15rem; border-right: 0; border-bottom: 1px solid var(--color-border); }
+  .command-v3-territory-count strong { font-size: 3.3rem; }
+  .mobile-nav { padding-bottom: calc(.35rem + env(safe-area-inset-bottom)); }
+}
