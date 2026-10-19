@@ -2182,3 +2182,45 @@ table { border-collapse: separate; border-spacing: 0; }
   .panel { padding-block: 1rem; }
   .page-header::after { width: 5.5rem; }
 }
+
+
+/* Country dashboard: emphasize the two key financial indicators without changing data. */
+.country-finance-grid > .stat-module:nth-child(1),
+.country-finance-grid > .stat-module:nth-child(2) {
+  grid-column: span 2;
+  min-height: 9rem;
+  padding: 1.35rem 1.5rem;
+  gap: .65rem;
+}
+.country-finance-grid > .stat-module:nth-child(1) .stat-value,
+.country-finance-grid > .stat-module:nth-child(2) .stat-value {
+  font-size: clamp(1.9rem, 3vw, 2.65rem);
+  line-height: 1.08;
+}
+.country-finance-grid > .stat-module:nth-child(1) .stat-label,
+.country-finance-grid > .stat-module:nth-child(2) .stat-label {
+  font-size: .78rem;
+}
+.country-finance-grid > .stat-module:nth-child(3) {
+  grid-column: span 1;
+}
+@media (max-width: 639px) {
+  .country-finance-grid > .stat-module:nth-child(1),
+  .country-finance-grid > .stat-module:nth-child(2),
+  .country-finance-grid > .stat-module:nth-child(3) {
+    grid-column: auto;
+    min-height: 7rem;
+    padding: 1rem;
+  }
+  .country-finance-grid > .stat-module:nth-child(1) .stat-value,
+  .country-finance-grid > .stat-module:nth-child(2) .stat-value {
+    font-size: clamp(1.65rem, 7vw, 2rem);
+  }
+}
+/* World country cards must stay inside their grid track on phones and tablets. */
+.content-area, .content-area > *, .content-area button { min-width: 0; }
+.content-area button > .panel { width: 100%; }
+@media (max-width: 640px) {
+  .content-area dl { column-gap: .65rem; }
+  .content-area dl dt { overflow-wrap: anywhere; }
+}
