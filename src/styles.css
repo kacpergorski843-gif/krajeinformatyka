@@ -1243,3 +1243,285 @@
     contain-intrinsic-size: 180px;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   QUIET PREMIUM DESIGN SYSTEM — mobile first
+   Visual-only overrides: game rules, state, and data flow are unchanged.
+   -------------------------------------------------------------------------- */
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.155 0.008 255);
+  --foreground: oklch(0.92 0.008 250);
+  --card: oklch(0.19 0.009 255);
+  --card-foreground: oklch(0.92 0.008 250);
+  --popover: oklch(0.205 0.009 255);
+  --popover-foreground: oklch(0.92 0.008 250);
+  --secondary: oklch(0.235 0.009 255);
+  --secondary-foreground: oklch(0.9 0.008 250);
+  --muted: oklch(0.225 0.008 255);
+  --muted-foreground: oklch(0.68 0.012 250);
+  --brass: oklch(0.72 0.055 84);
+  --primary: oklch(0.76 0.07 84);
+  --primary-foreground: oklch(0.17 0.01 255);
+  --accent: oklch(0.29 0.012 255);
+  --accent-foreground: oklch(0.94 0.006 250);
+  --success: oklch(0.72 0.09 155);
+  --destructive: oklch(0.62 0.15 25);
+  --destructive-foreground: oklch(0.97 0.005 250);
+  --info: oklch(0.72 0.065 230);
+  --inactive: oklch(0.52 0.012 250);
+  --border: oklch(0.29 0.009 255);
+  --input: oklch(0.31 0.01 255);
+  --ring: oklch(0.7 0.06 84);
+  --chart-1: oklch(0.72 0.06 84);
+  --chart-2: oklch(0.72 0.065 230);
+  --chart-3: oklch(0.72 0.09 155);
+  --chart-4: oklch(0.62 0.15 25);
+  --chart-5: oklch(0.67 0.025 255);
+  --sidebar: oklch(0.175 0.008 255);
+  --sidebar-foreground: oklch(0.9 0.008 250);
+  --sidebar-primary: oklch(0.76 0.07 84);
+  --sidebar-primary-foreground: oklch(0.17 0.01 255);
+  --sidebar-accent: oklch(0.235 0.009 255);
+  --sidebar-accent-foreground: oklch(0.9 0.008 250);
+  --sidebar-border: oklch(0.27 0.009 255);
+  --sidebar-ring: oklch(0.7 0.06 84);
+  --font-display: "Inter", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; text-size-adjust: 100%; }
+  body {
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: -0.008em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--color-background);
+  }
+  h1, h2, h3, h4, .font-display {
+    letter-spacing: -0.035em;
+    line-height: 1.2;
+    font-weight: 650;
+  }
+  ::selection { background: color-mix(in oklab, var(--color-primary) 28%, transparent); }
+  :focus-visible { outline-color: var(--color-ring); }
+}
+
+/* Remove the decorative HUD texture and let content breathe. */
+.tactical-bg::before, .tactical-bg::after { display: none !important; }
+.panel {
+  background: var(--color-card) !important;
+  border: 1px solid color-mix(in oklab, var(--color-border) 72%, transparent) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+.hud-frame::before, .hud-frame::after { display: none !important; }
+.app-shell { background: var(--color-background); }
+.sidebar {
+  background: var(--color-sidebar);
+  border-right-color: color-mix(in oklab, var(--color-border) 75%, transparent);
+}
+.brand-mark {
+  width: 40px; height: 40px;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 25%, var(--color-border));
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--color-primary) 7%, var(--color-card));
+}
+.brand-block p:first-child { letter-spacing: .08em !important; }
+.label-hud, .nav-caption, .page-intro {
+  letter-spacing: .12em;
+  font-weight: 600;
+}
+.nav-caption { margin-bottom: .8rem; }
+.nav-item {
+  min-height: 44px;
+  gap: .8rem;
+  padding: .7rem .85rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--color-muted-foreground);
+  transition: background-color .16s ease, color .16s ease;
+}
+.nav-item:hover {
+  border-color: transparent;
+  background: color-mix(in oklab, var(--color-foreground) 5%, transparent);
+}
+.nav-active {
+  color: var(--color-foreground) !important;
+  background: color-mix(in oklab, var(--color-primary) 10%, var(--color-card)) !important;
+  border-color: transparent !important;
+  box-shadow: inset 2px 0 0 var(--color-primary) !important;
+}
+.profile-strip {
+  border-color: color-mix(in oklab, var(--color-border) 75%, transparent);
+  border-radius: 12px;
+  background: transparent;
+}
+.profile-avatar { border-radius: 10px; }
+.page-header {
+  border-bottom-color: color-mix(in oklab, var(--color-border) 75%, transparent);
+}
+.command-header { padding: 1rem 0 1.5rem; margin-bottom: 1.5rem; }
+.page-title { font-size: clamp(1.65rem, 4vw, 2.2rem); letter-spacing: -.045em; line-height: 1.1; }
+.page-subtitle { margin-top: .45rem; font-size: .9rem; line-height: 1.5; }
+.page-intro { margin-bottom: 1.35rem; font-size: .62rem; }
+.command-pulse, .system-status span { box-shadow: none; }
+.system-status {
+  padding: .45rem .7rem;
+  border-color: transparent;
+  background: color-mix(in oklab, var(--color-success) 8%, var(--color-card));
+  border-radius: 999px;
+}
+.mobile-menu-button {
+  width: 44px; height: 44px;
+  border-color: var(--color-border);
+  border-radius: 12px;
+  background: var(--color-card);
+}
+.mobile-nav {
+  padding: .45rem .4rem calc(.45rem + env(safe-area-inset-bottom));
+  background: color-mix(in oklab, var(--color-card) 96%, transparent);
+  border-top-color: color-mix(in oklab, var(--color-border) 82%, transparent);
+  backdrop-filter: blur(18px);
+}
+.mobile-nav-item { min-height: 3.5rem; gap: .25rem; font-size: .68rem; }
+.mobile-nav-active { color: var(--color-primary); }
+.mobile-drawer {
+  padding: 1.25rem;
+  background: var(--color-sidebar);
+  border-right-color: var(--color-border);
+  box-shadow: 20px 0 60px rgb(0 0 0 / 22%);
+}
+.mobile-drawer-backdrop { background: rgb(0 0 0 / 56%); backdrop-filter: blur(3px); }
+
+/* Quiet surfaces: prefer spacing and contrast over nested outlines. */
+.command-overview, .shop-hero, .region-overview, .transfer-hero,
+.command-hero, .command-alert, .command-kpi, .command-v3-hero,
+.admin-v4-intro, .admin-v4-card, .command-v3-economy,
+.command-v3-territory, .command-v3-history, .command-v3-readiness,
+.command-v3-force-list, .command-v3-rail-block, .shop-balance,
+.region-overview-count {
+  border-color: color-mix(in oklab, var(--color-border) 78%, transparent) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+.command-overview, .shop-hero, .region-overview, .transfer-hero,
+.command-hero, .command-v3-hero, .admin-v4-intro {
+  background: var(--color-card) !important;
+}
+.command-kpi, .stat-card-command, .shop-card, .admin-v4-card {
+  transition: border-color .16s ease, background-color .16s ease !important;
+}
+.command-kpi:hover, .stat-card:hover, .shop-card:hover, .admin-v4-card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: color-mix(in oklab, var(--color-primary) 28%, var(--color-border)) !important;
+}
+.command-kpi::after, .stat-card-command::after { display: none !important; }
+.command-kpi-primary, .command-v3-territory-overview,
+.command-v3-readiness, .command-v3-hero-main {
+  background: var(--color-card) !important;
+}
+.command-kpi, .command-v3-section-title, .admin-v4-card {
+  padding: 1.1rem;
+}
+.command-kpi-icon, .command-resource-icon, .command-v3-resource-icon,
+.command-v3-force-icon, .admin-v4-icon, .stat-icon {
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: color-mix(in oklab, var(--color-primary) 8%, var(--color-secondary)) !important;
+}
+.command-kpi span, .stat-label, .command-resource-card p,
+.command-military-grid span, .command-v3-economy-head span {
+  letter-spacing: .08em;
+  font-size: .68rem;
+}
+.command-kpi strong { letter-spacing: -.035em; }
+.section-heading, .section-heading-command { margin-top: 2rem; }
+.section-heading-command { border-bottom-color: color-mix(in oklab, var(--color-border) 72%, transparent); }
+.command-section-header { margin-bottom: .9rem; }
+.command-section-header h2, .section-heading h2 { font-size: 1.15rem; }
+.command-resource-card { padding: 1rem .9rem; }
+.command-resource-card, .command-military-grid > div,
+.command-v3-economy-head, .command-v3-economy-head > div + div {
+  border-color: color-mix(in oklab, var(--color-border) 72%, transparent);
+}
+.command-v3-resource-track span { background: var(--color-primary); }
+.command-v3-event { border-radius: 8px; }
+.admin-v4-intro:after { display: none !important; }
+.admin-v4-card-copy { min-height: auto; padding: 1rem 0 1.2rem; }
+.admin-v4-card-copy h3 { font-size: 1.05rem; }
+.admin-v4-card-copy p { font-size: .78rem; line-height: 1.6; }
+.admin-v4-step, .admin-v4-field > label { letter-spacing: .07em; }
+.admin-dialog {
+  border-color: var(--color-border) !important;
+  border-radius: 16px !important;
+  background: var(--color-card) !important;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 28%) !important;
+}
+
+/* Forms, tables and controls share the same restrained visual language. */
+input, textarea, select,
+[data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"] {
+  border-radius: 10px;
+}
+button, [role="button"], a {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled) { touch-action: manipulation; }
+table { border-collapse: separate; border-spacing: 0; }
+th {
+  color: var(--color-muted-foreground);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .025em;
+}
+td { font-size: .875rem; }
+hr { border-color: color-mix(in oklab, var(--color-border) 72%, transparent); }
+
+@media (min-width: 1024px) {
+  .content-area { max-width: 1240px; }
+  .page-header { margin-bottom: 1.75rem; }
+}
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  .app-shell { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  .page-header { align-items: flex-start; gap: .75rem; }
+  .command-header { padding: .65rem 0 1.15rem; margin-bottom: 1.15rem; }
+  .page-title { font-size: clamp(1.55rem, 7vw, 1.9rem); }
+  .page-subtitle { font-size: .82rem; }
+  .content-area { width: 100%; }
+  .command-overview, .shop-hero, .region-overview, .transfer-hero,
+  .command-hero, .admin-v4-intro { padding: 1rem; gap: .9rem; }
+  .command-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+  .command-kpi { min-height: 126px; padding: .85rem; }
+  .command-kpi-icon { margin-bottom: .7rem; }
+  .command-resource-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .command-resource-card { border-bottom: 1px solid var(--color-border); }
+  .command-resource-card:nth-child(2n) { border-right: 0; }
+  .command-resource-card:last-child { grid-column: 1 / -1; border-bottom: 0; }
+  .command-military-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .command-military-grid > div:nth-child(3n) { border-right: 1px solid var(--color-border); }
+  .command-military-grid > div:nth-child(2n) { border-right: 0; }
+  .command-military-grid > div:nth-last-child(-n+3) { border-bottom: 1px solid var(--color-border); }
+  .command-military-grid > div:nth-last-child(-n+2) { border-bottom: 0; }
+  .command-resource-footer { grid-template-columns: 1fr auto; gap: .55rem; }
+  .command-resource-footer span:last-child { grid-column: 1 / -1; }
+  .admin-v4-grid { grid-template-columns: 1fr; gap: .7rem; }
+  .admin-v4-card { padding: 1rem; }
+  .admin-v4-card-copy { padding-bottom: 1rem; }
+  .command-v3-resource-name strong { font-size: .72rem; }
+  .mobile-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
