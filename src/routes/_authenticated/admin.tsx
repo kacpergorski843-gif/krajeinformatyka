@@ -696,16 +696,18 @@ function AdminPanel() {
               </SelectContent>
             </Select>
           </div>
-          <div className="admin-tabs-desktop hidden sm:block">
-            <TabsList className="grid h-auto w-full grid-cols-7 border border-border/70 bg-card/80 p-1">
-              <AdminTab value="countries" icon={<Building2 />}>Państwa</AdminTab>
-              <AdminTab value="users" icon={<UserCog />}>Użytkownicy</AdminTab>
-              <AdminTab value="suggestions" icon={<Flag />}>Propozycje</AdminTab>
-              <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
-              <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
-              <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
-              <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>
-            </TabsList>
+          <div className="admin-tabs-desktop hidden min-w-0 sm:block">
+            <div className="admin-scrollbar max-w-full overflow-x-auto">
+              <TabsList className="flex h-auto w-max min-w-full justify-start border border-border/70 bg-card/80 p-1">
+                <AdminTab value="countries" icon={<Building2 />}>Państwa</AdminTab>
+                <AdminTab value="users" icon={<UserCog />}>Użytkownicy</AdminTab>
+                <AdminTab value="suggestions" icon={<Flag />}>Propozycje</AdminTab>
+                <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
+                <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
+                <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
+                <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>
+              </TabsList>
+            </div>
           </div>
           <TabsContent value="countries"><CountriesTab /></TabsContent>
           <TabsContent value="users"><UsersTab isMainAdmin={!!me?.isMainAdmin} /></TabsContent>
