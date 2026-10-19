@@ -90,9 +90,9 @@ export function AppShell({ me, title, subtitle, children }: {
       </aside>
       <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 lg:px-10 lg:py-8">
         <header className="page-header command-header">
-          <div className="min-w-0"><div className="flex items-center gap-2"><span className="command-pulse" /><p className="label-hud">OBSZAR / {title.toUpperCase()}</p></div>
+          <div className="min-w-0"><p className="label-hud">KRAJE INFORMATYKA <span aria-hidden="true">·</span> PANEL PAŃSTWA</p>
           <h1 className="page-title truncate">{title}</h1>{subtitle ? <p className="page-subtitle truncate">{subtitle}</p> : null}</div>
-          <div className="flex items-center gap-2"><div className="system-status hidden sm:flex"><span /> ONLINE</div>
+          <div className="flex items-center gap-2"><div className="system-status hidden sm:flex"><span /> Aktywna sesja</div>
             <button className="mobile-menu-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Otwórz menu" aria-expanded={mobileOpen}><Menu className="size-5" /></button>
           </div>
         </header>
