@@ -250,7 +250,7 @@ function MyCountry() {
       })}
 
       {/* Skarbiec + przychód */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="country-finance-grid grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-5">
         <Stat
           label="Skarbiec"
           value={kr(country.balance)}
