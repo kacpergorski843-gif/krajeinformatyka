@@ -162,18 +162,18 @@ function World() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {list.map((country) => (
-              <button key={country.country_id} type="button" onClick={() => openCountry(country.country_id)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-                <Panel className={`h-full border-border/80 bg-card/80 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-xl ${country.country_id === me?.countryId ? "border-primary/50 bg-primary/[0.04]" : ""}`}>
+              <button key={country.country_id} type="button" onClick={() => openCountry(country.country_id)} className="block min-w-0 max-w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+                <Panel className={`h-full min-w-0 max-w-full overflow-hidden border-border/80 bg-card/80 transition-colors duration-200 hover:border-primary/50 ${country.country_id === me?.countryId ? "border-primary/50 bg-primary/[0.04]" : ""}`}>
                   <div className="flex items-center gap-3">
                     <CountryFlag flag={country.flag} alt={`Flaga państwa ${country.name}`} className="h-8 w-12 shrink-0 rounded-sm text-2xl" />
                     <p className="min-w-0 flex-1 truncate text-base font-semibold">{country.name}</p>
                     {country.country_id === me?.countryId ? <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase text-primary">Twoje</span> : null}
                   </div>
-                  <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                    <div><dt className="text-muted-foreground">Skarbiec</dt><dd className="num mt-0.5">{krShort(country.balance)}</dd></div>
-                    <div><dt className="text-muted-foreground">Przychód / doba</dt><dd className="num mt-0.5 text-primary">{krShort(country.gross_income)}</dd></div>
-                    <div><dt className="text-muted-foreground">Regiony</dt><dd className="num mt-0.5">{units(country.regions_count)}</dd></div>
-                    <div><dt className="text-muted-foreground">Wartość militarna</dt><dd className="num mt-0.5 text-accent">{krShort(country.military_value)}</dd></div>
+                  <dl className="mt-4 grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 text-xs">
+                    <div className="min-w-0"><dt className="text-muted-foreground">Skarbiec</dt><dd className="num mt-0.5 break-words">{krShort(country.balance)}</dd></div>
+                    <div className="min-w-0"><dt className="text-muted-foreground">Przychód / doba</dt><dd className="num mt-0.5 break-words text-primary">{krShort(country.gross_income)}</dd></div>
+                    <div className="min-w-0"><dt className="text-muted-foreground">Regiony</dt><dd className="num mt-0.5 break-words">{units(country.regions_count)}</dd></div>
+                    <div className="min-w-0"><dt className="text-muted-foreground">Wartość militarna</dt><dd className="num mt-0.5 break-words text-accent">{krShort(country.military_value)}</dd></div>
                   </dl>
                   <div className="mt-4 border-t border-border/60 pt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Otwórz profil państwa →</div>
                 </Panel>
