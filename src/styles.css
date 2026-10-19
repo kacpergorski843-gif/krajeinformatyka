@@ -2224,3 +2224,36 @@ table { border-collapse: separate; border-spacing: 0; }
   .content-area dl { column-gap: .65rem; }
   .content-area dl dt { overflow-wrap: anywhere; }
 }
+
+/* Admin navigation: keep every section reachable at tablet widths without squeezing labels. */
+.admin-tabs-desktop .admin-scrollbar {
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.admin-tabs-desktop [role="tab"] {
+  flex: 0 0 auto;
+  min-height: 2.7rem;
+}
+.admin-tabs-desktop [role="tab"] svg {
+  flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  .admin-tabs-mobile {
+    position: sticky;
+    top: .25rem;
+    z-index: 20;
+    padding: .25rem 0;
+    background: color-mix(in oklab, var(--color-background) 92%, transparent);
+    backdrop-filter: blur(12px);
+  }
+  .admin-tabs-mobile [role="combobox"] {
+    min-height: 2.9rem;
+  }
+  .admin-dialog {
+    max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
