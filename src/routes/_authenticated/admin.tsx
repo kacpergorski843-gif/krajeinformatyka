@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useMemo, useState, useTransition, type Rea
 import { toast } from "sonner";
 import {
   Boxes,
+  FileDown,
   Building2,
   CalendarClock,
   ChevronRight,
@@ -29,6 +30,7 @@ import { Flag } from "lucide-react";
 import { CountryFlag } from "@/components/CountryFlag";
 import { supabase } from "@/integrations/supabase/client";
 import { deletePlayerAccount, resetPlayerPassword } from "@/lib/admin.functions";
+import { exportApplicationData } from "@/lib/admin-export.functions";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -333,7 +335,7 @@ function Update4Tools() {
   const countryOptions = useMemo(
     () => (countries ?? []).map((item) => (
       <SelectItem key={item.country_id} value={item.country_id}>
-        <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-5 w-7 rounded-sm align-middle" />
+        <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />
         {item.name}
       </SelectItem>
     )),
@@ -568,7 +570,7 @@ function Update4Tools() {
               <Label>Kraj</Label>
               <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); setOccupationTargetCountry(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz kraj" /></SelectTrigger>
-                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-5 w-7 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
@@ -583,7 +585,7 @@ function Update4Tools() {
             <Label>Nowy właściciel</Label>
             <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
               <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz nowe państwo" : "Najpierw wybierz region"} /></SelectTrigger>
-              <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-5 w-7 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
+              <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="admin-v4-summary admin-v4-summary-danger">
@@ -752,6 +754,39 @@ function EconomyCountdownTab() {
   return <EconomyTab countdown={countdown} />;
 }
 
+
+function AdminDataExportButton() {
+  const exportData = useServerFn(exportApplicationData);
+  const [pending, setPending] = useState(false);
+
+  const handleExport = async () => {
+    setPending(true);
+    try {
+      const data = await exportData();
+      openApplicationExportPdf(JSON.parse(data) as ApplicationExport);
+      toast.success("Dane przygotowane do eksportu PDF");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się przygotować eksportu danych");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Panel className="hud-frame flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="label-hud">EKSPORT DANYCH</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Pełny zrzut danych aplikacji w strukturze czytelnej dla ChatGPT i innych narzędzi AI.
+        </p>
+      </div>
+      <Button className="shrink-0" onClick={() => void handleExport()} disabled={pending}>
+        <FileDown />
+        {pending ? "Przygotowywanie…" : "Eksportuj dane → PDF"}
+      </Button>
+    </Panel>
+  );
+}
 
 function AdminTab({ value, icon, children }: { value: string; icon: ReactNode; children: ReactNode }) {
   return (
@@ -1366,7 +1401,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
                     <SelectContent>
                       <SelectItem value="unassigned" disabled>Brak przypisania</SelectItem>
                       {(countryQuery.data ?? []).map((country) => (
-                        <SelectItem key={country.country_id} value={country.country_id}><CountryFlag flag={country.flag} alt="" className="mr-1 inline-block h-5 w-7 rounded-sm align-middle text-lg" />{country.name}</SelectItem>
+                        <SelectItem key={country.country_id} value={country.country_id}><CountryFlag flag={country.flag} alt="" className="mr-1 inline-block h-4 w-6 rounded-sm align-middle text-base" />{country.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
