@@ -68,7 +68,7 @@ export function AppShell({ me, title, subtitle, children }: {
     </div>
   );
 
-  return <div className="app-shell min-h-screen pb-20 lg:pb-0">
+  return <div className="app-shell tactical-bg min-h-screen pb-20 lg:pb-0">
     <GameAlerts countryId={me?.countryId ?? null} />
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
       <aside className="sidebar hidden w-[17rem] shrink-0 lg:flex">
