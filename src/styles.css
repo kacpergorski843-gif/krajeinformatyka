@@ -60,22 +60,22 @@
   --radius: 0.375rem;
 
   /* Luxury dark palette: charcoal, ivory, muted gold */
-  --background: #071426;
+  --background: #0A1128;
   --foreground: #F4F3EC;
-  --card: rgb(14 35 59 / 82%);
+  --card: rgb(14 26 56 / 94%);
   --card-foreground: #F4F3EC;
-  --popover: #0D2138;
+  --popover: #0E1A38;
   --popover-foreground: #F4F3EC;
-  --secondary: #132D49;
+  --secondary: #142544;
   --secondary-foreground: #F4F3EC;
-  --muted: #102741;
-  --muted-foreground: #A8BCD0;
+  --muted: #13213B;
+  --muted-foreground: #8A9BB4;
 
   --brass: #C5A46D;
   --primary: #C5A46D;
-  --primary-foreground: #071426;
+  --primary-foreground: #0A1128;
   --accent: #E8D8B2;
-  --accent-foreground: #071426;
+  --accent-foreground: #0A1128;
 
   /* Status */
   --success: #58A879;
@@ -84,8 +84,8 @@
   --info: #75C8FF;
   --inactive: #71859B;
 
-  --border: rgb(117 200 255 / 22%);
-  --input: rgb(117 200 255 / 30%);
+  --border: rgb(197 164 109 / 22%);
+  --input: rgb(138 155 180 / 30%);
   --ring: #C5A46D;
 
   --chart-1: #C5A46D;
@@ -94,13 +94,13 @@
   --chart-4: #D85B52;
   --chart-5: #E8D8B2;
 
-  --sidebar: rgb(7 23 41 / 94%);
+  --sidebar: rgb(8 17 38 / 96%);
   --sidebar-foreground: #F4F3EC;
   --sidebar-primary: #C5A46D;
   --sidebar-primary-foreground: #071426;
   --sidebar-accent: #12304F;
   --sidebar-accent-foreground: #F4F3EC;
-  --sidebar-border: rgb(117 200 255 / 20%);
+  --sidebar-border: rgb(197 164 109 / 16%);
   --sidebar-ring: #C5A46D;
 
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
@@ -191,7 +191,7 @@
 /* Card frame with HUD corner ticks */
 @utility panel {
   position: relative;
-  background: linear-gradient(158deg, oklch(0.22 0.032 260 / 92%), oklch(0.185 0.028 261 / 92%));
+  background: linear-gradient(158deg, rgb(14 26 56 / 96%), rgb(10 17 40 / 97%));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(12px); box-shadow: 0 12px 36px oklch(0.05 0.02 250 / 22%);
@@ -2401,14 +2401,14 @@ table { border-collapse: separate; border-spacing: 0; }
 }
 html:not(.light) body {
   background-image:
-    radial-gradient(ellipse at 12% 0%, rgb(24 99 158 / 20%), transparent 43%),
-    radial-gradient(ellipse at 88% 20%, rgb(23 77 132 / 16%), transparent 38%),
-    linear-gradient(145deg, #071426 0%, #0A1B30 52%, #071426 100%);
+    radial-gradient(ellipse at 12% 0%, rgb(24 67 117 / 18%), transparent 43%),
+    radial-gradient(ellipse at 88% 20%, rgb(23 52 100 / 13%), transparent 38%),
+    linear-gradient(145deg, #0A1128 0%, #0C1832 52%, #081026 100%);
   background-attachment: fixed;
 }
 html:not(.light) .panel {
   background: linear-gradient(135deg, rgb(19 49 78 / 78%), rgb(8 27 47 / 86%));
-  border-color: rgb(117 200 255 / 20%);
+  border-color: rgb(197 164 109 / 18%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%), 0 10px 28px rgb(0 0 0 / 18%);
   backdrop-filter: blur(16px) saturate(120%);
 }
@@ -2416,7 +2416,7 @@ html:not(.light) .sidebar,
 html:not(.light) .mobile-nav,
 html:not(.light) .mobile-drawer {
   background-color: rgb(7 23 41 / 90%);
-  border-color: rgb(117 200 255 / 18%);
+  border-color: rgb(197 164 109 / 16%);
   backdrop-filter: blur(18px) saturate(120%);
 }
 html:not(.light) .nav-active,
@@ -2447,14 +2447,14 @@ html:not(.light) .hud-frame::after {
 }
 html:not(.light) .theme-toggle {
   background: rgb(9 29 49 / 94%);
-  border-color: rgb(117 200 255 / 26%);
+  border-color: rgb(197 164 109 / 24%);
   box-shadow: 0 3px 12px rgb(0 0 0 / 14%);
 }
 html:not(.light) .tactical-bg::before {
-  background-image: linear-gradient(rgb(117 200 255 / 4%) 1px, transparent 1px), linear-gradient(90deg, rgb(117 200 255 / 4%) 1px, transparent 1px), linear-gradient(rgb(117 200 255 / 5%) 1px, transparent 1px), linear-gradient(90deg, rgb(117 200 255 / 5%) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(138 155 180 / 3.5%) 1px, transparent 1px), linear-gradient(90deg, rgb(138 155 180 / 3.5%) 1px, transparent 1px), linear-gradient(rgb(197 164 109 / 3%) 1px, transparent 1px), linear-gradient(90deg, rgb(197 164 109 / 3%) 1px, transparent 1px);
 }
 html:not(.light) .tactical-bg::after {
-  background-image: repeating-radial-gradient(circle at 78% 12%, rgb(117 200 255 / 5%) 0 1px, transparent 1px 88px), repeating-radial-gradient(circle at 12% 82%, rgb(197 164 109 / 2%) 0 1px, transparent 1px 120px), linear-gradient(76deg, transparent 49.85%, rgb(117 200 255 / 6%) 50%, transparent 50.15%), radial-gradient(120% 70% at 50% -15%, rgb(24 99 158 / 28%), transparent 70%);
+  background-image: repeating-radial-gradient(circle at 78% 12%, rgb(138 155 180 / 4%) 0 1px, transparent 1px 88px), repeating-radial-gradient(circle at 12% 82%, rgb(197 164 109 / 3%) 0 1px, transparent 1px 120px), linear-gradient(76deg, transparent 49.85%, rgb(138 155 180 / 4%) 50%, transparent 50.15%), radial-gradient(120% 70% at 50% -15%, rgb(24 67 117 / 22%), transparent 70%);
 }
 html.light .panel {
   border-color: rgb(49 90 133 / 18%);
