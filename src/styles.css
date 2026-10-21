@@ -1683,3 +1683,61 @@ hr { border-color: rgb(184 147 67 / 22%) !important; }
   .mobile-nav-item { font-size: 9px !important; }
   .mobile-nav-item svg { width: 18px; height: 18px; }
 }
+
+/* Final guard: the supplied tactical palette remains identical even if a
+   persisted light-theme preference exists; the spec defines one fixed visual system. */
+html.light {
+  color-scheme: dark;
+  --background: #040914;
+  --foreground: #F1F5F9;
+  --card: #0A1628;
+  --card-foreground: #F1F5F9;
+  --popover: #071120;
+  --popover-foreground: #F1F5F9;
+  --primary: #D8B255;
+  --primary-foreground: #040914;
+  --secondary: #0F1E36;
+  --secondary-foreground: #F1F5F9;
+  --muted: #071120;
+  --muted-foreground: #7E90A8;
+  --accent: #B89343;
+  --accent-foreground: #040914;
+  --destructive: #E85555;
+  --destructive-foreground: #F1F5F9;
+  --border: #B89343;
+  --input: rgb(126 144 168 / 35%);
+  --ring: #D8B255;
+  --sidebar: #071120;
+  --sidebar-foreground: #F1F5F9;
+  --sidebar-primary: #D8B255;
+  --sidebar-primary-foreground: #040914;
+  --sidebar-accent: #0F1E36;
+  --sidebar-accent-foreground: #F1F5F9;
+  --sidebar-border: rgb(184 147 67 / 35%);
+  --sidebar-ring: #D8B255;
+}
+html.light body {
+  color: #F1F5F9 !important;
+  background-color: #040914 !important;
+  background-image:
+    linear-gradient(rgba(40, 75, 120, .15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40, 75, 120, .15) 1px, transparent 1px),
+    linear-gradient(rgba(184, 147, 67, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184, 147, 67, .035) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% -10%, rgba(18, 45, 78, .32), transparent 62%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720'%3E%3Cg fill='none' stroke='%23D8B255' stroke-opacity='.08' stroke-width='1'%3E%3Cpath d='M40 170l28-23 19 5 15-17 31 4 19-19 24 9 11 26-13 14 9 17-20 21-7 28-23 7-9 24-25-3-8-20-20-7-4-22-18-8zM325 150l20-19 29 5 17-12 24 15 21-3 23 22 26-5 17 16 25-2 19 21-7 21-20 8-8 19-28 1-13 20-24-8-15 14-21-9-11-22-24-1-9-19-24-7-8-22-19-4zM365 270l28-13 27 9 19 25-5 26 16 18-6 30-21 16-10 33-25 15-18-18 2-27-16-19 4-27-12-19z'/%3E%3C/g%3E%3Cg fill='none' stroke='%237E90A8' stroke-opacity='.11' stroke-width='1'%3E%3Ccircle cx='535' cy='210' r='78'/%3E%3Ccircle cx='535' cy='210' r='54'/%3E%3Ccircle cx='535' cy='210' r='28'/%3E%3Cpath d='M535 112v196M437 210h196M466 141l138 138M466 279l138-138'/%3E%3C/g%3E%3Cg fill='%23D8B255' fill-opacity='.23' font-family='monospace' font-size='8'%3E%3Ctext x='548' y='202'%3E32°N 14°E%3C/text%3E%3Ctext x='510' y='330'%3ENAV / 04%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-size: 30px 30px, 30px 30px, 150px 150px, 150px 150px, auto, 720px 720px;
+  background-attachment: fixed;
+  background-position: center, center, center, center, center, center top;
+  background-repeat: repeat, repeat, repeat, repeat, no-repeat, repeat;
+}
+html.light .panel, html.light .stat-card-command {
+  color: #F1F5F9 !important;
+  background: rgba(10, 22, 40, .88) !important;
+  border-color: #B89343 !important;
+}
+html.light .page-title, html.light .section-heading h2 { color: #F1F5F9 !important; }
+html.light .page-subtitle, html.light .stat-label, html.light .text-muted-foreground { color: #7E90A8 !important; }
+html.light input, html.light select, html.light textarea, html.light [role="combobox"] {
+  color: #F1F5F9 !important; background: #071120 !important; border-color: rgb(126 144 168 / 35%) !important;
+}
