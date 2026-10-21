@@ -2472,3 +2472,34 @@ html.light a.bg-primary {
   box-shadow: 0 3px 8px rgb(49 90 133 / 10%);
 }
 html.light .text-primary { color: #315A85; }
+
+
+/* Reconciled institutional landing layout from lovable-sync; uses current main theme tokens. */
+.institutional-entry { background:var(--color-background); }
+.entry-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.5rem 0 1.5rem; border-bottom:1px solid var(--color-border); }
+.entry-ranking { display:inline-flex; min-height:42px; align-items:center; gap:.55rem; padding:.65rem .85rem; border:1px solid var(--color-border); border-radius:var(--radius-md); color:var(--color-muted-foreground); font-size:.78rem; font-weight:600; transition:border-color .16s ease,color .16s ease,background .16s ease; }
+.entry-ranking:hover { border-color:color-mix(in oklab,var(--color-primary) 42%,var(--color-border)); color:var(--color-primary); background:var(--color-card); }
+.entry-main { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:clamp(2.5rem,7vw,7rem); align-items:center; flex:1; padding:clamp(3rem,8vw,7rem) 0; }
+.entry-copy h1 { max-width:720px; margin-top:1rem; font-size:clamp(2.7rem,6.2vw,5.6rem); line-height:.98; font-weight:700; }
+.entry-copy h1 span { display:block; color:var(--color-primary); }
+.entry-lead { max-width:610px; margin-top:1.5rem; color:var(--color-muted-foreground); font-size:clamp(.95rem,1.5vw,1.12rem); line-height:1.75; }
+.entry-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:2rem; }
+.entry-primary,.entry-secondary { display:inline-flex; min-height:50px; align-items:center; justify-content:center; gap:.65rem; padding:.8rem 1.25rem; border-radius:var(--radius-md); font-size:.85rem; font-weight:700; transition:transform .16s ease,background .16s ease,border-color .16s ease; }
+.entry-primary { background:var(--color-primary); color:var(--color-primary-foreground); box-shadow:0 12px 30px color-mix(in oklab,var(--color-primary) 15%,transparent); }
+.entry-secondary { border:1px solid var(--color-border); background:var(--color-card); color:var(--color-foreground); }
+.entry-primary:hover,.entry-secondary:hover { transform:translateY(-1px); }
+.entry-secondary:hover { border-color:color-mix(in oklab,var(--color-primary) 40%,var(--color-border)); }
+.entry-signals { display:flex; flex-wrap:wrap; gap:1.25rem; margin-top:2.25rem; color:var(--color-muted-foreground); font-size:.75rem; }
+.entry-signals span { display:flex; align-items:center; gap:.45rem; }
+.entry-signals svg { color:var(--color-info); }
+.entry-modules { border:1px solid var(--color-border); border-radius:var(--radius-xl); overflow:hidden; background:var(--color-card); box-shadow:0 26px 70px color-mix(in oklab,var(--color-background) 64%,transparent); }
+.entry-module { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:1rem; min-height:116px; padding:1.3rem; border-bottom:1px solid var(--color-border); transition:background .16s ease; }
+.entry-module:last-child { border-bottom:0; }
+.entry-module:hover { background:var(--color-secondary); }
+.entry-module-icon { display:grid; place-items:center; width:42px; height:42px; border:1px solid color-mix(in oklab,var(--color-primary) 28%,var(--color-border)); border-radius:var(--radius-md); color:var(--color-primary); background:color-mix(in oklab,var(--color-primary) 7%,transparent); }
+.entry-module span { color:var(--color-muted-foreground); font-size:.58rem; font-weight:700; letter-spacing:.14em; }
+.entry-module h2 { margin-top:.22rem; font-size:1rem; }
+.entry-module p { margin-top:.2rem; color:var(--color-muted-foreground); font-size:.72rem; }
+.entry-module>strong { max-width:115px; color:var(--color-primary); font-family:var(--font-display); font-size:.68rem; text-align:right; }
+@media(max-width:900px){.entry-main{grid-template-columns:1fr;gap:3rem;padding:3.5rem 0}.entry-copy{max-width:720px}}
+@media(max-width:640px){.entry-header{padding-bottom:1rem}.entry-header .label-hud{display:none}.entry-ranking{font-size:0;width:42px;padding:0;justify-content:center}.entry-ranking svg{width:18px;height:18px}.entry-main{padding:3rem 0}.entry-copy h1{font-size:2.65rem}.entry-actions{display:grid}.entry-primary,.entry-secondary{width:100%}.entry-signals{margin-top:1.5rem}.entry-module{grid-template-columns:auto 1fr;padding:1rem;min-height:100px}.entry-module>strong{display:none}}
