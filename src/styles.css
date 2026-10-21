@@ -2599,3 +2599,40 @@ body { color:#F1F5F9; font-family:"Inter","Sora",ui-sans-serif,system-ui,sans-se
 @media(min-width:768px) { .app-shell>.mx-auto,.institutional-entry>div { min-height:100vh; } }
 @media(max-width:360px) { .command-kpi { padding:.75rem; } .command-kpi strong { font-size:1.2rem; } .mobile-nav-item { font-size:9px; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; } }
+
+/* Reference screenshot refinement: saturated navy, visible map contours and six-item mobile dock */
+.tactical-bg { background:#071944!important; }
+.tactical-bg::before {
+  background-color:#071944;
+  background-image:
+    linear-gradient(rgba(40,75,120,.18) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(40,75,120,.18) 1px,transparent 1px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='760' height='900' viewBox='0 0 760 900'%3E%3Cg fill='none' stroke='%23D8B255' stroke-opacity='.17' stroke-width='1'%3E%3Cpath d='M25 175l45-32 18-30 40 4 30-27 42 22 22 45-18 27 28 24-10 38-35 20-5 35-30 12-16 37-42-8-18-32-38-10-9-41-30-22z M228 340l34-24 42 10 24 35-20 27-5 41-30 19-35-16-21-34z M440 120l30-28 48 12 20 27 42 8 24 35-18 27-5 35-31 18-25-20-29 9-24-24-30-8-13-35 18-24z M490 350l34-20 35 18 15 35-24 29-8 40-31 17-20-30-24-8-6-35z M80 600q50-50 100 0t100 0t100 0t100 0t100 0t100 0 M40 635q55-55 110 0t110 0t110 0t110 0t110 0t110 0 M0 670q60-60 120 0t120 0t120 0t120 0t120 0t120 0'/%3E%3Ccircle cx='520' cy='500' r='75'/%3E%3Ccircle cx='520' cy='500' r='105'/%3E%3Ccircle cx='520' cy='500' r='140'/%3E%3Cpath d='M350 500h340M520 330v340M505 500h30M520 485v30 M40 420h180M130 330v180M120 420h20M130 410v20'/%3E%3Cpath d='M280 210l40 15 60-12 40 30 55 5 28 26-20 18-70-8-40 22-42-14-25-28z M290 245l45 12 45-10 40 22 48 0'/%3E%3C/g%3E%3Cg fill='%23D8B255' fill-opacity='.45' font-family='monospace' font-size='8'%3E%3Ctext x='535' y='480'%3E32%C2%B0N 14%C2%B0E%3C/text%3E%3Ctext x='42' y='410'%3EGRID 04-A%3C/text%3E%3Ctext x='445' y='670'%3ESECTOR 07%3C/text%3E%3Ctext x='320' y='180'%3ETACTICAL OVERLAY%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-size:30px 30px,30px 30px,min(100vw,760px) auto;
+  background-position:0 0,0 0,center 42%;
+  background-repeat:repeat,repeat,no-repeat;
+}
+.tactical-bg::after {
+  background:
+    radial-gradient(circle at 76% 18%,transparent 0 76px,rgba(216,178,85,.09) 77px 78px,transparent 79px 112px,rgba(216,178,85,.07) 113px 114px,transparent 115px 150px,rgba(216,178,85,.05) 151px 152px,transparent 153px),
+    radial-gradient(circle at 30% 73%,transparent 0 90px,rgba(216,178,85,.06) 91px 92px,transparent 93px 130px,rgba(216,178,85,.045) 131px 132px,transparent 133px),
+    linear-gradient(90deg,transparent calc(50% - .5px),rgba(216,178,85,.055) 50%,transparent calc(50% + .5px)),
+    linear-gradient(0deg,transparent calc(38% - .5px),rgba(216,178,85,.045) 38%,transparent calc(38% + .5px)),
+    linear-gradient(rgba(4,9,20,.14),rgba(4,9,20,.18));
+}
+.panel,.command-kpi,.command-overview,.command-hero,.command-alert,.stat-card,.command-resource-card,.resource-command,.entry-module {
+  background:rgba(7,25,68,.82)!important;
+  border:1px solid #D0B56F!important;
+  border-radius:7px!important;
+  box-shadow:0 0 0 1px rgba(216,178,85,.1),0 10px 30px rgba(0,0,0,.2);
+  backdrop-filter:blur(8px);
+}
+.mobile-nav { grid-template-columns:repeat(6,minmax(0,1fr))!important; }
+.mobile-nav-item,.mobile-nav-active { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:0; padding:.2rem 0; color:#040914!important; }
+.mobile-nav-item svg,.mobile-nav-active svg { width:25px; height:25px; }
+.mobile-nav-item span,.mobile-nav-active span { white-space:nowrap; font-size:10px; letter-spacing:-.02em; }
+.app-shell main { background:transparent; }
+.app-shell .content-area { padding-bottom:.5rem; }
+@media(min-width:768px) {
+  .app-shell>.mx-auto { max-width:480px!important; }
+}
