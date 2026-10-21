@@ -70,7 +70,7 @@ function World() {
           <>
             <Panel className="hud-frame mb-5 overflow-hidden p-0">
               <div className="flex flex-wrap items-center gap-4 bg-secondary/20 p-5 sm:p-6">
-                <CountryFlag flag={c.flag} alt={`Flaga państwa ${c.name}`} className="h-12 w-20 shrink-0 rounded-md text-4xl shadow-sm" />
+                <CountryFlag flag={c.flag} alt={`Flaga państwa ${c.name}`} className="h-16 w-24 shrink-0 rounded-md text-4xl shadow-sm" />
                 <div className="min-w-0 flex-1">
                   <p className="label-hud">NATIONAL PROFILE</p>
                   <h2 className="mt-1 truncate text-2xl font-semibold">{c.name}</h2>
