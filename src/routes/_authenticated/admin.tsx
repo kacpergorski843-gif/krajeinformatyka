@@ -4,7 +4,6 @@ import { useDeferredValue, useEffect, useMemo, useState, useTransition, type Rea
 import { toast } from "sonner";
 import {
   Boxes,
-  FileDown,
   Building2,
   CalendarClock,
   ChevronRight,
@@ -30,7 +29,6 @@ import { Flag } from "lucide-react";
 import { CountryFlag } from "@/components/CountryFlag";
 import { supabase } from "@/integrations/supabase/client";
 import { deletePlayerAccount, resetPlayerPassword } from "@/lib/admin.functions";
-import { exportApplicationData } from "@/lib/admin-export.functions";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -754,39 +752,6 @@ function EconomyCountdownTab() {
   return <EconomyTab countdown={countdown} />;
 }
 
-
-function AdminDataExportButton() {
-  const exportData = useServerFn(exportApplicationData);
-  const [pending, setPending] = useState(false);
-
-  const handleExport = async () => {
-    setPending(true);
-    try {
-      const data = await exportData();
-      openApplicationExportPdf(JSON.parse(data) as ApplicationExport);
-      toast.success("Dane przygotowane do eksportu PDF");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Nie udało się przygotować eksportu danych");
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <Panel className="hud-frame flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <p className="label-hud">EKSPORT DANYCH</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Pełny zrzut danych aplikacji w strukturze czytelnej dla ChatGPT i innych narzędzi AI.
-        </p>
-      </div>
-      <Button className="shrink-0" onClick={() => void handleExport()} disabled={pending}>
-        <FileDown />
-        {pending ? "Przygotowywanie…" : "Eksportuj dane → PDF"}
-      </Button>
-    </Panel>
-  );
-}
 
 function AdminTab({ value, icon, children }: { value: string; icon: ReactNode; children: ReactNode }) {
   return (
