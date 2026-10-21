@@ -1,6 +1,6 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Building2, ArrowRightLeft, Handshake } from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, Activity, ArrowRightLeft, Handshake } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -68,14 +68,14 @@ export function AppShell({ me, title, subtitle, children }: {
     </div>
   );
 
-  return <div className="app-shell tactical-bg min-h-screen pb-20 lg:pb-0">
+  return <div className="app-shell min-h-screen pb-20 lg:pb-0">
     <GameAlerts countryId={me?.countryId ?? null} />
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
       <aside className="sidebar hidden w-[17rem] shrink-0 lg:flex">
         <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
           <div className="brand-block mb-7">
-            <div className="brand-mark"><Building2 className="size-5" /></div>
-            <div><p className="font-display text-sm font-semibold tracking-[-0.025em]">KRAJE INFORMATYKA</p><p className="label-hud mt-1">System strategiczny</p></div>
+            <div className="brand-mark"><Activity className="size-5" /></div>
+            <div><p className="font-display text-sm font-semibold tracking-[-0.025em]">KRAJE INFORMATYKA</p><p className="mt-1 text-xs text-muted-foreground">Panel państwa</p></div>
           </div>
           <div className="command-section"><p className="nav-caption">Centrum dowodzenia</p>{nav()}</div>
           <div className="mt-auto">
@@ -100,14 +100,14 @@ export function AppShell({ me, title, subtitle, children }: {
       </main>
     </div>
     <nav className="mobile-nav lg:hidden" aria-label="Główna nawigacja">
-      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep", "/ranking"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} preload="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
-        <item.icon strokeWidth={1.8}/><span>{item.to === "/panstwo" ? "Moje" : item.label}</span>
+      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} preload="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
+        <item.icon className="size-5" strokeWidth={1.8}/><span>{item.label}</span>
       </Link>)}
-      <button className="mobile-nav-item" onClick={() => setMobileOpen(true)} aria-label="Otwórz pełne menu"><ShieldHalf/><span>Panel</span></button>
+      <button className="mobile-nav-item" onClick={() => setMobileOpen(true)} aria-label="Otwórz pełne menu"><Menu className="size-5"/><span>Menu</span></button>
     </nav>
     {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" role="presentation" onClick={() => setMobileOpen(false)}>
       <aside className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Building2 className="size-5"/></div><span className="font-display font-semibold tracking-[-0.025em]">KRAJE INFORMATYKA</span></div>
+        <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Activity className="size-5"/></div><span className="font-display font-semibold tracking-[-0.025em]">KRAJE INFORMATYKA</span></div>
         <button onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button></div>
         <div className="mt-5">{nav(true)}</div>
         <button type="button" onClick={() => { setMobileOpen(false); setConfirmOut(true); }} className="nav-item mt-1 w-full"><LogOut className="size-[18px]" /> Wyloguj</button>

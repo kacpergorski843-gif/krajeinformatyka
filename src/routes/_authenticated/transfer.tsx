@@ -102,7 +102,7 @@ function Transfers() {
             <Select value={target} onValueChange={setTarget}><SelectTrigger><SelectValue placeholder="Wybierz odbiorcę"/></SelectTrigger><SelectContent>
               {(countries ?? []).filter((c) => c.country_id !== me?.countryId).map((c) => (
                 <SelectItem key={c.country_id} value={c.country_id}>
-                  <span className="flex items-center gap-2"><CountryFlag flag={c.flag} alt="" className="size-6 shrink-0 rounded-sm text-lg" /><span>{c.name}</span></span>
+                  <span className="flex items-center gap-2"><CountryFlag flag={c.flag} alt="" className="size-5 shrink-0 rounded-sm text-base" /><span>{c.name}</span></span>
                 </SelectItem>
               ))}
             </SelectContent></Select>

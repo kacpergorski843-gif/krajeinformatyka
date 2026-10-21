@@ -14,9 +14,7 @@ export function CountryFlag({ flag, alt = "Flaga", className = "" }: CountryFlag
   const value = flag?.trim() ?? "";
   const [failed, setFailed] = useState(false);
 
-  if (!value || value === "🏳️" || failed) return null;
-
-  if (isImageSource(value)) {
+  if (value && isImageSource(value) && !failed) {
     return (
       <img
         src={value}
@@ -31,7 +29,7 @@ export function CountryFlag({ flag, alt = "Flaga", className = "" }: CountryFlag
 
   return (
     <span className={`inline-flex items-center justify-center ${className}`} role={alt ? "img" : undefined} aria-label={alt || undefined}>
-      {value}
+      {value || "🏳️"}
     </span>
   );
 }
