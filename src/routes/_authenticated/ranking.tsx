@@ -57,7 +57,7 @@ function RankingBlock({ metric, countries, myCountryId }: { metric: Metric; coun
           <div key={c.country_id} className={`grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 ${c.country_id === myCountryId ? "bg-primary/[0.06]" : ""}`}>
             <span className="num text-muted-foreground text-sm">{index + 1}</span>
             <span className="flex min-w-0 items-center gap-2.5">
-              <CountryFlag flag={c.flag} alt="" className="h-6 w-9 shrink-0 rounded-sm text-lg" />
+              <CountryFlag flag={c.flag} alt="" className="h-8 w-12 shrink-0 rounded-sm text-xl" />
               <span className="min-w-0 truncate text-sm font-semibold">{c.name}</span>
             </span>
             <span className="num text-right text-sm font-semibold text-primary">{metric.value(c)}</span>
