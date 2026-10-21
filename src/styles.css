@@ -1343,3 +1343,272 @@ html:not(.light) a.bg-primary {
   color: #0A1128;
   box-shadow: 0 3px 8px rgb(0 0 0 / 16%);
 }
+
+
+/* PREMIUM TACTICAL COMMAND UI — full visual pass */
+:root {
+  --radius: .7rem;
+  --background: #0A1128;
+  --card: #0E1A38;
+  --popover: #0E1A38;
+  --secondary: #122341;
+  --muted: #101D35;
+  --muted-foreground: #8A9BB4;
+  --primary: #C5A059;
+  --brass: #C5A059;
+  --accent: #D4AF37;
+  --border: rgb(197 160 89 / 23%);
+  --input: rgb(138 155 180 / 28%);
+  --ring: #C5A059;
+  --sidebar: #080F22;
+  --sidebar-border: rgb(197 160 89 / 19%);
+  --sidebar-accent: #142442;
+  --sidebar-primary: #C5A059;
+}
+html:not(.light) body {
+  background-color: #0A1128;
+  background-image:
+    radial-gradient(ellipse at 50% -18%, rgb(28 67 118 / 28%), transparent 55%),
+    radial-gradient(ellipse at 100% 65%, rgb(15 49 88 / 15%), transparent 42%),
+    linear-gradient(145deg, #0A1128 0%, #09142B 48%, #070D1D 100%);
+  background-attachment: fixed;
+}
+.app-shell.tactical-bg {
+  position: relative;
+  isolation: isolate;
+  background: transparent !important;
+}
+.app-shell.tactical-bg::before,
+.app-shell.tactical-bg::after {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: block !important;
+  opacity: 1 !important;
+}
+.app-shell.tactical-bg::before {
+  z-index: 0;
+  background-image:
+    linear-gradient(rgb(138 155 180 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(138 155 180 / 4%) 1px, transparent 1px),
+    linear-gradient(rgb(197 160 89 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(197 160 89 / 4%) 1px, transparent 1px);
+  background-size: 32px 32px, 32px 32px, 160px 160px, 160px 160px;
+  mask-image: linear-gradient(to bottom, black 0%, rgb(0 0 0 / 45%) 65%, transparent 100%);
+}
+.app-shell.tactical-bg::after {
+  z-index: 0;
+  background-image:
+    repeating-radial-gradient(circle at 86% 8%, rgb(197 160 89 / 7%) 0 1px, transparent 1px 74px),
+    repeating-radial-gradient(circle at 12% 82%, rgb(117 200 255 / 4%) 0 1px, transparent 1px 110px),
+    linear-gradient(74deg, transparent 49.88%, rgb(197 160 89 / 6%) 50%, transparent 50.12%),
+    radial-gradient(ellipse at 82% 0%, rgb(24 67 117 / 16%), transparent 38%);
+}
+.app-shell > .mx-auto { position: relative; z-index: 1; }
+.app-shell > .mobile-nav,
+.app-shell > .mobile-drawer-backdrop { z-index: 50; }
+
+/* Stronger command sidebar and hierarchy */
+.sidebar {
+  background: rgb(7 14 31 / 96%) !important;
+  border-right: 1px solid rgb(197 160 89 / 22%) !important;
+  box-shadow: 12px 0 36px rgb(0 0 0 / 22%) !important;
+}
+.sidebar > div { padding-left: 1.15rem; padding-right: 1.15rem; }
+.brand-block { padding-bottom: 1.35rem; border-bottom: 1px solid rgb(197 160 89 / 20%); }
+.brand-mark {
+  width: 44px; height: 44px;
+  border: 1px solid rgb(197 160 89 / 54%) !important;
+  border-radius: 10px !important;
+  color: #D4AF37 !important;
+  background: linear-gradient(145deg, rgb(197 160 89 / 15%), rgb(14 26 56 / 96%)) !important;
+  box-shadow: inset 0 0 0 3px rgb(197 160 89 / 4%), 0 0 22px rgb(197 160 89 / 7%) !important;
+}
+.brand-block .font-display { letter-spacing: .11em; font-size: .72rem; }
+.nav-caption { margin: 1rem 0 .7rem .65rem; color: #657995; font-size: .59rem; letter-spacing: .22em; }
+.nav-item {
+  min-height: 46px;
+  padding: .8rem .8rem;
+  border-radius: 6px !important;
+  border-color: transparent;
+  font-size: .8rem;
+  letter-spacing: .015em;
+}
+.nav-item:hover { background: rgb(20 36 66 / 78%) !important; border-color: rgb(197 160 89 / 15%) !important; }
+.nav-active {
+  color: #E8D8B2 !important;
+  background: linear-gradient(90deg, rgb(197 160 89 / 15%), rgb(197 160 89 / 4%)) !important;
+  border: 1px solid rgb(197 160 89 / 27%) !important;
+  box-shadow: inset 3px 0 0 #C5A059, 0 5px 18px rgb(0 0 0 / 12%) !important;
+}
+.profile-strip { background: #0D1930 !important; border-color: rgb(197 160 89 / 17%) !important; }
+
+/* Page title becomes a tactical module header */
+main { min-width: 0; }
+.page-header {
+  position: relative;
+  min-height: 104px;
+  align-items: center;
+  padding: 1.15rem 1.25rem 1.4rem;
+  margin: 0 0 1.4rem;
+  border: 1px solid rgb(197 160 89 / 19%);
+  border-top-color: rgb(197 160 89 / 35%);
+  border-radius: 10px;
+  background: linear-gradient(105deg, rgb(14 26 56 / 96%), rgb(10 17 40 / 88%));
+  box-shadow: 0 14px 34px rgb(0 0 0 / 17%), inset 0 1px 0 rgb(255 255 255 / 2%);
+}
+.page-header::after {
+  content: "COMMAND / LIVE SYSTEM";
+  position: absolute;
+  right: 1rem;
+  bottom: .48rem;
+  color: rgb(138 155 180 / 65%);
+  font-size: .52rem;
+  letter-spacing: .2em;
+}
+.page-title {
+  margin-top: .35rem;
+  color: #F0F4FA;
+  font-size: clamp(1.55rem, 2.7vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -.045em;
+}
+.page-subtitle { color: #8A9BB4; font-size: .78rem; }
+.label-hud { color: #8A9BB4; font-size: .61rem; letter-spacing: .2em; }
+.system-status {
+  border-radius: 5px !important;
+  border-color: rgb(67 199 139 / 28%) !important;
+  background: rgb(36 132 94 / 8%);
+  color: #A3D9C1 !important;
+}
+.page-intro {
+  color: #C5A059 !important;
+  font-size: .58rem !important;
+  letter-spacing: .24em !important;
+  margin-bottom: 1.25rem !important;
+}
+.page-intro-line { background: linear-gradient(90deg, rgb(197 160 89 / 40%), rgb(197 160 89 / 4%)) !important; }
+
+/* Cards: opaque command panels, visible edges, gold HUD corner markers */
+.panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(197 160 89 / 19%) !important;
+  border-radius: 9px !important;
+  background: linear-gradient(145deg, rgb(14 26 56 / 98%), rgb(10 18 39 / 98%)) !important;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 17%), inset 0 1px 0 rgb(255 255 255 / 2%) !important;
+  backdrop-filter: blur(12px);
+}
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 23px; height: 23px;
+  border-top: 1px solid rgb(212 175 55 / 70%);
+  border-left: 1px solid rgb(212 175 55 / 70%);
+  pointer-events: none;
+  opacity: .8;
+}
+.panel::after {
+  content: "";
+  position: absolute;
+  right: 0; bottom: 0;
+  width: 18px; height: 18px;
+  border-right: 1px solid rgb(197 160 89 / 48%);
+  border-bottom: 1px solid rgb(197 160 89 / 48%);
+  pointer-events: none;
+}
+.stat-card-command {
+  min-height: 158px !important;
+  padding: 1.15rem !important;
+  border-top-color: rgb(197 160 89 / 34%) !important;
+  background: linear-gradient(145deg, #101F40, #0C1730) !important;
+}
+.stat-card-command::before { width: 34px; height: 34px; }
+.stat-card-command::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: auto 0 0 0 !important;
+  width: auto !important; height: 2px !important;
+  border: 0 !important;
+  background: linear-gradient(90deg, #C5A059, rgb(197 160 89 / 14%), transparent 85%) !important;
+  opacity: .8 !important;
+}
+.stat-label { color: #8A9BB4 !important; font-size: .61rem !important; letter-spacing: .16em !important; }
+.stat-value-row { min-height: 48px; }
+.stat-value-row .num { color: #F0F4FA; font-size: clamp(1.75rem, 2.6vw, 2.35rem) !important; letter-spacing: -.045em; }
+.stat-icon {
+  border: 1px solid rgb(197 160 89 / 23%);
+  border-radius: 7px !important;
+  background: rgb(197 160 89 / 8%) !important;
+  color: #D4AF37 !important;
+}
+.section-heading, .section-heading-command {
+  margin-top: 2.35rem !important;
+  padding: 0 0 .8rem;
+  border-bottom: 1px solid rgb(197 160 89 / 20%) !important;
+}
+.section-heading h2 { color: #E6ECF5; font-size: 1.05rem; letter-spacing: -.02em; }
+.section-heading .label-hud { color: #C5A059; }
+
+/* Tables, inputs, and action controls */
+.content-area input, .content-area select, .content-area textarea,
+.auth-form input {
+  border-color: rgb(138 155 180 / 27%) !important;
+  border-radius: 6px !important;
+  background: #0A142B !important;
+}
+.content-area th { color: #8A9BB4 !important; letter-spacing: .16em !important; }
+.content-area td, .content-area th { border-color: rgb(197 160 89 / 12%); }
+button.bg-primary, a.bg-primary, .bg-primary {
+  border-radius: 6px;
+  background-image: none !important;
+  background-color: #C5A059 !important;
+  color: #0A1128 !important;
+  font-weight: 750;
+}
+button, a { transition-duration: 160ms; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #D4AF37; outline-offset: 3px; }
+
+/* Mobile command dock — dark navy, crisp active state, safe-area aware */
+.mobile-nav {
+  padding: .4rem .3rem calc(.4rem + env(safe-area-inset-bottom)) !important;
+  border-top: 1px solid rgb(197 160 89 / 26%) !important;
+  background: rgb(7 14 31 / 97%) !important;
+  box-shadow: 0 -12px 36px rgb(0 0 0 / 28%);
+  backdrop-filter: blur(20px) saturate(125%);
+}
+.mobile-nav-item { min-height: 3.4rem; color: #788AA5 !important; font-size: .62rem !important; letter-spacing: .015em; }
+.mobile-nav-active {
+  color: #E8D8B2 !important;
+  background: rgb(197 160 89 / 8%);
+  border-radius: 6px;
+}
+.mobile-nav-active svg { filter: drop-shadow(0 0 5px rgb(197 160 89 / 20%)); }
+.mobile-menu-button {
+  border: 1px solid rgb(197 160 89 / 28%) !important;
+  border-radius: 6px !important;
+  background: #101F3B !important;
+  color: #D4AF37 !important;
+}
+.mobile-drawer {
+  background: #080F22 !important;
+  border-color: rgb(197 160 89 / 25%) !important;
+}
+.mobile-drawer-backdrop { background: rgb(2 7 17 / 78%) !important; backdrop-filter: blur(6px); }
+
+@media (min-width: 1024px) {
+  .app-shell > .mx-auto > main { padding: 2rem 2.25rem 3rem !important; }
+  .content-area { max-width: 1280px !important; }
+}
+@media (max-width: 640px) {
+  .app-shell > .mx-auto > main { padding: .75rem .75rem 1.25rem !important; }
+  .page-header { min-height: 94px; padding: .95rem .9rem 1.4rem; margin-bottom: 1rem; border-radius: 8px; }
+  .page-header::after { right: .7rem; font-size: .46rem; }
+  .page-title { font-size: 1.45rem; }
+  .page-subtitle { font-size: .72rem; }
+  .content-area .panel { padding: 1rem !important; }
+  .stat-card-command { min-height: 132px !important; padding: .95rem !important; }
+  .stat-value-row .num { font-size: 1.65rem !important; }
+  .section-heading, .section-heading-command { margin-top: 1.65rem !important; }
+}
