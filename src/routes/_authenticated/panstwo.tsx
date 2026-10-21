@@ -129,7 +129,7 @@ function MyCountry() {
         <CountryFlag
           flag={country.flag}
           alt={"Flaga państwa " + country.name}
-          className="h-12 w-20 rounded-sm text-2xl"
+          className="h-16 w-24 rounded-sm text-3xl"
         />
         <div className="min-w-0 flex-1">
           <p className="label-hud">PAŃSTWO</p>
