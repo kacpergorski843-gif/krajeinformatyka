@@ -333,7 +333,7 @@ function Update4Tools() {
   const countryOptions = useMemo(
     () => (countries ?? []).map((item) => (
       <SelectItem key={item.country_id} value={item.country_id}>
-        <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />
+        <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-5 w-7 rounded-sm align-middle" />
         {item.name}
       </SelectItem>
     )),
@@ -568,7 +568,7 @@ function Update4Tools() {
               <Label>Kraj</Label>
               <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); setOccupationTargetCountry(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz kraj" /></SelectTrigger>
-                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-5 w-7 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="admin-v4-field">
@@ -583,7 +583,7 @@ function Update4Tools() {
             <Label>Nowy właściciel</Label>
             <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
               <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz nowe państwo" : "Najpierw wybierz region"} /></SelectTrigger>
-              <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
+              <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-5 w-7 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="admin-v4-summary admin-v4-summary-danger">
@@ -1366,7 +1366,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
                     <SelectContent>
                       <SelectItem value="unassigned" disabled>Brak przypisania</SelectItem>
                       {(countryQuery.data ?? []).map((country) => (
-                        <SelectItem key={country.country_id} value={country.country_id}><CountryFlag flag={country.flag} alt="" className="mr-1 inline-block h-4 w-6 rounded-sm align-middle text-base" />{country.name}</SelectItem>
+                        <SelectItem key={country.country_id} value={country.country_id}><CountryFlag flag={country.flag} alt="" className="mr-1 inline-block h-5 w-7 rounded-sm align-middle text-lg" />{country.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
