@@ -154,10 +154,10 @@
     z-index: -2;
     pointer-events: none;
     background-image:
-      linear-gradient(oklch(0.84 0.13 185 / 3.5%) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.84 0.13 185 / 3.5%) 1px, transparent 1px),
-      linear-gradient(oklch(0.84 0.13 185 / 6%) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.84 0.13 185 / 6%) 1px, transparent 1px);
+      linear-gradient(oklch(0.84 0.12 89 / 3.5%) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.84 0.12 89 / 3.5%) 1px, transparent 1px),
+      linear-gradient(oklch(0.84 0.12 89 / 6%) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.84 0.12 89 / 6%) 1px, transparent 1px);
     background-size:
       36px 36px,
       36px 36px,
@@ -179,11 +179,11 @@
       ),
       repeating-radial-gradient(
         circle at 12% 82%,
-        oklch(0.84 0.13 185 / 5%) 0 1px,
+        oklch(0.84 0.12 89 / 5%) 0 1px,
         transparent 1px 120px
       ),
       linear-gradient(76deg, transparent 49.85%, oklch(0.76 0.125 231 / 7%) 50%, transparent 50.15%),
-      linear-gradient(-58deg, transparent 39.9%, oklch(0.84 0.13 185 / 5%) 40%, transparent 40.2%),
+      linear-gradient(-58deg, transparent 39.9%, oklch(0.84 0.12 89 / 5%) 40%, transparent 40.2%),
       radial-gradient(120% 70% at 50% -15%, oklch(0.31 0.06 258 / 55%), transparent 70%);
   }
 }
@@ -207,7 +207,7 @@
     width: 10px;
     height: 10px;
     pointer-events: none;
-    border-color: oklch(0.78 0.15 190 / 55%);
+    border-color: oklch(0.76 0.116 88 / 55%);
   }
 
   &::before {
