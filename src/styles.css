@@ -60,48 +60,48 @@
   --radius: 0.375rem;
 
   /* Luxury dark palette: charcoal, ivory, muted gold */
-  --background: #171717;
-  --foreground: #F4EFE6;
-  --card: #202020;
-  --card-foreground: #F4EFE6;
-  --popover: #202020;
-  --popover-foreground: #F4EFE6;
-  --secondary: #2A2927;
-  --secondary-foreground: #F4EFE6;
-  --muted: #2A2927;
-  --muted-foreground: #B8B1A6;
+  --background: #071426;
+  --foreground: #F4F3EC;
+  --card: rgb(14 35 59 / 82%);
+  --card-foreground: #F4F3EC;
+  --popover: #0D2138;
+  --popover-foreground: #F4F3EC;
+  --secondary: #132D49;
+  --secondary-foreground: #F4F3EC;
+  --muted: #102741;
+  --muted-foreground: #A8BCD0;
 
-  --brass: #A98A55;
-  --primary: #C5A46D;
-  --primary-foreground: #171717;
-  --accent: #D6B982;
-  --accent-foreground: #171717;
+  --brass: #FFD700;
+  --primary: #FFD700;
+  --primary-foreground: #071426;
+  --accent: #FFF0A6;
+  --accent-foreground: #071426;
 
   /* Status */
   --success: #58A879;
   --destructive: #D85B52;
   --destructive-foreground: #FFF8F0;
-  --info: #7EA6C9;
-  --inactive: #77736D;
+  --info: #75C8FF;
+  --inactive: #71859B;
 
-  --border: #3A3732;
-  --input: #49443B;
-  --ring: #C5A46D;
+  --border: rgb(117 200 255 / 22%);
+  --input: rgb(117 200 255 / 30%);
+  --ring: #FFD700;
 
-  --chart-1: #C5A46D;
-  --chart-2: #7EA6C9;
+  --chart-1: #FFD700;
+  --chart-2: #75C8FF;
   --chart-3: #58A879;
   --chart-4: #D85B52;
-  --chart-5: #A98A55;
+  --chart-5: #FFF0A6;
 
-  --sidebar: #202020;
-  --sidebar-foreground: #F4EFE6;
-  --sidebar-primary: #C5A46D;
-  --sidebar-primary-foreground: #171717;
-  --sidebar-accent: #302D27;
-  --sidebar-accent-foreground: #F4EFE6;
-  --sidebar-border: #3A3732;
-  --sidebar-ring: #C5A46D;
+  --sidebar: rgb(7 23 41 / 94%);
+  --sidebar-foreground: #F4F3EC;
+  --sidebar-primary: #FFD700;
+  --sidebar-primary-foreground: #071426;
+  --sidebar-accent: #12304F;
+  --sidebar-accent-foreground: #F4F3EC;
+  --sidebar-border: rgb(117 200 255 / 20%);
+  --sidebar-ring: #FFD700;
 
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
@@ -2326,10 +2326,10 @@ table { border-collapse: separate; border-spacing: 0; }
   --secondary-foreground: #172C46;
   --muted: #E8EEF5;
   --muted-foreground: #52677F;
-  --brass: #315A85;
+  --brass: #B68B00;
   --primary: #315A85;
   --primary-foreground: #FFFFFF;
-  --accent: #DCE8F4;
+  --accent: #FFF0A6;
   --accent-foreground: #172C46;
   --success: #237A50;
   --destructive: #B93838;
@@ -2338,8 +2338,8 @@ table { border-collapse: separate; border-spacing: 0; }
   --inactive: #7A8A9C;
   --border: #D6E0EB;
   --input: #C8D5E3;
-  --ring: #315A85;
-  --chart-1: #315A85;
+  --ring: #B68B00;
+  --chart-1: #B68B00;
   --chart-2: #6E9CCB;
   --chart-3: #39845D;
   --chart-4: #C64D4D;
@@ -2351,7 +2351,7 @@ table { border-collapse: separate; border-spacing: 0; }
   --sidebar-accent: #DCE8F4;
   --sidebar-accent-foreground: #172C46;
   --sidebar-border: #D6E0EB;
-  --sidebar-ring: #315A85;
+  --sidebar-ring: #B68B00;
 }
 .light body { background-color: var(--background); color: var(--foreground); }
 .light .app-shell,
@@ -2390,3 +2390,83 @@ table { border-collapse: separate; border-spacing: 0; }
   .theme-toggle { width: 2.7rem; padding: .6rem; }
   .theme-toggle span { display: none; }
 }
+
+
+/* Holographic gold + blue-glass art direction */
+:root {
+  --gold-strong: #FFD700;
+  --gold-light: #FFF0A6;
+  --blue-glow: #75C8FF;
+  --glass-surface: rgb(14 35 59 / 64%);
+}
+html:not(.light) body {
+  background-image:
+    radial-gradient(ellipse at 12% 0%, rgb(24 99 158 / 25%), transparent 43%),
+    radial-gradient(ellipse at 88% 20%, rgb(23 77 132 / 20%), transparent 38%),
+    linear-gradient(145deg, #071426 0%, #0A1B30 52%, #071426 100%);
+  background-attachment: fixed;
+}
+html:not(.light) .panel {
+  background: linear-gradient(135deg, rgb(19 49 78 / 78%), rgb(8 27 47 / 86%));
+  border-color: rgb(117 200 255 / 24%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%), 0 12px 34px rgb(0 0 0 / 22%), 0 0 22px rgb(49 129 190 / 7%);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+html:not(.light) .sidebar,
+html:not(.light) .mobile-nav,
+html:not(.light) .mobile-drawer {
+  background-color: rgb(7 23 41 / 88%);
+  border-color: rgb(117 200 255 / 22%);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+html:not(.light) .nav-active,
+html:not(.light) .mobile-nav-item.mobile-nav-active {
+  color: var(--gold-light);
+  background: linear-gradient(110deg, rgb(255 215 0 / 13%), rgb(117 200 255 / 6%));
+  box-shadow: inset 0 0 0 1px rgb(255 215 0 / 25%), 0 0 18px rgb(255 215 0 / 5%);
+}
+html:not(.light) .brand-mark {
+  color: #071426;
+  background: linear-gradient(135deg, #FFF0A6 0%, #FFD700 48%, #B88700 100%);
+  border: 1px solid rgb(255 240 166 / 80%);
+  box-shadow: 0 0 20px rgb(255 215 0 / 24%), inset 0 1px 0 rgb(255 255 255 / 65%);
+}
+html:not(.light) .bg-primary,
+html:not(.light) button.bg-primary,
+html:not(.light) a.bg-primary {
+  background-image: linear-gradient(125deg, #FFF0A6 0%, #FFD700 38%, #E6AE00 72%, #FFF0A6 100%);
+  border: 1px solid rgb(255 240 166 / 85%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 65%), 0 0 20px rgb(255 215 0 / 17%), 0 5px 14px rgb(0 0 0 / 18%);
+}
+html:not(.light) .text-primary { color: var(--gold-strong); }
+html:not(.light) .border-primary,
+html:not(.light) .hud-frame::before,
+html:not(.light) .hud-frame::after {
+  border-color: rgb(255 215 0 / 70%);
+}
+html:not(.light) .theme-toggle {
+  background: linear-gradient(140deg, rgb(16 44 72 / 94%), rgb(7 23 41 / 96%));
+  border-color: rgb(117 200 255 / 35%);
+  box-shadow: 0 0 20px rgb(49 129 190 / 12%);
+}
+html:not(.light) .tactical-bg::before {
+  background-image: linear-gradient(rgb(117 200 255 / 4%) 1px, transparent 1px), linear-gradient(90deg, rgb(117 200 255 / 4%) 1px, transparent 1px), linear-gradient(rgb(117 200 255 / 7%) 1px, transparent 1px), linear-gradient(90deg, rgb(117 200 255 / 7%) 1px, transparent 1px);
+}
+html:not(.light) .tactical-bg::after {
+  background-image: repeating-radial-gradient(circle at 78% 12%, rgb(117 200 255 / 7%) 0 1px, transparent 1px 88px), repeating-radial-gradient(circle at 12% 82%, rgb(255 215 0 / 5%) 0 1px, transparent 1px 120px), linear-gradient(76deg, transparent 49.85%, rgb(117 200 255 / 9%) 50%, transparent 50.15%), radial-gradient(120% 70% at 50% -15%, rgb(24 99 158 / 34%), transparent 70%);
+}
+html.light .panel {
+  border-color: rgb(49 90 133 / 18%);
+  box-shadow: 0 10px 28px rgb(23 44 70 / 7%);
+}
+html.light .brand-mark {
+  color: #172C46;
+  background: linear-gradient(135deg, #FFF0A6, #E5BD3E 58%, #B68B00);
+  box-shadow: 0 3px 12px rgb(182 139 0 / 18%);
+}
+html.light .bg-primary,
+html.light button.bg-primary,
+html.light a.bg-primary {
+  box-shadow: 0 4px 12px rgb(49 90 133 / 14%);
+}
+html.light .text-primary { color: #315A85; }
