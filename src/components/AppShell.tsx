@@ -101,9 +101,9 @@ export function AppShell({ me, title, subtitle, children }: {
     </div>
     <nav className="mobile-nav lg:hidden" aria-label="Główna nawigacja">
       {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep", "/ranking"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} preload="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
-        <item.icon className="size-5" strokeWidth={1.8}/><span>{item.to === "/panstwo" ? "Moje" : item.label}</span>
+        <item.icon strokeWidth={1.8}/><span>{item.to === "/panstwo" ? "Moje" : item.label}</span>
       </Link>)}
-      <button className="mobile-nav-item" onClick={() => setMobileOpen(true)} aria-label="Otwórz pełne menu"><ShieldHalf className="size-5"/><span>Panel</span></button>
+      <button className="mobile-nav-item" onClick={() => setMobileOpen(true)} aria-label="Otwórz pełne menu"><ShieldHalf/><span>Panel</span></button>
     </nav>
     {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" role="presentation" onClick={() => setMobileOpen(false)}>
       <aside className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
