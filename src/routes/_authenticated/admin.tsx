@@ -674,8 +674,8 @@ function AdminPanel() {
   }
 
   return (
-    <AppShell me={me ?? null} title="Centrum dowodzenia" subtitle="Administracja Nation Dynamics">
-      <div className="min-w-0 space-y-4 overflow-x-clip">
+    <AppShell me={me ?? null} title="Administracja" subtitle="Państwa, gracze i zarządzanie rozgrywką">
+      <div className="min-w-0 space-y-6 overflow-x-clip">
         <AdminDataExportButton />
         <AdminKpis />
 
@@ -698,7 +698,7 @@ function AdminPanel() {
           </div>
           <div className="admin-tabs-desktop hidden min-w-0 sm:block">
             <div className="admin-scrollbar max-w-full overflow-x-auto">
-              <TabsList className="flex h-auto w-max min-w-full justify-start border border-border/70 bg-card/80 p-1">
+              <TabsList className="flex h-auto w-full flex-wrap justify-start bg-secondary p-1">
                 <AdminTab value="countries" icon={<Building2 />}>Państwa</AdminTab>
                 <AdminTab value="users" icon={<UserCog />}>Użytkownicy</AdminTab>
                 <AdminTab value="suggestions" icon={<Flag />}>Propozycje</AdminTab>
@@ -773,7 +773,7 @@ function AdminDataExportButton() {
   };
 
   return (
-    <Panel className="hud-frame flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-w-0 flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="label-hud">EKSPORT DANYCH</p>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -784,7 +784,7 @@ function AdminDataExportButton() {
         <FileDown />
         {pending ? "Przygotowywanie…" : "Eksportuj dane → PDF"}
       </Button>
-    </Panel>
+    </div>
   );
 }
 
@@ -871,7 +871,7 @@ function CountriesTab() {
   return (
     <div className="min-w-0 space-y-4">
       <Panel className="hud-frame min-w-0 p-3 sm:p-4">
-        <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_14rem_auto]">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_11rem_12rem_auto]">
           <div className="relative min-w-0">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input className="min-w-0 pl-9" placeholder="Szukaj państwa…" value={search} onChange={(event) => setSearch(event.target.value)} />
@@ -891,23 +891,23 @@ function CountriesTab() {
 
       {countryQuery.isLoading ? <LoadingRows /> : list.length === 0 ? <HudState icon={<Search />} title="Brak wyników" description="Zmień wyszukiwanie lub wybrane filtry." /> : (
         <>
-        <div className="grid gap-2 sm:hidden">
+        <div className="grid gap-3 lg:hidden">
           {list.slice(0, visibleCount).map((country) => {
             const owned = ownerIds.has(country.country_id);
             return (
-              <button key={country.country_id} type="button" onClick={() => setOpenId(country.country_id)} className="panel grid min-h-[4.5rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 text-left active:bg-secondary/40">
+              <Button variant="ghost" key={country.country_id} type="button" onClick={() => setOpenId(country.country_id)} className="panel grid h-auto min-h-[6rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 p-4 text-left active:bg-secondary/40">
                 <span className="grid size-10 shrink-0 place-items-center overflow-hidden border border-border bg-secondary"><CountryFlag flag={country.flag} alt={`Flaga ${country.name}`} className="size-full rounded-sm" /></span>
                 <span className="min-w-0">
-                  <span className="block truncate font-semibold">{country.name}</span>
+                  <span className="block font-semibold [overflow-wrap:anywhere]">{country.name}</span>
                   <span className="num block truncate text-sm text-primary">{fmtKR(country.balance)}</span>
-                  <span className="block truncate text-[11px] text-muted-foreground">+{fmtKR(country.gross_income)} / doba · {country.regions_count} reg. · {owned ? "Przypisane" : "Wolne"}</span>
+                  <span className="mt-1 block text-xs font-normal text-muted-foreground">+{fmtKR(country.gross_income)} / doba · {country.regions_count} reg. · {owned ? "Przypisane" : "Wolne"}</span>
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </button>
+              </Button>
             );
           })}
         </div>
-        <Panel className="hidden min-w-0 overflow-hidden p-0 sm:block">
+        <Panel className="hidden min-w-0 overflow-hidden p-0 lg:block">
           <div className="admin-scrollbar max-w-full overflow-x-auto">
             <div className="min-w-[46rem]">
               <div className="grid grid-cols-[minmax(14rem,1.5fr)_10rem_7rem_8rem_2rem] gap-3 border-b border-border bg-secondary/40 px-4 py-2 text-[10px] uppercase text-muted-foreground">
