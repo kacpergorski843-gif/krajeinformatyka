@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    mode: search.mode === "signup" ? "signup" as const : "login" as const,
+  validateSearch: (search: Record<string, unknown>): { mode?: "signup" | "login" } => ({
+    mode: search.mode === "signup" ? "signup" : "login",
   }),
   head: () => ({ meta: [
     { title: "Logowanie — Kraje Informatyka" },
@@ -30,7 +30,7 @@ function normalizeUsername(raw: string) { return raw.trim().toLowerCase().replac
 function AuthPage() {
   const router = useRouter();
   const search = Route.useSearch();
-  const [mode, setMode] = useState<"login" | "signup">(search.mode);
+  const [mode, setMode] = useState<"login" | "signup">(search.mode ?? "login");
   const [username, setUsername] = useState(""); const [password, setPassword] = useState(""); const [showPassword, setShowPassword] = useState(false); const [busy, setBusy] = useState(false); const usernameRef = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState(false); useEffect(() => { setReady(true); }, []); useEffect(() => { usernameRef.current?.focus(); }, [mode]);
   function goNext() {
