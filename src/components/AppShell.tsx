@@ -66,7 +66,7 @@ export function AppShell({ me, title, subtitle, children }: {
     </div>
   );
 
-  return <div className="app-shell min-h-screen pb-20 lg:pb-0">
+  return <div className="app-shell min-h-screen">
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
       <aside className="sidebar hidden w-[17rem] shrink-0 lg:flex">
         <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
@@ -96,12 +96,6 @@ export function AppShell({ me, title, subtitle, children }: {
         <div className="content-area"><div className="page-intro"><span>LIVE OPERATIONS</span><span className="page-intro-line" /></div>{children}</div>
       </main>
     </div>
-    <nav className="mobile-nav lg:hidden" aria-label="Główna nawigacja">
-      {items.filter((item) => ["/panstwo", "/swiat", "/regiony", "/sklep"].includes(item.to)).map((item) => <Link key={item.to} to={item.to} prefetch="intent" activeProps={{ className: "mobile-nav-active" }} className="mobile-nav-item">
-        <item.icon className="size-5" strokeWidth={1.8}/><span>{item.label}</span>
-      </Link>)}
-      <button className="mobile-nav-item" onClick={() => setMobileOpen(true)} aria-label="Otwórz pełne menu"><Menu className="size-5"/><span>Menu</span></button>
-    </nav>
     {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" role="presentation" onClick={() => setMobileOpen(false)}>
       <aside className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Activity className="size-5"/></div><span className="font-display font-bold tracking-[0.18em]">COUNTRY RP</span></div>
