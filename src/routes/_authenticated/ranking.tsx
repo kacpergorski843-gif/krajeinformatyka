@@ -56,11 +56,11 @@ function RankingBlock({ metric, countries, myCountryId }: { metric: Metric; coun
       </div>
       <div className="divide-y divide-border/70">
         {ranked.map((c, index) => (
-          <div key={c.country_id} className={`grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 ${c.country_id === myCountryId ? "bg-primary/[0.06]" : ""}`}>
+          <div key={c.country_id} className={`ranking-row grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 ${c.country_id === myCountryId ? "bg-primary/[0.06]" : ""}`}>
             <span className="num text-muted-foreground text-sm">{index + 1}</span>
             <span className="flex min-w-0 items-center gap-2.5">
               <CountryFlag flag={c.flag} alt="" className="h-6 w-9 shrink-0 rounded-sm text-lg" />
-              <span className="min-w-0 truncate text-sm font-semibold">{c.name}</span>
+              <span className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">{c.name}</span>
             </span>
             <span className="num text-right text-sm font-semibold text-primary">{metric.value(c)}</span>
           </div>
@@ -87,7 +87,7 @@ function Ranking() {
     {isError ? <Panel className="mt-4 border-destructive/40 bg-destructive/5 p-5"><p className="font-semibold text-destructive">Nie udało się wczytać rankingów</p><p className="mt-1 text-sm text-muted-foreground">{error instanceof Error ? error.message : "Spróbuj ponownie za chwilę."}</p></Panel> : null}
     {!isPending && !isError ? (
       <>
-        <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl border border-border/70 bg-secondary/20 p-1">
+        <div className="ranking-selector mt-6 grid grid-cols-3 gap-2 rounded-md bg-secondary p-1">
           {metrics.map((metric) => {
             const active = activeMetric === metric.key;
             return (
@@ -96,12 +96,12 @@ function Ranking() {
                 type="button"
                 variant={active ? "default" : "ghost"}
                 size="sm"
-                className="min-h-10 rounded-lg px-2 text-xs sm:text-sm"
+                className="min-h-12 rounded-md px-3 text-xs sm:text-sm"
                 onClick={() => setActiveMetric(metric.key)}
                 aria-pressed={active}
               >
                 <metric.Icon className="size-4 shrink-0" />
-                <span className="truncate">{metric.label}</span>
+                <span>{metric.label}</span>
               </Button>
             );
           })}

@@ -45,9 +45,9 @@ function RankingBlock({ metric, rows }: { metric: Metric; rows: Row[] }) {
       <div><p className="font-display text-sm font-semibold">{metric.label}</p><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Ranking #1 → #N</p></div>
     </div>
     <div className="divide-y divide-border/70">
-      {ranked.map((country, index) => <div key={country.country_id} className="grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5">
+      {ranked.map((country, index) => <div key={country.country_id} className="ranking-row grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4">
         <span className="num text-muted-foreground text-sm">{index + 1}</span>
-        <span className="min-w-0 truncate text-sm font-semibold">{country.name}</span>
+        <span className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">{country.name}</span>
         <span className="num text-right text-sm font-semibold text-primary">{metric.value(country)}</span>
       </div>)}
     </div>
@@ -64,12 +64,11 @@ function PublicRanking() {
       <Link to="/" className="text-muted-foreground inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm hover:bg-secondary/50"><ArrowLeft className="size-3.5" strokeWidth={1.5} /> Strona główna</Link>
       <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Rankingi państw</h1>
       <p className="label-hud">Trzy niezależne rankingi</p>
-      <p className="mt-5 text-sm text-muted-foreground">Każda wartość ma własną tabelę i własną kolejność miejsc.</p>
       {isLoading ? <p className="text-muted-foreground mt-6 text-sm">Wczytywanie…</p> : null}
       {isError ? <p className="text-destructive mt-6 text-sm">Nie udało się wczytać rankingów.</p> : null}
       {!isLoading && !isError ? (
         <>
-          <div className="mt-5 grid grid-cols-3 gap-1 rounded-xl border border-border/70 bg-secondary/20 p-1">
+          <div className="ranking-selector mt-6 grid grid-cols-3 gap-2 rounded-md bg-secondary p-1">
             {metrics.map((metric) => {
               const active = activeMetric === metric.key;
               return (
@@ -78,12 +77,12 @@ function PublicRanking() {
                   type="button"
                   variant={active ? "default" : "ghost"}
                   size="sm"
-                  className="min-h-10 rounded-lg px-2 text-xs sm:text-sm"
+                  className="min-h-12 rounded-md px-3 text-xs sm:text-sm"
                   onClick={() => setActiveMetric(metric.key)}
                   aria-pressed={active}
                 >
                   <metric.Icon className="size-4 shrink-0" />
-                  <span className="truncate">{metric.label}</span>
+                  <span>{metric.label}</span>
                 </Button>
               );
             })}

@@ -197,7 +197,7 @@ function Regions() {
 
       <div className="region-overview">
         <div>
-          <p className="label-hud">TERRITORY CONTROL</p>
+          <p className="label-hud">Terytorium</p>
           <h2 className="mt-1 text-xl font-semibold">Zarządzanie regionami</h2>
           <p className="mt-1 text-sm text-muted-foreground">Rozbudowuj infrastrukturę, kontroluj sloty i utrzymuj obronę każdego regionu.</p>
         </div>
@@ -205,14 +205,14 @@ function Regions() {
       </div>
 
       {country ? (
-        <Panel className="hud-frame mb-4 overflow-x-auto p-0">
-          <div className="divide-border grid min-w-max grid-cols-6 divide-x text-xs">
-            <div className="min-w-24 px-3 py-2.5">
+        <Panel className="hud-frame mb-6 overflow-hidden p-0">
+          <div className="resource-summary-grid grid grid-cols-2 text-sm sm:grid-cols-3 xl:grid-cols-6">
+            <div className="min-w-0 px-4 py-4">
               <p className="label-hud">Skarbiec</p>
               <p className="num text-primary mt-1">{fmtKR(country.balance)}</p>
             </div>
             {RESOURCES.map((r) => (
-              <div key={r} className="min-w-24 px-3 py-2.5">
+              <div key={r} className="min-w-0 px-4 py-4">
                 <p className="label-hud">{RESOURCE_LABELS[r]}</p>
                 <p
                   className={`num mt-1 ${Number(country[r]) === 0 ? "text-inactive" : "text-foreground"}`}
@@ -262,15 +262,20 @@ function Regions() {
         </div>
       ) : null}
 
-      <div className="space-y-2">
+      <div className="space-y-4">
         {(regions ?? []).map((r) => {
           const open = expanded === r.id;
           const free = 9 - r.slots.length;
           return (
             <Panel key={r.id} className="hud-frame p-0">
-              <button
+              <div
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-2 sm:p-3"
+              >
+              <Button
+                variant="ghost"
+                aria-expanded={open}
                 onClick={() => setExpanded(open ? null : r.id)}
-                className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left"
+                className="grid h-auto w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{r.name}</p>
@@ -290,6 +295,11 @@ function Regions() {
                     {units(r.aa_defense)} OPL
                   </span>
                 </span>
+                <ChevronDown
+                  className={`text-muted-foreground size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+                  strokeWidth={1.5}
+                />
+              </Button>
                 <Button
                   type="button"
                   variant="ghost"
@@ -304,11 +314,7 @@ function Regions() {
                 >
                   <Pencil className="size-4" strokeWidth={1.5} />
                 </Button>
-                <ChevronDown
-                  className={`text-muted-foreground size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-                  strokeWidth={1.5}
-                />
-              </button>
+              </div>
 
               {open ? (
                 <div className="border-border/70 border-t p-3">
