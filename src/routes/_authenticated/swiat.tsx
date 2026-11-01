@@ -15,6 +15,10 @@ export const Route = createFileRoute("/_authenticated/swiat")({
     meta: [
       { title: "Świat i państwa — COUNTRY RP" },
       { name: "description", content: "Przegląd państw, ich gospodarek, regionów i siły militarnej." },
+      { property: "og:title", content: "Świat — Kraje Informatyka" },
+      { property: "og:description", content: "Przegląd państw i regionów rozgrywki." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: World,
@@ -72,7 +76,7 @@ function World() {
               <div className="flex flex-wrap items-center gap-4 bg-secondary/20 p-5 sm:p-6">
                 <CountryFlag flag={c.flag} alt={`Flaga państwa ${c.name}`} className="h-12 w-20 shrink-0 rounded-md text-4xl shadow-sm" />
                 <div className="min-w-0 flex-1">
-                  <p className="label-hud">NATIONAL PROFILE</p>
+                  <p className="label-hud">Profil państwa</p>
                   <h2 className="mt-1 truncate text-2xl font-semibold">{c.name}</h2>
                   <p className="mt-1 text-sm text-muted-foreground">{c.country_id === me?.countryId ? "To jest Twoje państwo." : "Dane publiczne — tryb tylko do odczytu."}</p>
                 </div>

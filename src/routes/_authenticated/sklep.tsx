@@ -37,6 +37,8 @@ export const Route = createFileRoute("/_authenticated/sklep")({
         property: "og:description",
         content: "Kup fabryki, wytwórnie, wojsko i obronę przeciwlotniczą za KR i surowce.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Shop,

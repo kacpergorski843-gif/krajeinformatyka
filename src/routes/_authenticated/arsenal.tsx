@@ -38,6 +38,8 @@ export const Route = createFileRoute("/_authenticated/arsenal")({
         property: "og:description",
         content: "Rakiety, salwy i obrona przeciwlotnicza regionów.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Arsenal,

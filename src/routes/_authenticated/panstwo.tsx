@@ -26,6 +26,8 @@ export const Route = createFileRoute("/_authenticated/panstwo")({
         property: "og:description",
         content: "Pulpit dowodzenia: skarbiec, przychód dobowy, surowce, wojsko i regiony.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: MyCountry,

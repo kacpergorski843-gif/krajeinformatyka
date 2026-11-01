@@ -14,7 +14,14 @@ import { countriesQuery, meQuery, rpc, transferRegionsQuery } from "@/lib/api";
 import { fmtNum, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/transfer")({
-  head: () => ({ meta: [{ title: "Transfery — COUNTRY RP" }] }),
+  head: () => ({ meta: [
+    { title: "Transfery — Kraje Informatyka" },
+    { name: "description", content: "Przesyłaj środki, surowce i jednostki między państwami." },
+    { property: "og:title", content: "Transfery — Kraje Informatyka" },
+    { property: "og:description", content: "Przesyłaj środki, surowce i jednostki między państwami." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Transfers,
 });
 

@@ -14,7 +14,14 @@ import { agreementsQuery, countriesQuery, meQuery, rpc } from "@/lib/api";
 import { fmtKR, fmtNum } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/umowy")({
-  head: () => ({ meta: [{ title: "Umowy — COUNTRY RP" }] }),
+  head: () => ({ meta: [
+    { title: "Umowy — Kraje Informatyka" },
+    { name: "description", content: "Aktywne umowy i cykliczne wymiany między państwami." },
+    { property: "og:title", content: "Umowy — Kraje Informatyka" },
+    { property: "og:description", content: "Aktywne umowy i cykliczne wymiany między państwami." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AgreementsPage,
 });
 

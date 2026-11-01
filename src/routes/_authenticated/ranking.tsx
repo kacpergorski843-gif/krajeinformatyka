@@ -18,6 +18,8 @@ export const Route = createFileRoute("/_authenticated/ranking")({
     { name: "description", content: "Trzy osobne rankingi państw: produkcja KR, głosy wojenne i wartość militarna." },
     { property: "og:title", content: "Rankingi państw — Kraje Informatyka" },
     { property: "og:description", content: "Trzy osobne rankingi: produkcja KR, głosy wojenne i wartość militarna." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
   ]}),
   component: Ranking,
 });

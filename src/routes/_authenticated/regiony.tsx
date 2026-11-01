@@ -39,6 +39,8 @@ export const Route = createFileRoute("/_authenticated/regiony")({
         property: "og:description",
         content: "Zarządzaj 9 slotami w każdym regionie: fabryki, wytwórnie i fortyfikacje.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Regions,

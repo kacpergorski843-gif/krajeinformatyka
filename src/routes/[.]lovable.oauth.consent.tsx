@@ -29,6 +29,8 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
     { name: "description", content: "Zatwierdź dostęp zewnętrznej aplikacji do Twojego konta." },
     { property: "og:title", content: "Autoryzacja aplikacji — Nation Dynamics" },
     { property: "og:description", content: "Zatwierdź dostęp zewnętrznej aplikacji do Twojego konta." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
   ]}),
   validateSearch: (s: Record<string, unknown>) => ({
     authorization_id: typeof s.authorization_id === "string" ? s.authorization_id : "",
