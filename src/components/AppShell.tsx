@@ -90,7 +90,7 @@ export function AppShell({ me, title, subtitle, children }: {
           <div className="min-w-0"><div className="flex items-center gap-2"><span className="command-pulse" /><p className="label-hud">SYSTEM / {title.toUpperCase()}</p></div>
           <h1 className="page-title truncate">{title}</h1>{subtitle ? <p className="page-subtitle truncate">{subtitle}</p> : null}</div>
           <div className="flex items-center gap-2"><div className="system-status hidden sm:flex"><span /> ONLINE</div>
-            <button className="mobile-menu-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Otwórz menu" aria-expanded={mobileOpen}><Menu className="size-5" /></button>
+            <button className="mobile-menu-button lg:hidden" style={{ top: "auto", bottom: "max(1rem, env(safe-area-inset-bottom))" }} onClick={() => setMobileOpen(true)} aria-label="Otwórz menu" aria-expanded={mobileOpen}><Menu className="size-5" /></button>
           </div>
         </header>
         <div className="content-area"><div className="page-intro"><span>LIVE OPERATIONS</span><span className="page-intro-line" /></div>{children}</div>
