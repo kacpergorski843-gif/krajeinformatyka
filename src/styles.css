@@ -1494,3 +1494,19 @@ th,td { padding-block: 16px; }
 }
 @media(max-width:380px) { .entry-copy h1 { font-size: 36px; } .page-title { font-size: 24px; } .stat-value { font-size: 22px; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+.resource-summary-grid > div { border-bottom: 1px solid var(--border); }
+.resource-summary-grid > div:last-child { border-bottom: 0; }
+.shop-card { transition: border-color .15s ease; }
+.shop-card:hover { border-color: var(--primary) !important; }
+.ranking-row { min-height: 64px; }
+@media(max-width:767px) {
+  .ranking-selector { grid-template-columns: minmax(0,1fr); padding: 6px; }
+  .ranking-selector .ui-button { justify-content: flex-start; min-height: 44px; gap: 12px; font-size: 14px; padding: 10px 14px; }
+  .ranking-row { grid-template-columns: 24px minmax(0,1fr); gap: 6px 12px; }
+  .ranking-row > :first-child { grid-row: span 2; align-self: start; }
+  .ranking-row > :last-child { grid-column: 2; text-align: left; font-size: 13px; }
+}
+@media(min-width:768px) {
+  .resource-summary-grid > div { border: 0; border-right: 1px solid var(--border); }
+  .resource-summary-grid > div:last-child { border-right: 0; }
+}
