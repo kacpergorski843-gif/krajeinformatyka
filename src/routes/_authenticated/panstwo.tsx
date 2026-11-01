@@ -26,6 +26,8 @@ export const Route = createFileRoute("/_authenticated/panstwo")({
         property: "og:description",
         content: "Pulpit dowodzenia: skarbiec, przychód dobowy, surowce, wojsko i regiony.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: MyCountry,
@@ -267,17 +269,17 @@ function MyCountry() {
       </div>
 
       {/* Poziomy pasek zasobów */}
-      <Panel className="hud-frame mt-3 overflow-x-auto p-0">
-        <div className="divide-border grid min-w-max grid-cols-5 divide-x">
+      <Panel className="hud-frame mt-5 overflow-hidden p-0">
+        <div className="resource-summary-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
           {resources.map((r) => {
             const zero = Number(r.value) === 0;
             return (
-              <div key={r.key} className="min-w-28 px-3 py-2.5">
+              <div key={r.key} className="min-w-0 border-border px-5 py-5">
                 <div className="text-muted-foreground flex items-center gap-1.5">
                   <r.icon className="size-3.5" strokeWidth={1.5} />
                   <span className="text-[10px] tracking-[0.14em] uppercase">{r.label}</span>
                 </div>
-                <p className={`num mt-1 text-sm ${zero ? "text-inactive" : "text-foreground"}`}>
+                <p className={`num mt-3 text-xl ${zero ? "text-inactive" : "text-foreground"}`}>
                   {units(r.value)}
                 </p>
                 <p className={`text-[10px] ${Number(r.prod) > 0 ? "text-success" : "text-inactive"}`}>
@@ -299,9 +301,9 @@ function MyCountry() {
         Wojsko i obrona
       </SectionTitle>
       <Panel className="p-0">
-        <div className="divide-border grid grid-cols-3 divide-x divide-y sm:grid-cols-6 sm:divide-y-0">
+        <div className="resource-summary-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
           {military.map((m) => (
-            <div key={m.label} className="px-3 py-2.5">
+            <div key={m.label} className="min-w-0 px-5 py-5">
               <p className="text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
                 {m.label}
               </p>

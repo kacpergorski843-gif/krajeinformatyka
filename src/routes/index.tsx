@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Factory, Globe2, Shield, LineChart, UserPlus, LogIn, Trophy, Coins, Swords } from "lucide-react";
+import { ArrowRight, Factory, Globe2, Shield, LineChart, UserPlus, LogIn, Trophy, Landmark } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import worldImage from "@/assets/strategic-world.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
@@ -14,21 +16,38 @@ export const Route = createFileRoute("/")({
 });
 
 const FEATURES = [
-  { icon: Factory, title: "Gospodarka", text: "Rozwijaj produkcję i buduj dochód państwa.", stat: "+4.2B KR / doba" },
-  { icon: Globe2, title: "Regiony", text: "Rozwijaj infrastrukturę i kontroluj swoje terytorium.", stat: "9 slotów / region" },
-  { icon: Shield, title: "Arsenał", text: "Buduj obronę i zarządzaj arsenałem rakietowym.", stat: "OPL + rakiety I–III" },
-  { icon: LineChart, title: "Ranking", text: "Śledź pozycję swojego państwa i rywali.", stat: "Ranking państw" },
+  { icon: Factory, title: "Gospodarka", text: "Produkcja, surowce i finanse państwa." },
+  { icon: Globe2, title: "Regiony", text: "Terytorium i rozwój infrastruktury." },
+  { icon: Shield, title: "Wojsko", text: "Arsenał i obrona Twoich regionów." },
+  { icon: LineChart, title: "Ranking", text: "Pozycja państw w rozgrywce." },
 ];
 
 function Landing() {
-  return <div className="tactical-bg min-h-screen overflow-hidden">
-    <div className="mx-auto flex min-h-screen max-w-6xl items-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8"><div className="w-full"><main className="mx-auto max-w-3xl text-center lg:text-left">
-      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5"><span className="size-1.5 animate-pulse rounded-full bg-primary" /><span className="text-primary font-display text-[10px] font-semibold tracking-[0.28em] uppercase">Kraje Informatyka</span></div>
-      <h1 className="max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight sm:text-6xl">Zbuduj państwo.<span className="text-primary block">Przejmij inicjatywę.</span></h1>
-      <p className="text-muted-foreground mt-5 max-w-2xl text-sm leading-6 sm:text-base">Zarządzaj gospodarką, rozwijaj regiony, buduj potencjał militarny i walcz o pozycję w rankingu. Każda decyzja wpływa na rozwój Twojego państwa.</p>
-      <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap"><a href="/auth?mode=signup" className="bg-primary text-primary-foreground group flex min-h-12 items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 hover:shadow-primary/20"><UserPlus className="size-4" />Rozpocznij grę<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></a><Link to="/auth" className="border-primary/50 text-primary flex min-h-12 items-center justify-center gap-2 rounded-lg border px-6 py-3.5 text-sm font-semibold tracking-[0.1em] uppercase transition-colors hover:bg-primary/5"><LogIn className="size-4" />Mam już konto</Link><Link to="/ranking-publiczny" className="text-muted-foreground hover:text-foreground flex min-h-12 items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-xs font-semibold tracking-[0.1em] uppercase transition-colors"><Trophy className="size-4" />Ranking publiczny</Link></div>
-      <div className="mt-8 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[10px] text-muted-foreground lg:justify-start"><span className="inline-flex items-center gap-1.5"><Coins className="size-3.5 text-primary" />Ekonomia rozliczana serwerowo</span><span className="inline-flex items-center gap-1.5"><Swords className="size-3.5 text-primary" />Arsenał i obrona</span></div>
-    </main></div></div>
-    <div className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8"><div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">{FEATURES.map((f) => <div key={f.title} className="panel hud-frame group p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30"><f.icon className="text-primary size-5" strokeWidth={1.5} /><div className="mt-3 flex items-center justify-between gap-2"><p className="text-sm font-semibold">{f.title}</p><span className="text-primary/80 font-display text-[9px] uppercase">{f.stat}</span></div><p className="text-muted-foreground mt-1 text-xs leading-5">{f.text}</p></div>)}</div></div>
+  return <div className="entry-page">
+    <header className="entry-nav">
+      <Link to="/" className="brand-block" aria-label="Kraje Informatyka — strona główna">
+        <span className="brand-mark"><Landmark className="size-5" /></span>
+        <span className="brand-name">KRAJE INFORMATYKA</span>
+      </Link>
+      <Button variant="ghost" asChild><Link to="/ranking-publiczny"><Trophy />Ranking</Link></Button>
+    </header>
+    <main className="entry-hero">
+      <img src={worldImage} alt="Mapa świata w sali dowodzenia" width={1600} height={1008} fetchPriority="high" />
+      <div className="entry-copy">
+        <p className="label-hud mb-4">Rozgrywka państwowa</p>
+        <h1>Kraje Informatyka</h1>
+        <p>Twoje państwo. Twoje decyzje.<br />Rozwijaj gospodarkę, zarządzaj regionami i buduj swoją pozycję w świecie.</p>
+        <div className="entry-actions">
+          <Button size="lg" asChild><a href="/auth?mode=signup"><UserPlus />Rozpocznij grę<ArrowRight /></a></Button>
+          <Button size="lg" variant="outline" className="border-cover-foreground/40 text-cover-foreground hover:bg-cover-foreground/10 hover:text-cover-foreground" asChild><Link to="/auth"><LogIn />Mam już konto</Link></Button>
+        </div>
+      </div>
+    </main>
+    <section className="entry-modules" aria-label="Rozgrywka">
+      {FEATURES.map((feature) => <div key={feature.title} className="entry-module">
+        <feature.icon className="size-5 text-primary" strokeWidth={1.7} />
+        <h2>{feature.title}</h2><p>{feature.text}</p>
+      </div>)}
+    </section>
   </div>;
 }
