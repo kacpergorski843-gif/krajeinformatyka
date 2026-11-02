@@ -144,7 +144,7 @@ function World() {
   }
 
   return (
-    <AppShell me={me ?? null} title="Świat / Państwa" subtitle="Podglądasz dane wszystkich państw">
+    <AppShell me={me ?? null} title="Świat / Państwa">
       <div className="relative mb-4">
         <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" />
         <Input placeholder="Szukaj państwa…" value={q} onChange={(event) => setQ(event.target.value)} aria-label="Szukaj państwa" className="pl-9" />
