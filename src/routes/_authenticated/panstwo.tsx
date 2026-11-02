@@ -208,8 +208,8 @@ function MyCountry() {
       </section>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
 
-      <section className="mb-5 rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6">
-        <div className="mb-5">
+      <section className="mb-8">
+        <div className="mb-4">
           <p className="text-[10px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">Gospodarka</p>
           <h3 className="mt-1 text-lg font-semibold tracking-tight">Surowce</h3>
           <p className="mt-1 text-sm text-muted-foreground">Stan zapasów i dzienna produkcja</p>
@@ -218,7 +218,7 @@ function MyCountry() {
           {resources.map((r) => {
             const zero = Number(r.value) === 0;
             return (
-              <div key={r.key} className="min-w-0 rounded-xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/30 sm:p-5">
+              <div key={r.key} className="min-w-0 rounded-xl border border-border/80 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md sm:p-5">
                 <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">{r.label}</p>
                 <p className={`num mt-3 text-xl font-semibold tracking-tight sm:text-2xl ${zero ? "text-inactive" : "text-foreground"}`}>
                   {units(r.value)}
@@ -232,15 +232,15 @@ function MyCountry() {
         </div>
       </section>
 
-      <section className="mb-5 rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6">
-        <div className="mb-5">
+      <section className="mb-8">
+        <div className="mb-4">
           <p className="text-[10px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">Bezpieczeństwo</p>
           <h3 className="mt-1 text-lg font-semibold tracking-tight">Wojsko i obrona</h3>
           <p className="mt-1 text-sm text-muted-foreground">Stan sił zbrojnych i systemów obronnych</p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           {military.map((m) => (
-            <div key={m.label} className="min-w-0 rounded-xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/30 sm:p-5">
+            <div key={m.label} className="min-w-0 rounded-xl border border-border/80 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md sm:p-5">
               <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                 {m.label}
               </p>
