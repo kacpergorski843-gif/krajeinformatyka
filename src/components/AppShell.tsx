@@ -21,7 +21,7 @@ const NAV = [
   { to: "/transfer", label: "Transfery", icon: ArrowRightLeft },
 ] as const;
 
-export function AppShell({ me, title, subtitle, children }: {
+export function AppShell({ me, title, children }: {
   me: Me | null; title: string; subtitle?: string; children: ReactNode;
 }) {
   const router = useRouter();
@@ -73,7 +73,7 @@ export function AppShell({ me, title, subtitle, children }: {
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
       <aside className="sidebar hidden w-[17rem] shrink-0 lg:flex">
         <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
-          <div className="command-section"><p className="nav-caption">Centrum dowodzenia</p>{nav()}</div>
+          <div className="command-section">{nav()}</div>
           <div className="mt-auto">
             <div className="profile-strip mb-3">
               <div className="profile-avatar">{(me?.displayName ?? me?.email ?? "?").slice(0,1).toUpperCase()}</div>
@@ -86,7 +86,7 @@ export function AppShell({ me, title, subtitle, children }: {
       </aside>
       <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 lg:px-10 lg:py-8">
         <header className="page-header command-header">
-          <div className="min-w-0"><h1 className="page-title truncate">{title}</h1>{subtitle ? <p className="page-subtitle truncate">{subtitle}</p> : null}</div>
+          <div className="min-w-0"><h1 className="page-title truncate">{title}</h1></div>
           <div className="flex items-center gap-2">
             <button className="mobile-menu-button lg:hidden" style={{ top: "auto", bottom: "max(1rem, env(safe-area-inset-bottom))" }} onClick={() => setMobileOpen(true)} aria-label="Otwórz menu" aria-expanded={mobileOpen}><Menu className="size-5" /></button>
           </div>
