@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useMemo, useState } from "react";
-import { Coins, Search, Shield, Vote } from "lucide-react";
+import { Coins, Search, Vote } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CountryFlag } from "@/components/CountryFlag";
 import { PageSkeleton } from "@/components/PageSkeleton";
@@ -15,26 +15,24 @@ import { fmtKR, units } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/ranking")({
   head: () => ({ meta: [
     { title: "Rankingi państw — Kraje Informatyka" },
-    { name: "description", content: "Rankingi państw: produkcja KR, głosy wojenne i wartość militarna." },
+    { name: "description", content: "Rankingi państw: produkcja KR i głosy wojenne." },
     { property: "og:title", content: "Rankingi państw — Kraje Informatyka" },
-    { property: "og:description", content: "Rankingi produkcji KR, głosów wojennych i wartości militarnej." },
+    { property: "og:description", content: "Rankingi produkcji KR i głosów wojennych." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ]}),
   component: Ranking,
 });
 
-type Metric = { key: "income" | "votes" | "military"; label: string; shortLabel: string; Icon: typeof Coins; value: (c: CountryStats) => string };
+type Metric = { key: "income" | "votes"; label: string; shortLabel: string; Icon: typeof Coins; value: (c: CountryStats) => string };
 
 const metrics: Metric[] = [
   { key: "income", label: "Produkcja KR", shortLabel: "Produkcja", Icon: Coins, value: (c) => fmtKR(c.gross_income) },
   { key: "votes", label: "Głosy wojenne", shortLabel: "Głosy", Icon: Vote, value: (c) => units(c.war_votes) },
-  { key: "military", label: "Wartość militarna", shortLabel: "Wojsko", Icon: Shield, value: (c) => fmtKR(c.military_value) },
 ];
 
 function metricNumber(c: CountryStats, key: Metric["key"]) {
   if (key === "income") return BigInt(c.gross_income || "0");
-  if (key === "military") return BigInt(c.military_value || "0");
   return BigInt(c.war_votes || 0);
 }
 
@@ -82,7 +80,7 @@ function Ranking() {
 
         {!isPending && !isError ? (
           <>
-            <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-xl border border-border/70 bg-card p-1.5 sm:mt-6 sm:gap-2 sm:p-2">
+            <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-xl border border-border/70 bg-card p-1.5 sm:mt-6 sm:gap-2 sm:p-2">
               {metrics.map((metric) => {
                 const selected = metric.key === activeMetric;
                 return (
