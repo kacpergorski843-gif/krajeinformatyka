@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
 
+// Set to true to restore navigation icons without changing the menu structure.
+const SHOW_NAV_ICONS = false;
+
 const NAV = [
   { to: "/panstwo", label: "Państwo", icon: Landmark },
   { to: "/swiat", label: "Świat", icon: Globe2 },
@@ -59,7 +62,7 @@ export function AppShell({ me, title, subtitle, children }: {
           activeProps={{ className: "nav-active" }}
           className="nav-item"
         >
-          <item.icon className="size-[18px] shrink-0" strokeWidth={1.8} />
+          {SHOW_NAV_ICONS ? <item.icon className="size-[18px] shrink-0" strokeWidth={1.8} /> : null}
           <span className="truncate">{item.label}</span>
         </Link>
       ))}
