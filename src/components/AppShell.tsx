@@ -21,7 +21,7 @@ const NAV = [
   { to: "/transfer", label: "Transfery", icon: ArrowRightLeft },
 ] as const;
 
-export function AppShell({ me, title, subtitle, children }: {
+export function AppShell({ me, title, children }: {
   me: Me | null; title: string; subtitle?: string; children: ReactNode;
 }) {
   const router = useRouter();
