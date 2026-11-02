@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Flame, Droplet, CircleDot, Magnet, Atom, Timer } from "lucide-react";
+import { Timer } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { rulerUploadCountryFlag } from "@/lib/admin.functions";
@@ -100,17 +100,16 @@ function MyCountry() {
   }
 
   const resources = [
-    { key: "coal", label: "Węgiel", icon: Flame, value: country.coal, prod: country.coal_prod },
-    { key: "oil", label: "Ropa", icon: Droplet, value: country.oil, prod: country.oil_prod },
+    { key: "coal", label: "Węgiel", value: country.coal, prod: country.coal_prod },
+    { key: "oil", label: "Ropa", value: country.oil, prod: country.oil_prod },
     {
       key: "copper",
       label: "Miedź",
-      icon: CircleDot,
       value: country.copper,
       prod: country.copper_prod,
     },
-    { key: "iron", label: "Żelazo", icon: Magnet, value: country.iron, prod: country.iron_prod },
-    { key: "uranium", label: "Uran", icon: Atom, value: country.uranium, prod: country.uranium_prod },
+    { key: "iron", label: "Żelazo", value: country.iron, prod: country.iron_prod },
+    { key: "uranium", label: "Uran", value: country.uranium, prod: country.uranium_prod },
   ];
 
   const shortage = Number(country.coal_upkeep) > Number(country.coal) + Number(country.coal_prod);
@@ -194,7 +193,6 @@ function MyCountry() {
         <p className="mb-2 text-sm font-medium text-muted-foreground">Aktualny stan skarbca</p>
         <Panel className="rounded-xl border-border/80 p-5 sm:p-7">
           <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.balance)}</p>
-          <p className="mt-2 text-sm text-muted-foreground">{fmtKR(country.balance)}</p>
           <div className="mt-6 grid grid-cols-1 gap-5 border-t border-border pt-5 sm:grid-cols-2">
             <div>
               <p className="text-xs text-muted-foreground">Przychód na dobę</p>
@@ -218,10 +216,7 @@ function MyCountry() {
             const zero = Number(r.value) === 0;
             return (
               <div key={r.key} className="min-w-0 px-4 py-4 sm:px-5">
-                <div className="text-muted-foreground flex items-center gap-1.5">
-                  <r.icon className="size-3.5" strokeWidth={1.5} />
-                  <span className="text-[10px] tracking-[0.14em] uppercase">{r.label}</span>
-                </div>
+                <p className="text-[10px] tracking-[0.14em] uppercase text-muted-foreground">{r.label}</p>
                 <p className={`num mt-3 text-xl ${zero ? "text-inactive" : "text-foreground"}`}>
                   {units(r.value)}
                 </p>
@@ -234,15 +229,7 @@ function MyCountry() {
         </div>
       </Panel>
 
-      <SectionTitle
-        action={
-          <Link to="/arsenal" className="text-primary shrink-0 text-xs">
-            Arsenał
-          </Link>
-        }
-      >
-        Wojsko i obrona
-      </SectionTitle>
+      <SectionTitle>Wojsko i obrona</SectionTitle>
       <Panel className="p-0">
         <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 xl:grid-cols-6">
           {military.map((m) => (
