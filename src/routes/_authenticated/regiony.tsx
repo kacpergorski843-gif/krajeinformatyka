@@ -204,23 +204,6 @@ function Regions() {
         <div className="region-overview-count"><span>REGIONY</span><strong>{regions?.length ?? 0}</strong></div>
       </div>
 
-      {country ? (
-        <Panel className="hud-frame mb-6 overflow-hidden p-0">
-          <div className="resource-summary-grid grid grid-cols-2 text-sm sm:grid-cols-3 xl:grid-cols-6">
-            {RESOURCES.map((r) => (
-              <div key={r} className="min-w-0 px-4 py-4">
-                <p className="label-hud">{RESOURCE_LABELS[r]}</p>
-                <p
-                  className={`num mt-1 ${Number(country[r]) === 0 ? "text-inactive" : "text-foreground"}`}
-                >
-                  {units(country[r])}
-                </p>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      ) : null}
-
       {!countryId ? (
         <Panel className="p-4">
           <p className="text-muted-foreground text-sm">
