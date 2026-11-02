@@ -190,21 +190,22 @@ function MyCountry() {
         </div>
       </section>
       <section className="mb-8">
-        <p className="mb-2 text-sm font-medium text-muted-foreground">Aktualny stan skarbca</p>
-        <Panel className="rounded-xl border-border/80 p-5 sm:p-7">
+        <p className="mb-2 text-sm font-medium text-muted-foreground">Budżet państwa</p>
+        <Panel className="rounded-xl border-border/80 p-6 shadow-sm sm:p-8">
           <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.balance)}</p>
-          <div className="mt-6 grid grid-cols-1 gap-5 border-t border-border pt-5 sm:grid-cols-2">
-            <div>
-              <p className="text-xs text-muted-foreground">Przychód na dobę</p>
-              <p className="num mt-1 text-xl font-semibold sm:text-2xl">{fmtKR(country.gross_income)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Zużycie węgla na dobę</p>
-              <p className="num mt-1 text-xl font-semibold sm:text-2xl">{units(country.coal_upkeep)}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{shortage ? "Brak węgla wstrzyma fabryki IV/V" : "Zapas wystarczający"}</p>
-            </div>
-          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Aktualny stan skarbca</p>
         </Panel>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="flex aspect-square min-w-0 flex-col justify-center rounded-xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+            <p className="text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase sm:text-xs">Przychód na dobę</p>
+            <p className="num mt-3 break-words text-xl font-semibold tracking-tight sm:text-2xl">{fmtKR(country.gross_income)}</p>
+          </div>
+          <div className="flex aspect-square min-w-0 flex-col justify-center rounded-xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+            <p className="text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase sm:text-xs">Zużycie węgla na dobę</p>
+            <p className="num mt-3 break-words text-xl font-semibold tracking-tight sm:text-2xl">{units(country.coal_upkeep)}</p>
+            <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{shortage ? "Brak węgla wstrzyma fabryki IV/V" : "Zapas wystarczający"}</p>
+          </div>
+        </div>
       </section>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
 
