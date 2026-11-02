@@ -209,7 +209,9 @@ function MyCountry() {
         </Panel>
       </section>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
-\n      <SectionTitle>Surowce</SectionTitle>\n      {/* Poziomy pasek zasobów */}
+
+      <SectionTitle>Surowce</SectionTitle>
+      {/* Poziomy pasek zasobów */}
       <Panel className="rounded-xl p-0">
         <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 xl:grid-cols-5">
           {resources.map((r) => {
