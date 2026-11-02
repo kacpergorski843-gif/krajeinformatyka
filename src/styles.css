@@ -1245,12 +1245,22 @@
 }
 
 
-/* Keep the daily income figure free of stray decorative line artifacts. */
+/* The daily income tile is intentionally plain: no HUD corner ticks or overlays. */
 .daily-income-card {
   position: relative;
   isolation: isolate;
-  background-color: var(--color-card);
-  background-image: none;
+  overflow: hidden;
+  background: var(--color-card) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.daily-income-card::before,
+.daily-income-card::after,
+.daily-income-value::before,
+.daily-income-value::after {
+  content: none !important;
+  display: none !important;
 }
 
 .daily-income-value {
@@ -1258,8 +1268,8 @@
   display: block;
   width: fit-content;
   max-width: 100%;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  text-decoration: none;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
 }
