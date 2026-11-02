@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { rulerUploadCountryFlag } from "@/lib/admin.functions";
 import { CountryFlag } from "@/components/CountryFlag";
-import { Panel, SectionTitle } from "@/components/stat";
+import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
 import { SuggestCountryPanel } from "@/components/CountrySuggestions";
 import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, shopQuery, transactionsQuery } from "@/lib/api";
@@ -190,7 +190,6 @@ function MyCountry() {
           {flagSaving && flagFile ? <p className="mt-1 text-[11px] text-muted-foreground">{flagFile.name}</p> : null}
         </div>
       </section>
-      {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
       <section className="mb-8">
         <p className="mb-2 text-sm font-medium text-muted-foreground">Aktualny stan skarbca</p>
         <Panel className="rounded-xl border-border/80 p-5 sm:p-7">
@@ -209,7 +208,8 @@ function MyCountry() {
           </div>
         </Panel>
       </section>
-      {/* Poziomy pasek zasobów */}
+      {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
+\n      <SectionTitle>Surowce</SectionTitle>\n      {/* Poziomy pasek zasobów */}
       <Panel className="rounded-xl p-0">
         <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 xl:grid-cols-5">
           {resources.map((r) => {
