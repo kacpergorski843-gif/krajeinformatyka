@@ -9,6 +9,7 @@ import {
   CalendarClock,
   ChevronRight,
   CircleDollarSign,
+  Construction,
   History,
   PackagePlus,
   Radar,
@@ -29,7 +30,7 @@ import { AdminSuggestionsTab } from "@/components/CountrySuggestions";
 import { Flag } from "lucide-react";
 import { CountryFlag } from "@/components/CountryFlag";
 import { supabase } from "@/integrations/supabase/client";
-import { deletePlayerAccount, resetPlayerPassword } from "@/lib/admin.functions";
+import { deletePlayerAccount, getMaintenanceMode, resetPlayerPassword, setMaintenanceMode } from "@/lib/admin.functions";
 import { exportApplicationData } from "@/lib/admin-export.functions";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
@@ -693,6 +694,7 @@ function AdminPanel() {
                 <SelectItem value="economy">Cykl dobowy</SelectItem>
                 <SelectItem value="history">Historia / Audyt</SelectItem>
                 <SelectItem value="update4">Operacje</SelectItem>
+                {me?.isMainAdmin ? <SelectItem value="maintenance">Tryb konserwacji</SelectItem> : null}
               </SelectContent>
             </Select>
           </div>
@@ -706,6 +708,7 @@ function AdminPanel() {
                 <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
                 <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
                 <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>
+                {me?.isMainAdmin ? <AdminTab value="maintenance" icon={<Construction />}>Konserwacja</AdminTab> : null}
               </TabsList>
             </div>
           </div>
@@ -716,9 +719,71 @@ function AdminPanel() {
           <TabsContent value="economy"><EconomyCountdownTab /></TabsContent>
           <TabsContent value="history"><HistoryTab /></TabsContent>
           <TabsContent value="update4"><Update4Tools /></TabsContent>
+          {me?.isMainAdmin ? <TabsContent value="maintenance"><MaintenanceTab /></TabsContent> : null}
         </Tabs>
       </div>
     </AppShell>
+  );
+}
+
+
+function MaintenanceTab() {
+  const getMode = useServerFn(getMaintenanceMode);
+  const setMode = useServerFn(setMaintenanceMode);
+  const queryClient = useQueryClient();
+  const mode = useQuery({
+    queryKey: ["maintenance_mode"],
+    queryFn: () => getMode(),
+  });
+  const update = useMutation({
+    mutationFn: (enabled: boolean) => setMode({ data: { enabled } }),
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["maintenance_mode"] });
+      toast.success(result.enabled ? "Tryb konserwacji został włączony" : "Strona jest ponownie dostępna");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return (
+    <div className="mx-auto grid min-w-0 max-w-3xl gap-4">
+      <Panel className="hud-frame space-y-5 p-4 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="grid size-11 shrink-0 place-items-center border border-primary/30 bg-primary/10 text-primary">
+            <Construction className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="label-hud">DOSTĘPNOŚĆ GRY</p>
+            <h2 className="mt-1 font-display text-lg font-semibold">Tryb konserwacji</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Tymczasowo ukryj aplikację przed władcami na czas prac technicznych i aktualizacji.</p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-secondary/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className={`size-2 rounded-full ${mode.data?.enabled ? "bg-amber-400" : "bg-emerald-400"}`} />
+              <p className="text-sm font-medium">{mode.isLoading ? "Sprawdzanie statusu…" : mode.data?.enabled ? "Strona wyłączona dla władców" : "Strona działa normalnie"}</p>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Zmiana zacznie obowiązywać przy kolejnym wejściu lub odświeżeniu strony.</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="text-xs text-muted-foreground">{mode.data?.enabled ? "Włączony" : "Wyłączony"}</span>
+            <Switch
+              checked={mode.data?.enabled === true}
+              disabled={mode.isLoading || mode.isError || update.isPending}
+              onCheckedChange={(enabled) => update.mutate(enabled)}
+              aria-label="Włącz tryb konserwacji"
+            />
+          </div>
+        </div>
+        <div className="rounded-md border border-border/70 p-4">
+          <p className="label-hud">KOMUNIKAT DLA GRACZY</p>
+          <p className="mt-2 font-display text-base font-semibold">Ekonomia jest aktualnie w remoncie</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.</p>
+        </div>
+        <p className="text-xs text-muted-foreground">Panel administracyjny pozostaje dostępny dla administratorów. Tylko główny administrator może zmieniać ten przełącznik.</p>
+        {mode.isError ? <p role="alert" className="text-sm text-destructive">Nie udało się pobrać statusu konserwacji. Odśwież stronę.</p> : null}
+      </Panel>
+    </div>
   );
 }
 
