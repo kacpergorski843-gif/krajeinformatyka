@@ -1243,3 +1243,23 @@
     contain-intrinsic-size: 180px;
   }
 }
+
+
+/* Keep the daily income figure free of stray decorative line artifacts. */
+.daily-income-card {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--color-card);
+  background-image: none;
+}
+
+.daily-income-value {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-decoration: none;
+}
