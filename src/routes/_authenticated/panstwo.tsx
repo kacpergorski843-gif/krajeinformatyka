@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, Timer } from "lucide-react";
+import { Flame, Droplet, CircleDot, Magnet, Atom, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { supabase } from "@/integrations/supabase/client";
 import { rulerUploadCountryFlag } from "@/lib/admin.functions";
 import { CountryFlag } from "@/components/CountryFlag";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
@@ -126,18 +125,17 @@ function MyCountry() {
   ];
 
   return (
-    <AppShell me={me} title={country.name} subtitle="Pulpit dowodzenia">
-      <Panel className="mb-4 flex flex-wrap items-center gap-3 p-3">
+    <AppShell me={me} title="Państwo">
+      <section className="mb-8 flex items-center gap-5 border-b border-border pb-6 sm:gap-7">
         <CountryFlag
           flag={country.flag}
           alt={"Flaga państwa " + country.name}
-          className="h-12 w-20 rounded-sm text-2xl"
+          className="h-[5.5rem] w-[8.25rem] shrink-0 rounded-lg text-5xl shadow-sm sm:h-28 sm:w-40"
         />
         <div className="min-w-0 flex-1">
-          <p className="label-hud">PAŃSTWO</p>
-          <p className="font-display text-lg font-semibold">{country.name}</p>
-          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-sm border border-primary/30 bg-primary/5 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10">
-            Zmień flagę
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{country.name}</h2>
+          <label className="mt-3 inline-flex min-h-9 cursor-pointer items-center rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground">
+            {flagSaving ? "Wgrywanie flagi…" : "Zmień flagę"}
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
@@ -155,7 +153,6 @@ function MyCountry() {
                   toast.error("Flaga może mieć maksymalnie 5 MB.");
                   return;
                 }
-
                 setFlagFile(file);
                 setFlagSaving(true);
                 try {
@@ -190,12 +187,86 @@ function MyCountry() {
               }}
             />
           </label>
-          {flagSaving && flagFile ? (
-            <p className="mt-1 text-[11px] text-muted-foreground">Wgrywanie: {flagFile.name}</p>
-          ) : null}
+          {flagSaving && flagFile ? <p className="mt-1 text-[11px] text-muted-foreground">{flagFile.name}</p> : null}
+        </div>
+      </section>
+      <section className="mb-8">
+        <p className="mb-2 text-sm font-medium text-muted-foreground">Aktualny stan skarbca</p>
+        <Panel className="rounded-xl border-border/80 p-5 sm:p-7">
+          <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.balance)}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{fmtKR(country.balance)}</p>
+          <div className="mt-6 grid grid-cols-1 gap-5 border-t border-border pt-5 sm:grid-cols-2">
+            <div>
+              <p className="text-xs text-muted-foreground">Przychód na dobę</p>
+              <p className="num mt-1 text-xl font-semibold sm:text-2xl">{fmtKR(country.gross_income)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Zużycie węgla na dobę</p>
+              <p className="num mt-1 text-xl font-semibold sm:text-2xl">{units(country.coal_upkeep)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{shortage ? "Brak węgla wstrzyma fabryki IV/V" : "Zapas wystarczający"}</p>
+            </div>
+          </div>
+        </Panel>
+      </section>
+      {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
+
+      <SectionTitle>Surowce</SectionTitle>
+      {/* Poziomy pasek zasobów */}
+      <Panel className="rounded-xl p-0">
+        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 xl:grid-cols-5">
+          {resources.map((r) => {
+            const zero = Number(r.value) === 0;
+            return (
+              <div key={r.key} className="min-w-0 px-4 py-4 sm:px-5">
+                <div className="text-muted-foreground flex items-center gap-1.5">
+                  <r.icon className="size-3.5" strokeWidth={1.5} />
+                  <span className="text-[10px] tracking-[0.14em] uppercase">{r.label}</span>
+                </div>
+                <p className={`num mt-3 text-xl ${zero ? "text-inactive" : "text-foreground"}`}>
+                  {units(r.value)}
+                </p>
+                <p className={`text-[10px] ${Number(r.prod) > 0 ? "text-success" : "text-inactive"}`}>
+                  +{units(r.prod)} / doba
+                </p>
+              </div>
+            );
+          })}
         </div>
       </Panel>
-      {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
+
+      <SectionTitle
+        action={
+          <Link to="/arsenal" className="text-primary shrink-0 text-xs">
+            Arsenał
+          </Link>
+        }
+      >
+        Wojsko i obrona
+      </SectionTitle>
+      <Panel className="p-0">
+        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 xl:grid-cols-6">
+          {military.map((m) => (
+            <div key={m.label} className="min-w-0 px-5 py-5">
+              <p className="text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
+                {m.label}
+              </p>
+              <p className={`num mt-1 text-sm ${m.value === 0 ? "text-inactive" : ""}`}>
+                {units(m.value)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </Panel>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <Stat
+          label="Potencjał głosów"
+          value={units(country.vote_potential)}
+          hint="Bez limitu — pakiety żołnierzy + czołgów"
+          tone="accent"
+        />
+        <Stat label="Głosy fortyfikacji" value={units(country.fort_votes)} />
+      </div>
+
       {occupiedByMe.length ? (
         <Panel className="mb-4 border-primary/40 bg-primary/5 p-3">
           <p className="label-hud">OKUPOWANE REGIONY — TWOJE ZYSKI</p>
@@ -250,79 +321,6 @@ function MyCountry() {
           </Panel>
         );
       })}
-
-      {/* Skarbiec + przychód */}
-      <div className="country-finance-grid grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-5">
-        <Stat
-          label="Skarbiec"
-          value={kr(country.balance)}
-          hint={fmtKR(country.balance)}
-          tone="primary"
-          icon={<Coins className="size-4" strokeWidth={1.5} />}
-        />
-        <Stat label="Przychód / doba" value={fmtKR(country.gross_income)} tone="accent" />
-        <Stat
-          label="Zużycie węgla / doba"
-          value={units(country.coal_upkeep)}
-          hint={shortage ? "Brak węgla wstrzyma fabryki IV/V" : "Zapas wystarczający"}
-        />
-      </div>
-
-      {/* Poziomy pasek zasobów */}
-      <Panel className="hud-frame mt-5 overflow-hidden p-0">
-        <div className="resource-summary-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
-          {resources.map((r) => {
-            const zero = Number(r.value) === 0;
-            return (
-              <div key={r.key} className="min-w-0 border-border px-5 py-5">
-                <div className="text-muted-foreground flex items-center gap-1.5">
-                  <r.icon className="size-3.5" strokeWidth={1.5} />
-                  <span className="text-[10px] tracking-[0.14em] uppercase">{r.label}</span>
-                </div>
-                <p className={`num mt-3 text-xl ${zero ? "text-inactive" : "text-foreground"}`}>
-                  {units(r.value)}
-                </p>
-                <p className={`text-[10px] ${Number(r.prod) > 0 ? "text-success" : "text-inactive"}`}>
-                  +{units(r.prod)} / doba
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </Panel>
-
-      <SectionTitle
-        action={
-          <Link to="/arsenal" className="text-primary shrink-0 text-xs">
-            Arsenał
-          </Link>
-        }
-      >
-        Wojsko i obrona
-      </SectionTitle>
-      <Panel className="p-0">
-        <div className="resource-summary-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
-          {military.map((m) => (
-            <div key={m.label} className="min-w-0 px-5 py-5">
-              <p className="text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
-                {m.label}
-              </p>
-              <p className={`num mt-1 text-sm ${m.value === 0 ? "text-inactive" : ""}`}>
-                {units(m.value)}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Panel>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <Stat
-          label="Potencjał głosów"
-          value={units(country.vote_potential)}
-          hint="Bez limitu — pakiety żołnierzy + czołgów"
-          tone="accent"
-        />
-        <Stat label="Głosy fortyfikacji" value={units(country.fort_votes)} />
-      </div>
 
       <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
