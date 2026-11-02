@@ -184,7 +184,7 @@
         transparent 1px 120px
       ),
       linear-gradient(76deg, transparent 49.85%, oklch(0.76 0.125 231 / 7%) 50%, transparent 50.15%),
-      linear-gradient(-58deg, transparent 39.9%, oklch(0.84 0.12 89 / 5%) 40%, transparent 40.2%),
+
       radial-gradient(120% 70% at 50% -15%, oklch(0.31 0.06 258 / 55%), transparent 70%);
   }
 }
