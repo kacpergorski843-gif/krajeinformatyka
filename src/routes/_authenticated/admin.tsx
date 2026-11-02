@@ -9,6 +9,7 @@ import {
   CalendarClock,
   ChevronRight,
   CircleDollarSign,
+  Construction,
   History,
   PackagePlus,
   Radar,
@@ -692,7 +693,8 @@ function AdminPanel() {
                 <SelectItem value="shop">Sklep / Produkty</SelectItem>
                 <SelectItem value="economy">Cykl dobowy</SelectItem>
                 <SelectItem value="history">Historia / Audyt</SelectItem>
-                <SelectItem value="update4">Operacje</SelectItem>\n                {me?.isMainAdmin ? <SelectItem value="maintenance">Tryb konserwacji</SelectItem> : null}
+                <SelectItem value="update4">Operacje</SelectItem>
+                {me?.isMainAdmin ? <SelectItem value="maintenance">Tryb konserwacji</SelectItem> : null}
               </SelectContent>
             </Select>
           </div>
@@ -705,7 +707,8 @@ function AdminPanel() {
                 <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
                 <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
                 <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
-                <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>\n                {me?.isMainAdmin ? <AdminTab value="maintenance" icon={<Construction />}>Konserwacja</AdminTab> : null}
+                <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>
+                {me?.isMainAdmin ? <AdminTab value="maintenance" icon={<Construction />}>Konserwacja</AdminTab> : null}
               </TabsList>
             </div>
           </div>
@@ -715,7 +718,8 @@ function AdminPanel() {
           <TabsContent value="shop"><ShopTab /></TabsContent>
           <TabsContent value="economy"><EconomyCountdownTab /></TabsContent>
           <TabsContent value="history"><HistoryTab /></TabsContent>
-          <TabsContent value="update4"><Update4Tools /></TabsContent>\n          {me?.isMainAdmin ? <TabsContent value="maintenance"><MaintenanceTab /></TabsContent> : null}
+          <TabsContent value="update4"><Update4Tools /></TabsContent>
+          {me?.isMainAdmin ? <TabsContent value="maintenance"><MaintenanceTab /></TabsContent> : null}
         </Tabs>
       </div>
     </AppShell>
