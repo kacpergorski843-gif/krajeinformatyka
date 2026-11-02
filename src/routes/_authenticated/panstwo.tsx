@@ -196,9 +196,9 @@ function MyCountry() {
           <p className="mt-2 text-xs text-muted-foreground">Aktualny stan skarbca</p>
         </Panel>
         <div className="mt-3">
-          <div className="flex min-h-28 min-w-0 flex-col justify-center rounded-xl border border-border/80 bg-card p-5 shadow-sm sm:min-h-32 sm:p-6">
+          <div className="daily-income-card relative isolate flex min-h-28 min-w-0 flex-col justify-center rounded-xl border border-border/80 bg-card p-5 shadow-sm sm:min-h-32 sm:p-6">
             <p className="text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase sm:text-xs">Przychód na dobę</p>
-            <p className="num mt-3 break-words text-xl font-semibold tracking-tight sm:text-2xl">{fmtKR(country.gross_income)}</p>
+            <p className="daily-income-value num mt-3 break-words text-xl font-semibold tracking-tight sm:text-2xl">{fmtKR(country.gross_income)}</p>
           </div>
         </div>
       </section>
