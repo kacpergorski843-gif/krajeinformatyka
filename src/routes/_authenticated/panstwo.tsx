@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, Timer } from "lucide-react";
+import { Flame, Droplet, CircleDot, Magnet, Atom, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { supabase } from "@/integrations/supabase/client";
 import { rulerUploadCountryFlag } from "@/lib/admin.functions";
 import { CountryFlag } from "@/components/CountryFlag";
-import { Panel, SectionTitle, Stat } from "@/components/stat";
+import { Panel, SectionTitle } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
 import { SuggestCountryPanel } from "@/components/CountrySuggestions";
 import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, shopQuery, transactionsQuery } from "@/lib/api";
