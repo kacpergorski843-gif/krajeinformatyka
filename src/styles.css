@@ -1321,3 +1321,42 @@
 .resource-command {
   border-radius: 0.9rem;
 }
+
+/* Unified card treatment: quiet surfaces with the same rounded gold outline
+   as the login / create-account choices on the landing screen. */
+:where(
+  .panel,
+  .stat-card,
+  .stat-card-command,
+  .command-kpi,
+  .command-hero,
+  .command-overview,
+  .command-alert,
+  .command-hero-cycle,
+  .command-overview-metrics,
+  .shop-card,
+  .shop-hero,
+  .shop-balance,
+  .region-overview,
+  .region-overview-count,
+  .transfer-hero,
+  .resource-command,
+  .daily-income-card,
+  .country-card,
+  .admin-v4-card,
+  .admin-data-row,
+  .command-region-row,
+  .profile-strip,
+  .auth-card,
+  .landing-shell
+) {
+  border: 1px solid color-mix(in oklab, var(--color-primary) 50%, transparent) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: none !important;
+}
+
+/* Keep the outline consistent on individual bordered tiles built with utility classes. */
+.mobile-content :is(div, section, article)[class*="rounded-"][class*="border"]:not([role="dialog"]) {
+  border-color: color-mix(in oklab, var(--color-primary) 50%, transparent);
+  border-radius: 0.75rem;
+}
