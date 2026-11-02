@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, History, ReceiptText, WalletCards } from "lucide-react";
+import { ChevronRight, History } from "lucide-react";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -111,35 +111,22 @@ function purchaseInfo(t: TxRow) {
 
 export function OperationsHistory({ rows, title = "Historia operacji" }: { rows: TxRow[] | undefined; title?: string }) {
   const [view, setView] = useState<View>("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
   const [full, setFull] = useState(false);
   const [selected, setSelected] = useState<TxRow | null>(null);
   const filtered = useMemo(() => (rows ?? []).filter((t) => {
     if (view === "payouts" && !isPayout(t)) return false;
     if (view === "purchases" && !isPurchase(t)) return false;
     if (view === "transfers" && !isTransfer(t)) return false;
-    const day = t.created_at.slice(0, 10);
-    return (!from || day >= from) && (!to || day <= to);
-  }), [rows, view, from, to]);
+    return true;
+  }), [rows, view]);
   const ordered = useMemo(() => [...filtered].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)), [filtered]);
   const visible = full ? ordered : ordered.slice(0, 5);
-  const payouts = ordered.filter(isPayout);
-  const purchases = ordered.filter(isPurchase);
 
   return (<>
     <SectionTitle>{title}</SectionTitle>
     <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
       {([["all", "Wszystko"], ["payouts", "Wypłaty"], ["purchases", "Zakupy"], ["transfers", "Transfery"]] as const).map(([key, label]) => <button key={key} type="button" onClick={() => setView(key)} className={`min-h-10 rounded-lg border px-3 py-2 text-xs font-medium transition ${view === key ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:bg-secondary/40"}`}>{label}</button>)}
     </div>
-    <div className="mb-4 grid gap-2 sm:grid-cols-2">
-      <label className="text-xs text-muted-foreground">Od<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground" /></label>
-      <label className="text-xs text-muted-foreground">Do<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground" /></label>
-    </div>
-    {view === "all" && <div className="mb-4 grid gap-2 sm:grid-cols-2">
-      <button type="button" onClick={() => setView("payouts")} className="rounded-xl border border-border bg-secondary/20 p-3 text-left hover:bg-secondary/40"><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm font-medium"><WalletCards className="size-4" /> Wypłaty</span><ChevronRight className="size-4 text-muted-foreground" /></div><p className="mt-1 text-xs text-muted-foreground">{payouts.length} wypłat · kliknij, aby sprawdzić rozliczenie</p></button>
-      <button type="button" onClick={() => setView("purchases")} className="rounded-xl border border-border bg-secondary/20 p-3 text-left hover:bg-secondary/40"><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm font-medium"><ReceiptText className="size-4" /> Zakupy</span><ChevronRight className="size-4 text-muted-foreground" /></div><p className="mt-1 text-xs text-muted-foreground">{purchases.length} zakupów · ilość, cena i suma</p></button>
-    </div>}
     <Panel className="overflow-hidden p-0">
       {visible.map((t) => { const transfer = transferInfo(t); const purchase = isPurchase(t) ? purchaseInfo(t) : null; const payout = isPayout(t); const amount = Number(t.amount_kr); return <button key={t.id} type="button" onClick={() => setSelected(t)} className="flex min-h-[72px] w-full items-center gap-3 border-b border-border/70 px-3 py-3 text-left transition last:border-0 hover:bg-secondary/30"><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{readableLabel(t)}</p><p className="mt-0.5 text-xs text-muted-foreground">{kindName[t.kind] ?? "Operacja"} · {dateTime(t.created_at)}</p>{purchase ? <p className="mt-1 text-xs text-muted-foreground">Ilość: {units(purchase.qty)} · cena szt.: {fmtKR(purchase.unit)}</p> : null}{transfer ? <p className="mt-1 text-xs text-muted-foreground">{transfer.direction === "out" ? "Do" : "Od"}: {transfer.otherName}</p> : null}{payout ? <p className="mt-1 text-xs text-muted-foreground">Kliknij, aby zobaczyć pełne rozliczenie</p> : null}</div><div className="flex shrink-0 items-center gap-2"><span className={`text-sm font-semibold ${amount > 0 ? "text-success" : amount < 0 ? "text-destructive" : "text-muted-foreground"}`}>{displayAmount(t)}</span><ChevronRight className="size-4 text-muted-foreground" /></div></button>; })}
       {!visible.length ? <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><History className="size-4" /> Brak operacji dla wybranych filtrów.</div> : null}
