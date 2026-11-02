@@ -90,7 +90,7 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
     extension: z.enum(["png", "jpg", "jpeg", "webp", "gif"]),
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: profile, error: profileError } = await context.supabase
+    const { data: profile, error: profileError } = await (context.supabase as any)
       .from("profiles")
       .select("country_id")
       .eq("id", context.userId)
@@ -126,7 +126,7 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
 export const getMaintenanceMode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { data, error } = await (context.supabase as any)
       .from("app_maintenance_mode")
       .select("enabled")
       .eq("id", 1)
@@ -147,7 +147,7 @@ export const setMaintenanceMode = createServerFn({ method: "POST" })
     if (roleError) throw new Error(roleError.message);
     if (isMainAdmin !== true) throw new Error("Tylko główny administrator może zmienić tryb konserwacji");
 
-    const { error } = await context.supabase
+    const { error } = await (context.supabase as any)
       .from("app_maintenance_mode")
       .upsert({ id: 1, enabled: data.enabled }, { onConflict: "id" });
     if (error) throw new Error(error.message);
