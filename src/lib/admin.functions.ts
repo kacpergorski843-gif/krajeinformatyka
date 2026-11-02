@@ -90,7 +90,7 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
     extension: z.enum(["png", "jpg", "jpeg", "webp", "gif"]),
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: profile, error: profileError } = await (context.supabase as any)
+    const { data: profile, error: profileError } = await context.supabase
       .from("profiles")
       .select("country_id")
       .eq("id", context.userId)
