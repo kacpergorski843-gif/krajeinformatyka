@@ -96,9 +96,8 @@ export function AppShell({ me, title, subtitle, children }: {
     </div>
     {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" role="presentation" onClick={() => setMobileOpen(false)}>
       <aside className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-end border-b border-border pb-4">
-        <button onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button></div>
-        <div className="mt-5">{nav(true)}</div>
+        <button className="ml-auto mb-4 block" onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button>
+        {nav(true)}
       </aside>
     </div> : null}
     <Dialog open={confirmOut} onOpenChange={setConfirmOut}><DialogContent className="admin-dialog">
