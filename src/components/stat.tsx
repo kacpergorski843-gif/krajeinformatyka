@@ -21,7 +21,7 @@ export function Stat({ label, value, hint, tone = "default", icon }: {
 
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return <div className="section-heading section-heading-command">
-    <div className="min-w-0"><p className="label-hud">Operations</p><h2>{children}</h2></div>
+    <div className="min-w-0"><h2>{children}</h2></div>
     {action}
   </div>;
 }
