@@ -4,7 +4,6 @@ import { useDeferredValue, useEffect, useMemo, useState, useTransition, type Rea
 import { toast } from "sonner";
 import {
   Boxes,
-  FileDown,
   Building2,
   CalendarClock,
   ChevronRight,
@@ -31,7 +30,6 @@ import { Flag } from "lucide-react";
 import { CountryFlag } from "@/components/CountryFlag";
 import { supabase } from "@/integrations/supabase/client";
 import { deletePlayerAccount, getMaintenanceMode, resetPlayerPassword, setMaintenanceMode } from "@/lib/admin.functions";
-import { exportApplicationData } from "@/lib/admin-export.functions";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -171,105 +169,6 @@ const MILITARY_ICONS: Record<string, typeof Shield> = {
   missile_3: Rocket,
 };
 
-
-type ApplicationExport = {
-  generated_at: string;
-  tables: Record<string, unknown[]>;
-  errors: { table: string; message: string }[];
-  auth_users: unknown[];
-};
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
-
-function openApplicationExportPdf(data: ApplicationExport) {
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) throw new Error("Przeglądarka zablokowała nowe okno. Zezwól na wyskakujące okna dla aplikacji.");
-
-  const sections = Object.entries(data.tables)
-    .map(([table, rows]) => {
-      const json = JSON.stringify(rows, null, 2);
-      return `
-        <section>
-          <h2>${escapeHtml(table)}</h2>
-          <p class="meta">Rekordów: ${rows.length}</p>
-          <pre>${escapeHtml(json)}</pre>
-        </section>
-      `;
-    })
-    .join("");
-
-  const authJson = JSON.stringify(data.auth_users, null, 2);
-  const errors = data.errors.length
-    ? `
-      <section>
-        <h2>Problemy podczas eksportu</h2>
-        <pre>${escapeHtml(JSON.stringify(data.errors, null, 2))}</pre>
-      </section>
-    `
-    : "";
-
-  printWindow.document.open();
-  printWindow.document.write(`
-    <!doctype html>
-    <html lang="pl">
-      <head>
-        <meta charset="utf-8">
-        <title>Nation Dynamics — pełny eksport danych</title>
-        <style>
-          @page { size: A4; margin: 12mm; }
-          * { box-sizing: border-box; }
-          body { margin: 0; color: #111; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.45; }
-          main { max-width: 100%; }
-          .cover { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; }
-          h1 { font-size: 24px; margin: 0 0 10px; }
-          h2 { font-size: 16px; margin: 0 0 4px; border-bottom: 1px solid #bbb; padding-bottom: 4px; }
-          p { margin: 5px 0; }
-          .meta { color: #555; font-size: 9px; }
-          .note { margin-top: 18px; padding: 10px; border: 1px solid #ccc; background: #f7f7f7; }
-          section { break-before: page; page-break-before: always; }
-          pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font: 8px/1.35 "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
-          footer { margin-top: 18px; color: #666; font-size: 8px; }
-        </style>
-      </head>
-      <body>
-        <main>
-          <div class="cover">
-            <h1>Nation Dynamics — pełny eksport danych</h1>
-            <p>Eksport przygotowany dla administratora. Dane są zapisane w formacie strukturalnym JSON, dzięki czemu dokument można przekazać np. ChatGPT do analizy.</p>
-            <p class="meta">Wygenerowano: ${escapeHtml(data.generated_at)}</p>
-            <p class="meta">Tabele: ${Object.keys(data.tables).length} · Użytkownicy Auth: ${data.auth_users.length}</p>
-            <div class="note">
-              <strong>Jak zapisać PDF:</strong> w oknie drukowania wybierz „Zapisz jako PDF”. Nie zmieniaj orientacji na poziomą — dokument jest przygotowany pod A4.
-            </div>
-            <footer>Eksport zawiera dane bazy aplikacji dostępne dla administratora, w tym historię, audyt, ekonomię, regiony, wojsko, okupacje i rozmowy z Doradcą AI.</footer>
-          </div>
-          <section>
-            <h2>auth.users</h2>
-            <p class="meta">Rekordów: ${data.auth_users.length}</p>
-            <pre>${escapeHtml(authJson)}</pre>
-          </section>
-          ${sections}
-          ${errors}
-        </main>
-        <script>
-          window.addEventListener("load", () => {
-            setTimeout(() => {
-              window.focus();
-              window.print();
-            }, 250);
-          });
-          window.addEventListener("afterprint", () => window.close());
-        </script>
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
-}
 
 const SHOP_NUMERIC = [
   ["cost_kr", "Koszt KR"],
@@ -677,7 +576,6 @@ function AdminPanel() {
   return (
     <AppShell me={me ?? null} title="Administracja" subtitle="Państwa, gracze i zarządzanie rozgrywką">
       <div className="min-w-0 space-y-6 overflow-x-clip">
-        <AdminDataExportButton />
         <AdminKpis />
 
         <Tabs value={adminTab} onValueChange={(value) => startAdminTabTransition(() => setAdminTab(value))} className="min-w-0">
@@ -819,39 +717,6 @@ function EconomyCountdownTab() {
   return <EconomyTab countdown={countdown} />;
 }
 
-
-function AdminDataExportButton() {
-  const exportData = useServerFn(exportApplicationData);
-  const [pending, setPending] = useState(false);
-
-  const handleExport = async () => {
-    setPending(true);
-    try {
-      const data = await exportData();
-      openApplicationExportPdf(JSON.parse(data) as ApplicationExport);
-      toast.success("Dane przygotowane do eksportu PDF");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Nie udało się przygotować eksportu danych");
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <div className="flex min-w-0 flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <p className="label-hud">EKSPORT DANYCH</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Pełny zrzut danych aplikacji w strukturze czytelnej dla ChatGPT i innych narzędzi AI.
-        </p>
-      </div>
-      <Button className="shrink-0" onClick={() => void handleExport()} disabled={pending}>
-        <FileDown />
-        {pending ? "Przygotowywanie…" : "Eksportuj dane → PDF"}
-      </Button>
-    </div>
-  );
-}
 
 function AdminTab({ value, icon, children }: { value: string; icon: ReactNode; children: ReactNode }) {
   return (
