@@ -255,10 +255,12 @@ function MyCountry() {
         <Stat
           label="Potencjał głosów"
           value={units(country.vote_potential)}
-          hint="Bez limitu — pakiety żołnierzy + czołgów"
           tone="accent"
         />
-        <Stat label="Głosy fortyfikacji" value={units(country.fort_votes)} />
+        <div className="stat-card stat-card-command rounded-xl border-2 border-primary/40 bg-primary/5 p-5 shadow-md">
+          <p className="stat-label">Głosy fortyfikacji</p>
+          <p className="num mt-3 break-words text-2xl font-semibold leading-none text-primary sm:text-3xl">{units(country.fort_votes)}</p>
+        </div>
       </div>
 
       {occupiedByMe.length ? (
