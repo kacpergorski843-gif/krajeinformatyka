@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, ChevronRight, Timer } from "lucide-react";
+import { Coins, Flame, Droplet, CircleDot, Magnet, Atom, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -323,43 +323,6 @@ function MyCountry() {
         />
         <Stat label="Głosy fortyfikacji" value={units(country.fort_votes)} />
       </div>
-
-      {/* Widget regionów */}
-      <SectionTitle
-        action={
-          <Link to="/regiony" className="text-primary flex shrink-0 items-center gap-1 text-xs">
-            Zarządzaj <ChevronRight className="size-3.5" strokeWidth={1.5} />
-          </Link>
-        }
-      >
-        Regiony ({regions?.length ?? 0})
-      </SectionTitle>
-      <Panel className="divide-border divide-y p-0">
-        {(regions ?? []).slice(0, 4).map((r) => (
-          <Link
-            key={r.id}
-            to="/regiony"
-            className="hover:bg-secondary/50 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5"
-          >
-            <p className="truncate text-sm">{r.name}</p>
-            <span
-              className={`num shrink-0 text-xs ${(r.slots ?? []).length === 0 ? "text-inactive" : "text-primary"}`}
-            >
-              {(r.slots ?? []).length}/9
-            </span>
-          </Link>
-        ))}
-        {regions && regions.length === 0 ? (
-          <p className="text-muted-foreground p-3 text-sm">
-            Twoje państwo nie ma jeszcze regionów — administrator może je dodać.
-          </p>
-        ) : null}
-        {regions && regions.length > 4 ? (
-          <Link to="/regiony" className="text-primary block px-3 py-2.5 text-xs">
-            + {regions.length - 4} kolejnych regionów
-          </Link>
-        ) : null}
-      </Panel>
 
       <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
