@@ -207,10 +207,6 @@ function Regions() {
       {country ? (
         <Panel className="hud-frame mb-6 overflow-hidden p-0">
           <div className="resource-summary-grid grid grid-cols-2 text-sm sm:grid-cols-3 xl:grid-cols-6">
-            <div className="min-w-0 px-4 py-4">
-              <p className="label-hud">Skarbiec</p>
-              <p className="num text-primary mt-1">{fmtKR(country.balance)}</p>
-            </div>
             {RESOURCES.map((r) => (
               <div key={r} className="min-w-0 px-4 py-4">
                 <p className="label-hud">{RESOURCE_LABELS[r]}</p>
