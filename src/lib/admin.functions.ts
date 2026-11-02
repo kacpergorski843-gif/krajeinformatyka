@@ -121,3 +121,35 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/** Odczyt globalnego trybu konserwacji dla zalogowanych użytkowników. */
+export const getMaintenanceMode = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("app_maintenance_mode")
+      .select("enabled")
+      .eq("id", 1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { enabled: data?.enabled === true };
+  });
+
+/** Zmiana trybu konserwacji jest dostępna wyłącznie dla MAIN_ADMIN. */
+export const setMaintenanceMode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ enabled: z.boolean() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: isMainAdmin, error: roleError } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "MAIN_ADMIN",
+    });
+    if (roleError) throw new Error(roleError.message);
+    if (isMainAdmin !== true) throw new Error("Tylko główny administrator może zmienić tryb konserwacji");
+
+    const { error } = await context.supabase
+      .from("app_maintenance_mode")
+      .upsert({ id: 1, enabled: data.enabled }, { onConflict: "id" });
+    if (error) throw new Error(error.message);
+    return { enabled: data.enabled };
+  });
