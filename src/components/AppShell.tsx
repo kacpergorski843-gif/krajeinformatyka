@@ -73,9 +73,6 @@ export function AppShell({ me, title, subtitle, children }: {
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
       <aside className="sidebar hidden w-[17rem] shrink-0 lg:flex">
         <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
-          <div className="brand-block mb-7">
-            <div className="brand-mark"><Landmark className="size-5" /></div>
-          </div>
           <div className="command-section"><p className="nav-caption">Centrum dowodzenia</p>{nav()}</div>
           <div className="mt-auto">
             <div className="profile-strip mb-3">
@@ -99,7 +96,7 @@ export function AppShell({ me, title, subtitle, children }: {
     </div>
     {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" role="presentation" onClick={() => setMobileOpen(false)}>
       <aside className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-border pb-4"><div className="brand-block"><div className="brand-mark"><Landmark className="size-5"/></div></div>
+        <div className="flex items-center justify-end border-b border-border pb-4">
         <button onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button></div>
         <div className="mt-5">{nav(true)}</div>
       </aside>
