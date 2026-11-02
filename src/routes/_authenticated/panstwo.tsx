@@ -195,15 +195,10 @@ function MyCountry() {
           <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.balance)}</p>
           <p className="mt-2 text-xs text-muted-foreground">Aktualny stan skarbca</p>
         </Panel>
-        <div className="mt-3 grid grid-cols-2 items-stretch gap-3">
+        <div className="mt-3">
           <div className="flex min-h-28 min-w-0 flex-col justify-center rounded-xl border border-border/80 bg-card p-5 shadow-sm sm:min-h-32 sm:p-6">
             <p className="text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase sm:text-xs">Przychód na dobę</p>
             <p className="num mt-3 break-words text-xl font-semibold tracking-tight sm:text-2xl">{fmtKR(country.gross_income)}</p>
-          </div>
-          <div className="flex min-h-28 min-w-0 flex-col justify-center rounded-xl border border-border/80 bg-card p-5 shadow-sm sm:min-h-32 sm:p-6">
-            <p className="text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase sm:text-xs">Zużycie węgla na dobę</p>
-            <p className="num mt-3 break-words text-xl font-semibold tracking-tight sm:text-2xl">{units(country.coal_upkeep)}</p>
-            <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{shortage ? "Brak węgla wstrzyma fabryki IV/V" : "Zapas wystarczający"}</p>
           </div>
         </div>
       </section>
