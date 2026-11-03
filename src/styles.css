@@ -277,7 +277,7 @@
 .page-subtitle { margin-top:.3rem; color:var(--color-muted-foreground); font-size:.82rem; }
 .system-status { align-items:center; gap:.45rem; padding:.45rem .65rem; border:1px solid var(--color-border); border-radius:999px; color:var(--color-muted-foreground); font-size:.62rem; font-weight:700; letter-spacing:.12em; }
 .system-status span { width:7px; height:7px; border-radius:50%; background:var(--color-success); box-shadow:0 0 12px var(--color-success); }
-.mobile-menu-button { position:fixed; top:max(1rem, env(safe-area-inset-top)); right:1rem; z-index:50; display:grid; place-items:center; width:46px; height:46px; border:1px solid var(--color-border); border-radius:999px; background:var(--color-card); box-shadow:0 8px 28px oklch(.04 .02 250 / 28%); }
+.mobile-menu-button { position:fixed !important; top:max(1rem, env(safe-area-inset-top)); right:1rem; z-index:9999 !important; pointer-events:auto; display:grid; place-items:center; width:46px; height:46px; border:1px solid var(--color-border); border-radius:999px; background:var(--color-card); box-shadow:0 8px 28px oklch(.04 .02 250 / 28%); }
 .content-area { max-width:1180px; }
 .section-heading { display:flex; align-items:end; justify-content:space-between; gap:1rem; margin:2.5rem 0 1rem; }
 .section-heading h2 { margin-top:.25rem; font-size:1.05rem; font-weight:700; letter-spacing:-.01em; }
