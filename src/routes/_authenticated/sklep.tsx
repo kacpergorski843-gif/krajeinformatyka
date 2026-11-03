@@ -113,7 +113,11 @@ function Shop() {
   }
 
   const buy = useMutation({
-    mutationFn: async (v: { item: ShopItem; qty: number; targets: Array<{ region_id: string; slot_index: number }> }) => {
+    mutationFn: async (v: {
+      item: ShopItem;
+      qty: number;
+      targets: Array<{ region_id: string; slot_index: number }>;
+    }) => {
       if (v.item.building?.startsWith("factory_")) {
         if (!v.targets.length) throw new Error("Wybierz przynajmniej jedno miejsce");
         return rpc("build_factories_batch", {
@@ -507,7 +511,7 @@ function Shop() {
                                     type="button"
                                     aria-label={`${r.name}, slot ${slotIndex}${isUpgradeSlot ? ", miejsce ulepszenia" : ""}`}
                                     aria-pressed={selectedTarget}
-                                    disabled={!available}
+                                    disabled={!available || (!selectedTarget && factoryTargets.length >= 500)}
                                     onClick={() =>
                                       setFactoryTargets((current) =>
                                         selectedTarget
@@ -515,7 +519,9 @@ function Shop() {
                                               (target) =>
                                                 !(target.region_id === r.id && target.slot_index === slotIndex),
                                             )
-                                          : [...current, { region_id: r.id, slot_index: slotIndex }],
+                                          : current.length < 500
+                                            ? [...current, { region_id: r.id, slot_index: slotIndex }]
+                                            : current,
                                       )
                                     }
                                     className={[
@@ -622,12 +628,13 @@ function Shop() {
                             </>
                           ) : null}
                         </button>
-                      );                    })}
+                      );
+                    })}
                   </div>
 
                   {isFactory ? (
                     <p className="text-xs text-muted-foreground">
-                      Wybrano: {factoryTargets.length} {factoryTargets.length === 1 ? "miejsce" : "miejsca"}
+                      Wybrano: {factoryTargets.length} slotów
                     </p>
                   ) : null}
                   {upgradeTarget ? (
