@@ -30,6 +30,7 @@ import { Flag } from "lucide-react";
 import { CountryFlag } from "@/components/CountryFlag";
 import { FlagImagePicker } from "@/components/FlagImagePicker";
 import { supabase } from "@/integrations/supabase/client";
+import { deletePlayerAccount, getMaintenanceMode, setMaintenanceMode } from "@/lib/admin.functions";
 
 import { Panel, SectionTitle } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
@@ -1314,7 +1315,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
                     setNewCountryFile(null);
                     setNewCountryPreview(null);
                   }}>
-                    <PackagePlus /> Dodaj nowe państwo
+Dodaj nowe państwo
                   </Button>
                   {user.country_id ? (
                     <Button type="button" variant="outline" className="w-full" onClick={() => {
