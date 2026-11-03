@@ -58,6 +58,7 @@ import {
   activeIncomeBonusesQuery,
   adminActiveRegionOccupationsQuery,
   adminActionsQuery,
+  adminStrikesQuery,
   allRegionOptionsQuery,
   adminShopQuery,
   adminUsersQuery,
