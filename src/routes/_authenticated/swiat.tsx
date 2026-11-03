@@ -26,12 +26,15 @@ export const Route = createFileRoute("/_authenticated/swiat")({
 
 function World() {
   const { data: me } = useQuery(meQuery);
-  const { data: countries, isPending, isError, error } = useQuery(publicCountriesQuery);
   const [q, setQ] = useState("");
   const deferredQ = useDeferredValue(q);
   const [selectedId, setSelectedId] = useState<string | null>(() =>
     typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("country"),
   );
+  const { data: countries, isPending, isError, error } = useQuery({
+    ...publicCountriesQuery,
+    enabled: !selectedId,
+  });
 
   const list = (countries ?? []).filter((country) =>
     country.name.toLocaleLowerCase("pl-PL").includes(deferredQ.trim().toLocaleLowerCase("pl-PL")),
