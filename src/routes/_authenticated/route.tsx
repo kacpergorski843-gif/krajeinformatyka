@@ -27,7 +27,7 @@ function AuthenticatedLayout() {
   });
 
   const maintenancePath = location.pathname.startsWith("/swiat/")
-    ? "/swiat/:id"
+    ? "/swiat/$id"
     : location.pathname;
   const pageDisabled = mode.data?.pages.includes(maintenancePath) === true;
   if (me.data?.isAdmin || (mode.data?.enabled !== true && !pageDisabled)) return <Outlet />;
