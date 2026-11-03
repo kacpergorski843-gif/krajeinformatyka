@@ -1516,3 +1516,9 @@
     transition: none !important;
   }
 }
+
+
+/* Hide the success checkmark in toast notifications; keep other status icons. */
+.premium-toaster [data-sonner-toast][data-type="success"] [data-icon] {
+  display: none !important;
+}
