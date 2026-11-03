@@ -254,7 +254,7 @@ function Regions() {
                 variant="ghost"
                 aria-expanded={open}
                 onClick={() => setExpanded(open ? null : r.id)}
-                className="grid h-auto w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left"
+                className="grid h-auto w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left hover:bg-secondary/35 hover:text-foreground"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{r.name}</p>
