@@ -599,6 +599,18 @@ export const allRegionsQuery = queryOptions({
   },
 });
 
+export const adminStrikesQuery = queryOptions({
+  queryKey: ["missile_strikes", "admin"],
+  queryFn: async () =>
+    (await unwrap(
+      supabase
+        .from("missile_strikes")
+        .select("id,attacker_country_id,defender_country_id,region_id,region_name,missile_code,result,aa_defense,region_aa,required_aa,destroyed,created_at")
+        .order("created_at", { ascending: false })
+        .limit(100),
+    )) as unknown as MissileStrike[],
+});
+
 export function strikesQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["missile_strikes", countryId],
