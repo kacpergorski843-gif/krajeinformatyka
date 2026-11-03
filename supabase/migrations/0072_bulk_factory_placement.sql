@@ -19,7 +19,7 @@ declare
   v_results jsonb := '[]'::jsonb;
   v_count int;
 begin
-  if jsonb_typeof(p_targets) <> 'array' then
+  if p_targets is null or jsonb_typeof(p_targets) is distinct from 'array' then
     raise exception 'Nieprawidłowa lista miejsc budowy';
   end if;
 
@@ -60,6 +60,10 @@ begin
     exception when others then
       raise exception 'Nieprawidłowe miejsce budowy';
     end;
+
+    if v_region_id is null or v_slot_index is null then
+      raise exception 'Nieprawidłowe miejsce budowy';
+    end if;
 
     if v_slot_index < 1 or v_slot_index > 9 then
       raise exception 'Nieprawidłowy slot';
