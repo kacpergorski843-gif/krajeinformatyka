@@ -75,11 +75,6 @@ export function AppShell({ me, title, children }: {
         <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
           <div className="command-section">{nav()}</div>
           <div className="mt-auto">
-            <div className="profile-strip mb-3">
-              <div className="profile-avatar">{(me?.displayName ?? me?.email ?? "?").slice(0,1).toUpperCase()}</div>
-              <div className="min-w-0"><p className="truncate text-sm font-semibold">{me?.displayName ?? me?.email ?? "Dowódca"}</p>
-              <p className="text-primary text-[10px] tracking-[0.14em] uppercase">{me ? ROLE_LABELS[me.role] : ""}</p></div>
-            </div>
             <button type="button" onClick={() => setConfirmOut(true)} className="nav-item w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
           </div>
         </div>
@@ -99,13 +94,6 @@ export function AppShell({ me, title, children }: {
         <button className="ml-auto mb-4 block" onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button>
         <div className="min-h-0 flex-1 overflow-y-auto">{nav(true)}</div>
         <div className="mt-auto pt-4">
-          <div className="profile-strip mb-3">
-            <div className="profile-avatar">{(me?.displayName ?? me?.email ?? "?").slice(0,1).toUpperCase()}</div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{me?.displayName ?? me?.email ?? "Dowódca"}</p>
-              <p className="text-primary text-[10px] tracking-[0.14em] uppercase">{me ? ROLE_LABELS[me.role] : ""}</p>
-            </div>
-          </div>
           <button type="button" onClick={() => { setMobileOpen(false); setConfirmOut(true); }} className="nav-item w-full">
             <LogOut className="size-[18px]" /> Wyloguj
           </button>
