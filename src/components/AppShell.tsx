@@ -81,13 +81,11 @@ export function AppShell({ me, title, children }: {
       <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 lg:px-10 lg:py-8">
         <header className="page-header command-header">
           <div className="min-w-0"><h1 className="page-title truncate">{title}</h1></div>
-          <div className="flex items-center gap-2">
-            <button className="mobile-menu-button lg:hidden" style={{ top: "auto", bottom: "max(1rem, env(safe-area-inset-bottom))" }} onClick={() => setMobileOpen(true)} aria-label="Otwórz menu" aria-expanded={mobileOpen}><Menu className="size-5" /></button>
-          </div>
         </header>
         <div className="content-area">{children}</div>
       </main>
     </div>
+    <button className="mobile-menu-button lg:hidden" style={{ top: "auto", bottom: "max(1rem, env(safe-area-inset-bottom))" }} onClick={() => setMobileOpen(true)} aria-label="Otwórz menu" aria-expanded={mobileOpen}><Menu className="size-5" /></button>
     {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" role="presentation" onClick={() => setMobileOpen(false)}>
       <aside className="mobile-drawer flex flex-col" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
         <button className="ml-auto mb-4 block" onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button>
