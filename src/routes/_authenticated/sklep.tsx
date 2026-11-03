@@ -97,20 +97,30 @@ function Shop() {
   const { data: regions } = useQuery(regionsQuery(countryId));
   const [item, setItem] = useState<ShopItem | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
+  const [factoryTargets, setFactoryTargets] = useState<Array<{ region_id: string; slot_index: number }>>([]);
   const [qtyText, setQtyText] = useState("1");
   const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
 
   const isBuilding = !!item?.building;
+  const isFactory = !!item?.building?.startsWith("factory_");
   const region = (regions ?? []).find((r) => r.id === regionId) ?? null;
 
   function openItem(i: ShopItem) {
     setItem(i);
     setQtyText("1");
     setRegionId(null);
+    setFactoryTargets([]);
   }
 
   const buy = useMutation({
-    mutationFn: async (v: { item: ShopItem; qty: number }) => {
+    mutationFn: async (v: { item: ShopItem; qty: number; targets: Array<{ region_id: string; slot_index: number }> }) => {
+      if (v.item.building?.startsWith("factory_")) {
+        if (!v.targets.length) throw new Error("Wybierz przynajmniej jedno miejsce");
+        return rpc("build_factories_batch", {
+          p_item_code: v.item.code,
+          p_targets: v.targets,
+        });
+      }
       if (v.item.building) {
         if (!region) throw new Error("Wybierz region");
         if (v.item.building.startsWith("factory_") || v.item.building.startsWith("fort_")) {
@@ -154,6 +164,7 @@ function Shop() {
       toast.success("Zakup zrealizowany");
       setItem(null);
       setQtyText("1");
+      setFactoryTargets([]);
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
       void queryClient.invalidateQueries({ queryKey: ["regions"] });
       void queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -175,7 +186,7 @@ function Shop() {
   }
 
   // Braki dla aktualnie wybranego produktu i ilości
-  const effectiveQty = isBuilding ? 1 : qty;
+  const effectiveQty = isFactory ? Math.max(1, factoryTargets.length) : isBuilding ? 1 : qty;
   const needKr = item ? Number(item.cost_kr) * effectiveQty : 0;
   const haveKr = Number(country?.balance ?? 0);
   const krShort = item ? haveKr < needKr : false;
@@ -223,7 +234,7 @@ function Shop() {
       : null;
 
   const blockReason =
-    item?.building && region
+    item?.building && region && !isFactory
       ? upgradeTarget
         ? null
         : buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
@@ -233,7 +244,8 @@ function Shop() {
     krShort ||
     resourceRows.some((x) => x.missing) ||
     !!blockReason ||
-    (isBuilding && !region) ||
+    (isBuilding && !isFactory && !region) ||
+    (isFactory && factoryTargets.length === 0) ||
     (item?.code === "aa" && !regionId);
 
   function levelLockForRegion(selectedRegion: RegionWithSlots, building: string): string | null {
