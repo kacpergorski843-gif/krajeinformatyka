@@ -85,23 +85,36 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Odczyt globalnego trybu konserwacji dla zalogowanych użytkowników. */
+/** Odczyt globalnego i stronicowego trybu konserwacji dla zalogowanych użytkowników. */
 export const getMaintenanceMode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await (context.supabase as any)
       .from("app_maintenance_mode")
-      .select("enabled")
+      .select("enabled, pages, message_title, message_body")
       .eq("id", 1)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return { enabled: data?.enabled === true };
+    return {
+      enabled: data?.enabled === true,
+      pages: Array.isArray(data?.pages) ? data.pages as string[] : [],
+      messageTitle: data?.message_title || "Ekonomia jest aktualnie w remoncie",
+      messageBody: data?.message_body || "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.",
+    };
   });
 
 /** Zmiana trybu konserwacji jest dostępna wyłącznie dla MAIN_ADMIN. */
 export const setMaintenanceMode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ enabled: z.boolean() }).parse(data))
+  .inputValidator((data) => z.object({
+    enabled: z.boolean(),
+    pages: z.array(z.enum([
+      "/panstwo", "/regiony", "/swiat", "/swiat/:id", "/ranking",
+      "/sklep", "/arsenal", "/transfer", "/umowy",
+    ])).max(20),
+    messageTitle: z.string().trim().min(1).max(120),
+    messageBody: z.string().max(1000),
+  }).parse(data))
   .handler(async ({ data, context }) => {
     const { data: isMainAdmin, error: roleError } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
@@ -112,7 +125,18 @@ export const setMaintenanceMode = createServerFn({ method: "POST" })
 
     const { error } = await (context.supabase as any)
       .from("app_maintenance_mode")
-      .upsert({ id: 1, enabled: data.enabled }, { onConflict: "id" });
+      .upsert({
+        id: 1,
+        enabled: data.enabled,
+        pages: data.pages,
+        message_title: data.messageTitle,
+        message_body: data.messageBody,
+      }, { onConflict: "id" });
     if (error) throw new Error(error.message);
-    return { enabled: data.enabled };
+    return {
+      enabled: data.enabled,
+      pages: data.pages,
+      messageTitle: data.messageTitle,
+      messageBody: data.messageBody,
+    };
   });
