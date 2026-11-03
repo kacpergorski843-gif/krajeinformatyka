@@ -96,11 +96,9 @@ export function FlagImagePicker({
             ))}
           </div>
           <div className="overflow-hidden border border-border bg-secondary/30 p-2">
-            <div className="mx-auto overflow-hidden bg-background" style={{ aspectRatio: String(SHAPES[shape].ratio), maxWidth: "100%" }}>
-              <img ref={imageRef} src={source} alt="Podgląd przycinania flagi" className="h-full w-full opacity-0" />
-              <div className="relative -mt-full overflow-hidden" style={{ aspectRatio: String(SHAPES[shape].ratio) }}>
-                <img src={source} alt="" className="h-full w-full object-cover" style={{ objectPosition: `${positionX}% ${positionY}%`, transform: `scale(${zoom})` }} />
-              </div>
+            <div className="relative mx-auto overflow-hidden bg-background" style={{ aspectRatio: String(SHAPES[shape].ratio), maxWidth: "100%" }}>
+              <img ref={imageRef} src={source} alt="" className="hidden" />
+              <img src={source} alt="Podgląd przycinania flagi" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: `${positionX}% ${positionY}%`, transform: `scale(${zoom})` }} />
             </div>
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><Scissors className="size-3.5" /> Podgląd przycięcia</div>
           </div>
