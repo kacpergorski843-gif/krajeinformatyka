@@ -97,20 +97,34 @@ function Shop() {
   const { data: regions } = useQuery(regionsQuery(countryId));
   const [item, setItem] = useState<ShopItem | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
+  const [factoryTargets, setFactoryTargets] = useState<Array<{ region_id: string; slot_index: number }>>([]);
   const [qtyText, setQtyText] = useState("1");
   const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
 
   const isBuilding = !!item?.building;
+  const isFactory = !!item?.building?.startsWith("factory_");
   const region = (regions ?? []).find((r) => r.id === regionId) ?? null;
 
   function openItem(i: ShopItem) {
     setItem(i);
     setQtyText("1");
     setRegionId(null);
+    setFactoryTargets([]);
   }
 
   const buy = useMutation({
-    mutationFn: async (v: { item: ShopItem; qty: number }) => {
+    mutationFn: async (v: {
+      item: ShopItem;
+      qty: number;
+      targets: Array<{ region_id: string; slot_index: number }>;
+    }) => {
+      if (v.item.building?.startsWith("factory_")) {
+        if (!v.targets.length) throw new Error("Wybierz przynajmniej jedno miejsce");
+        return rpc("build_factories_batch", {
+          p_item_code: v.item.code,
+          p_targets: v.targets,
+        });
+      }
       if (v.item.building) {
         if (!region) throw new Error("Wybierz region");
         if (v.item.building.startsWith("factory_") || v.item.building.startsWith("fort_")) {
@@ -154,6 +168,7 @@ function Shop() {
       toast.success("Zakup zrealizowany");
       setItem(null);
       setQtyText("1");
+      setFactoryTargets([]);
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
       void queryClient.invalidateQueries({ queryKey: ["regions"] });
       void queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -175,7 +190,7 @@ function Shop() {
   }
 
   // Braki dla aktualnie wybranego produktu i ilości
-  const effectiveQty = isBuilding ? 1 : qty;
+  const effectiveQty = isFactory ? factoryTargets.length : isBuilding ? 1 : qty;
   const needKr = item ? Number(item.cost_kr) * effectiveQty : 0;
   const haveKr = Number(country?.balance ?? 0);
   const krShort = item ? haveKr < needKr : false;
@@ -223,7 +238,7 @@ function Shop() {
       : null;
 
   const blockReason =
-    item?.building && region
+    item?.building && region && !isFactory
       ? upgradeTarget
         ? null
         : buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
@@ -233,7 +248,8 @@ function Shop() {
     krShort ||
     resourceRows.some((x) => x.missing) ||
     !!blockReason ||
-    (isBuilding && !region) ||
+    (isBuilding && !isFactory && !region) ||
+    (isFactory && factoryTargets.length === 0) ||
     (item?.code === "aa" && !regionId);
 
   function levelLockForRegion(selectedRegion: RegionWithSlots, building: string): string | null {
@@ -471,6 +487,63 @@ function Shop() {
                         : !buildBlockReason(r, "aa");
                       const selectedRegion = regionId === r.id;
 
+                      if (isFactory) {
+                        const factoryRequired = level > 1 ? `factory_${level - 1}` : null;
+                        const factoryRegionBlocked =
+                          buildBlockReason(r, building) ?? levelLockForRegion(r, building);
+                        return (
+                          <div key={r.id} className="rounded-lg border border-border bg-background/30 p-3">
+                            <p className="mb-3 font-semibold">{r.name}</p>
+                            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                              {Array.from({ length: 9 }, (_, index) => {
+                                const slotIndex = index + 1;
+                                const slot = r.slots.find((candidate) => candidate.slot_index === slotIndex);
+                                const isUpgradeSlot = !!factoryRequired && slot?.building === factoryRequired;
+                                const available = factoryRequired
+                                  ? isUpgradeSlot
+                                  : !slot && !factoryRegionBlocked;
+                                const selectedTarget = factoryTargets.some(
+                                  (target) => target.region_id === r.id && target.slot_index === slotIndex,
+                                );
+                                return (
+                                  <button
+                                    key={slotIndex}
+                                    type="button"
+                                    aria-label={`${r.name}, slot ${slotIndex}${isUpgradeSlot ? ", miejsce ulepszenia" : ""}`}
+                                    aria-pressed={selectedTarget}
+                                    disabled={!available || (!selectedTarget && factoryTargets.length >= 500)}
+                                    onClick={() =>
+                                      setFactoryTargets((current) =>
+                                        selectedTarget
+                                          ? current.filter(
+                                              (target) =>
+                                                !(target.region_id === r.id && target.slot_index === slotIndex),
+                                            )
+                                          : current.length < 500
+                                            ? [...current, { region_id: r.id, slot_index: slotIndex }]
+                                            : current,
+                                      )
+                                    }
+                                    className={[
+                                      "min-h-12 rounded-md border text-sm font-semibold transition-colors",
+                                      selectedTarget
+                                        ? "border-primary bg-primary text-primary-foreground"
+                                        : available
+                                          ? isUpgradeSlot
+                                            ? "border-primary/60 bg-primary/10 text-primary hover:bg-primary/20"
+                                            : "border-dashed border-border bg-background hover:border-primary/60"
+                                          : "border-border/40 bg-muted/30 text-muted-foreground/40",
+                                    ].join(" ")}
+                                  >
+                                    {slotIndex}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <button
                           key={r.id}
@@ -559,6 +632,11 @@ function Shop() {
                     })}
                   </div>
 
+                  {isFactory ? (
+                    <p className="text-xs text-muted-foreground">
+                      Wybrano: {factoryTargets.length} slotów
+                    </p>
+                  ) : null}
                   {upgradeTarget ? (
                     <p className="text-primary text-xs">
                       Wybrany region: ulepszenie zastąpi{" "}
@@ -607,9 +685,9 @@ function Shop() {
                 <Button
                   className="flex-1"
                   disabled={buy.isPending || cannotBuy}
-                  onClick={() => buy.mutate({ item, qty })}
+                  onClick={() => buy.mutate({ item, qty, targets: factoryTargets })}
                 >
-                  {buy.isPending ? "Realizuję…" : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
+                  {buy.isPending ? "Realizuję…" : isFactory ? (isFactoryUpgrade ? `Ulepsz ${factoryTargets.length}` : `Kup ${factoryTargets.length} fabryk`) : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
                 </Button>
               </div>
             </div>
