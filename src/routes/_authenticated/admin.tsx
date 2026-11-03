@@ -27,6 +27,7 @@ import { AppShell } from "@/components/AppShell";
 import { AdminSuggestionsTab } from "@/components/CountrySuggestions";
 import { Flag } from "lucide-react";
 import { CountryFlag } from "@/components/CountryFlag";
+import { FlagImagePicker } from "@/components/FlagImagePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { deletePlayerAccount, getMaintenanceMode, resetPlayerPassword, setMaintenanceMode } from "@/lib/admin.functions";
 import { Panel, SectionTitle } from "@/components/stat";
@@ -643,7 +644,7 @@ function MaintenanceTab() {
 
   return (
     <div className="mx-auto grid min-w-0 max-w-3xl gap-4">
-      <Panel className="hud-frame space-y-5 p-4 sm:p-6">
+      <Panel className="space-y-5 p-4 sm:p-6">
         <div className="flex items-start gap-3">
           <span className="grid size-11 shrink-0 place-items-center border border-primary/30 bg-primary/10 text-primary">
             <Construction className="size-5" />
@@ -727,7 +728,7 @@ function AdminTab({ value, icon, children }: { value: string; icon: ReactNode; c
 
 function Kpi({ icon, label, value, hint, loading }: { icon: ReactNode; label: string; value: string; hint: string; loading: boolean }) {
   return (
-    <Panel className="hud-frame min-w-0 p-3 sm:p-4">
+    <Panel className="min-w-0 p-3 sm:p-4">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           <p className="label-hud truncate">{label}</p>
@@ -742,7 +743,7 @@ function Kpi({ icon, label, value, hint, loading }: { icon: ReactNode; label: st
 
 function HudState({ icon, title, description, children }: { icon: ReactNode; title: string; description: string; children?: ReactNode }) {
   return (
-    <Panel className="hud-frame flex min-h-48 flex-col items-center justify-center p-6 text-center">
+    <Panel className="flex min-h-48 flex-col items-center justify-center p-6 text-center">
       <span className="mb-3 grid size-11 place-items-center border border-primary/30 text-primary [&_svg]:size-5">{icon}</span>
       <h2 className="font-display text-base font-semibold">{title}</h2>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
@@ -799,7 +800,7 @@ function CountriesTab() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <Panel className="hud-frame min-w-0 p-3 sm:p-4">
+      <Panel className="min-w-0 p-3 sm:p-4">
         <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_11rem_12rem_auto]">
           <div className="relative min-w-0">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -975,29 +976,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Nazwa"><Input value={identity.name ?? country.name} onChange={(event) => setIdentity((current) => ({ ...current, name: event.target.value }))} /></Field>
                 <Field label="Zdjęcie flagi">
-                  <Input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0] ?? null;
-                      if (!file) return;
-                      if (file.size > 2 * 1024 * 1024) {
-                        toast.error("Flaga może mieć maksymalnie 2 MB");
-                        event.target.value = "";
-                        return;
-                      }
-                      setFlagFile(file);
-                      setFlagPreview(URL.createObjectURL(file));
-                    }}
-                  />
-                  {flagPreview ? (
-                    <div className="mt-2 flex items-center gap-3 border border-border p-2">
-                      <img src={flagPreview} alt="Podgląd flagi" className="h-12 w-20 rounded-sm object-cover" />
-                      <span className="truncate text-xs text-muted-foreground">{flagFile?.name}</span>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-xs text-muted-foreground">Wybierz zdjęcie z telefonu · PNG, JPG lub WebP · maks. 2 MB</p>
-                  )}
+                  <FlagImagePicker onChange={(file, preview) => { setFlagFile(file); setFlagPreview(preview); }} />
                 </Field>
               </div>
               <Panel className="p-4"><Label className="label-hud mb-2 block">Właściciel</Label><Select value={owner?.id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate(value)}><SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Wybierz gracza" /></SelectTrigger><SelectContent><SelectItem value="unassigned" disabled>Brak właściciela</SelectItem>{users.map((user) => <SelectItem key={user.id} value={user.id}>{user.display_name ?? "Użytkownik"}{user.country_name ? ` — ${user.country_name}` : ""}</SelectItem>)}</SelectContent></Select><p className="mt-2 text-xs text-muted-foreground">Wybranie gracza przypisze mu to państwo przez bezpieczną operację administracyjną.</p></Panel>
@@ -1300,9 +1279,15 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  if (userQuery.isError) {
+    return <HudState icon={<ShieldAlert />} title="Nie udało się otworzyć użytkowników" description={userQuery.error instanceof Error ? userQuery.error.message : "Nie udało się pobrać listy użytkowników. Sprawdź połączenie z bazą i spróbuj ponownie."}>
+      <Button variant="outline" onClick={() => void userQuery.refetch()}>Spróbuj ponownie</Button>
+    </HudState>;
+  }
+
   return (
     <div className="space-y-4">
-      <Panel className="hud-frame p-3">
+      <Panel className="p-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder="Szukaj użytkownika lub państwa…" value={search} onChange={(event) => setSearch(event.target.value)} />
@@ -1493,23 +1478,7 @@ function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
             </div>
           ) : null}
           <Field label="Nowa flaga">
-            <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => {
-              const file = event.target.files?.[0] ?? null;
-              if (!file) return;
-              if (file.size > 2 * 1024 * 1024) {
-                toast.error("Flaga może mieć maksymalnie 2 MB");
-                event.target.value = "";
-                return;
-              }
-              setEditFlagFile(file);
-              setEditFlagPreview(URL.createObjectURL(file));
-            }} />
-            {editFlagPreview ? (
-              <div className="mt-2 flex items-center gap-3 border border-border p-2">
-                <img src={editFlagPreview} alt="Podgląd nowej flagi" className="h-12 w-20 rounded-sm object-cover" />
-                <span className="truncate text-xs text-muted-foreground">{editFlagFile?.name}</span>
-              </div>
-            ) : <p className="mt-2 text-xs text-muted-foreground">PNG, JPG lub WebP · maks. 2 MB</p>}
+            <FlagImagePicker onChange={(file, preview) => { setEditFlagFile(file); setEditFlagPreview(preview); }} />
           </Field>
           <div className="grid gap-2 sm:grid-cols-2">
             <Button variant="outline" onClick={() => setEditFlagCountry(null)}>Anuluj</Button>
@@ -1547,7 +1516,7 @@ function ShopTab() {
   const toggle = useMutation({ mutationFn: ({ code, active }: { code: string; active: boolean }) => rpc("admin_toggle_shop_item", { p_code: code, p_active: active }), onSuccess: () => { toast.success("Widoczność zmieniona"); void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] }); void queryClient.invalidateQueries({ queryKey: ["shop_items"] }); }, onError: (error: Error) => toast.error(error.message) });
   const emptyForm = { code: "", name: "", category: "INNE", description: "", building: "", produces: "", active: "true", cost_kr: "0", cost_coal: "0", cost_oil: "0", cost_copper: "0", cost_iron: "0", cost_uranium: "0", income_kr: "0", upkeep_coal: "0", produces_amount: "0", sort_order: "100" };
   const toForm = (item: ShopItem) => ({ code: item.code, name: item.name, category: item.category, description: item.description, building: item.building ?? "", produces: item.produces ?? "", active: String(item.active), cost_kr: item.cost_kr, cost_coal: item.cost_coal, cost_oil: item.cost_oil, cost_copper: item.cost_copper, cost_iron: item.cost_iron, cost_uranium: item.cost_uranium, income_kr: item.income_kr, upkeep_coal: item.upkeep_coal, produces_amount: item.produces_amount, sort_order: String(item.sort_order) });
-  return <div className="space-y-4"><Panel className="hud-frame p-3"><div className="grid gap-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_11rem_auto]"><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Szukaj produktu…" value={search} onChange={(event) => setSearch(event.target.value)} /></div><Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Wszystkie kategorie</SelectItem>{categories.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select><Select value={visibility} onValueChange={setVisibility}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Każda widoczność</SelectItem><SelectItem value="true">Widoczne</SelectItem><SelectItem value="false">Ukryte</SelectItem></SelectContent></Select><Button onClick={() => setEdit(emptyForm)}><PackagePlus />Dodaj produkt</Button></div></Panel>{itemQuery.isLoading ? <LoadingRows /> : items.length === 0 ? <HudState icon={<ShoppingCart />} title="Brak produktów" description="Zmień filtry lub dodaj nowy produkt." /> : <div className="grid gap-3 lg:grid-cols-2">{items.map((item) => <Panel key={item.code} className="min-w-0 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><Button variant="ghost" className="h-auto min-w-0 justify-start p-0 text-left hover:bg-transparent" onClick={() => setEdit(toForm(item))}><span className="min-w-0"><span className={`block truncate font-semibold ${item.active ? "" : "text-inactive"}`}>{item.name}</span><span className="block truncate text-[11px] font-normal text-muted-foreground">{item.category} · {item.code}</span></span></Button><Switch checked={item.active} onCheckedChange={(active) => toggle.mutate({ code: item.code, active })} /></div><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Cena" value={fmtKR(item.cost_kr)} /><ValueBox label="Efekt / doba" value={Number(item.income_kr) ? `+${fmtKR(item.income_kr)}` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "—"} tone={Number(item.income_kr) || item.produces ? "success" : "muted"} /></div></Panel>)}</div>}<ProductDialog edit={edit} items={itemQuery.data ?? []} onEdit={setEdit} onSave={(payload) => save.mutate(payload)} pending={save.isPending} /></div>;
+  return <div className="space-y-4"><Panel className="p-3"><div className="grid gap-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_11rem_auto]"><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Szukaj produktu…" value={search} onChange={(event) => setSearch(event.target.value)} /></div><Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Wszystkie kategorie</SelectItem>{categories.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select><Select value={visibility} onValueChange={setVisibility}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Każda widoczność</SelectItem><SelectItem value="true">Widoczne</SelectItem><SelectItem value="false">Ukryte</SelectItem></SelectContent></Select><Button onClick={() => setEdit(emptyForm)}><PackagePlus />Dodaj produkt</Button></div></Panel>{itemQuery.isLoading ? <LoadingRows /> : items.length === 0 ? <HudState icon={<ShoppingCart />} title="Brak produktów" description="Zmień filtry lub dodaj nowy produkt." /> : <div className="grid gap-3 lg:grid-cols-2">{items.map((item) => <Panel key={item.code} className="min-w-0 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><Button variant="ghost" className="h-auto min-w-0 justify-start p-0 text-left hover:bg-transparent" onClick={() => setEdit(toForm(item))}><span className="min-w-0"><span className={`block truncate font-semibold ${item.active ? "" : "text-inactive"}`}>{item.name}</span><span className="block truncate text-[11px] font-normal text-muted-foreground">{item.category} · {item.code}</span></span></Button><Switch checked={item.active} onCheckedChange={(active) => toggle.mutate({ code: item.code, active })} /></div><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Cena" value={fmtKR(item.cost_kr)} /><ValueBox label="Efekt / doba" value={Number(item.income_kr) ? `+${fmtKR(item.income_kr)}` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "—"} tone={Number(item.income_kr) || item.produces ? "success" : "muted"} /></div></Panel>)}</div>}<ProductDialog edit={edit} items={itemQuery.data ?? []} onEdit={setEdit} onSave={(payload) => save.mutate(payload)} pending={save.isPending} /></div>;
 }
 
 function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<string, string> | null; items: ShopItem[]; onEdit: (value: Record<string, string> | null) => void; onSave: (value: Record<string, string>) => void; pending: boolean }) {
@@ -1566,7 +1535,7 @@ function EconomyTab({ countdown }: { countdown: string }) {
         void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
         void queryClient.invalidateQueries({ queryKey: ["countries"] });
         void queryClient.invalidateQueries({ queryKey: ["transactions"] }); }, onError: (error: Error) => toast.error(error.message) });
-  return <div className="space-y-4"><div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"><Panel className="hud-frame p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div><p className="label-hud">Następny automatyczny cykl</p><p className="num mt-2 text-3xl text-primary sm:text-4xl">{countdown}</p><p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p></div><CalendarClock className="size-7 text-primary" /></div><Button className="mt-5 w-full sm:w-auto" onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button></Panel><Panel className="p-4"><p className="label-hud">Prognoza kolejnego cyklu</p><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Przychód KR" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep)}`} tone="destructive" />{[["Węgiel",totals.coal],["Ropa",totals.oil],["Miedź",totals.copper],["Żelazo",totals.iron],["Uran",totals.uranium]].map(([label,value]) => <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(Number(value))}`} tone="success" />)}</div></Panel></div><SectionTitle>Ostatnie rozliczenia</SectionTitle><Panel className="divide-y divide-border p-0">{runs.filter((entry) => Number(entry.summary?.["total_kr"] ?? 0) !== 0).map((entry) => <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="text-sm">Cykl {entry.run_date}</p><p className="text-xs text-muted-foreground">{dateTime(entry.ran_at)}</p></div><p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.["total_kr"] ?? 0))}</p></div>)}{runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}</Panel><ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Uruchomić cykl dobowy?" description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`} confirmLabel="Uruchom cykl" destructive pending={run.isPending} onConfirm={() => run.mutate()}><div className="grid grid-cols-2 gap-2"><ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep)} węgla`} tone="destructive" /></div></ConfirmDialog></div>;
+  return <div className="space-y-4"><div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"><Panel className="p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div><p className="label-hud">Następny automatyczny cykl</p><p className="num mt-2 text-3xl text-primary sm:text-4xl">{countdown}</p><p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p></div><CalendarClock className="size-7 text-primary" /></div><Button className="mt-5 w-full sm:w-auto" onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button></Panel><Panel className="p-4"><p className="label-hud">Prognoza kolejnego cyklu</p><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Przychód KR" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep)}`} tone="destructive" />{[["Węgiel",totals.coal],["Ropa",totals.oil],["Miedź",totals.copper],["Żelazo",totals.iron],["Uran",totals.uranium]].map(([label,value]) => <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(Number(value))}`} tone="success" />)}</div></Panel></div><SectionTitle>Ostatnie rozliczenia</SectionTitle><Panel className="divide-y divide-border p-0">{runs.filter((entry) => Number(entry.summary?.["total_kr"] ?? 0) !== 0).map((entry) => <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="text-sm">Cykl {entry.run_date}</p><p className="text-xs text-muted-foreground">{dateTime(entry.ran_at)}</p></div><p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.["total_kr"] ?? 0))}</p></div>)}{runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}</Panel><ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Uruchomić cykl dobowy?" description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`} confirmLabel="Uruchom cykl" destructive pending={run.isPending} onConfirm={() => run.mutate()}><div className="grid grid-cols-2 gap-2"><ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep)} węgla`} tone="destructive" /></div></ConfirmDialog></div>;
 }
 
 type HistoryFilter = "all" | "adjustments" | "build" | "cycles" | "military" | "missiles";
@@ -1582,7 +1551,7 @@ function HistoryTab() {
   const actions = useMemo(() => ((actionQuery.data ?? []) as unknown as AdminActionRow[]).filter(() => filter === "all" || filter === "adjustments"), [actionQuery.data, filter]);
   const strikes = useMemo(() => (strikeQuery.data ?? []).filter(() => filter === "all" || filter === "missiles"), [strikeQuery.data, filter]);
   const loading = txQuery.isLoading || actionQuery.isLoading || strikeQuery.isLoading;
-  return <div className="space-y-4"><Panel className="hud-frame p-3"><div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div className="admin-scrollbar overflow-x-auto"><div className="flex min-w-max gap-1">{([['all','Wszystkie'],['adjustments','Korekty'],['build','Budowa'],['cycles','Cykle'],['military','Wojsko'],['missiles','Rakiety']] as [HistoryFilter,string][]).map(([value,label]) => <Button key={value} size="sm" variant={filter === value ? "secondary" : "ghost"} className={filter === value ? "text-primary" : "text-muted-foreground"} onClick={() => setFilter(value)}>{label}</Button>)}</div></div><div className="flex items-center gap-2"><Switch checked={hideZero} onCheckedChange={setHideZero} /><span className="whitespace-nowrap text-xs">Ukryj 0 KR</span></div></div></Panel>{loading ? <LoadingRows /> : <div className="space-y-4">{(filter === "all" || filter !== "adjustments" && filter !== "missiles") ? <><SectionTitle>Operacje</SectionTitle><Panel className="divide-y divide-border p-0">{transactions.map((transaction) => <TransactionItem key={transaction.id} transaction={transaction} country={transaction.country_id ? countries.get(transaction.country_id) : undefined} />)}{transactions.length === 0 ? <EmptyLine text="Brak operacji dla wybranego filtra." /> : null}</Panel></> : null}{filter === "all" || filter === "adjustments" ? <><SectionTitle>Zmiany administracyjne</SectionTitle><Panel className="divide-y divide-border p-0">{actions.map((action) => <AuditItem key={action.id} action={action} country={action.country_id ? countries.get(action.country_id) : undefined} />)}{actions.length === 0 ? <EmptyLine text="Brak zmian administracyjnych." /> : null}</Panel></> : null}{filter === "all" || filter === "missiles" ? <><SectionTitle>Operacje rakietowe</SectionTitle><Panel className="divide-y divide-border p-0">{strikes.map((strike) => <div key={strike.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{MISSILE_LABELS[strike.missile_code] ?? strike.missile_code} · {strike.region_name}</p><p className="truncate text-xs text-muted-foreground">{countries.get(strike.attacker_country_id ?? "") ?? "Nieznane"} → {countries.get(strike.defender_country_id ?? "") ?? "Nieznane"} · {dateTime(strike.created_at)}</p></div><Badge variant={strike.result === "PRZECHWYCONA" ? "outline" : "destructive"} className={strike.result === "PRZECHWYCONA" ? "border-success/40 text-success" : ""}>{strike.result}</Badge></div>)}{strikes.length === 0 ? <EmptyLine text="Brak operacji rakietowych." /> : null}</Panel></> : null}</div>}</div>;
+  return <div className="space-y-4"><Panel className="p-3"><div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div className="admin-scrollbar overflow-x-auto"><div className="flex min-w-max gap-1">{([['all','Wszystkie'],['adjustments','Korekty'],['build','Budowa'],['cycles','Cykle'],['military','Wojsko'],['missiles','Rakiety']] as [HistoryFilter,string][]).map(([value,label]) => <Button key={value} size="sm" variant={filter === value ? "secondary" : "ghost"} className={filter === value ? "text-primary" : "text-muted-foreground"} onClick={() => setFilter(value)}>{label}</Button>)}</div></div><div className="flex items-center gap-2"><Switch checked={hideZero} onCheckedChange={setHideZero} /><span className="whitespace-nowrap text-xs">Ukryj 0 KR</span></div></div></Panel>{loading ? <LoadingRows /> : <div className="space-y-4">{(filter === "all" || filter !== "adjustments" && filter !== "missiles") ? <><SectionTitle>Operacje</SectionTitle><Panel className="divide-y divide-border p-0">{transactions.map((transaction) => <TransactionItem key={transaction.id} transaction={transaction} country={transaction.country_id ? countries.get(transaction.country_id) : undefined} />)}{transactions.length === 0 ? <EmptyLine text="Brak operacji dla wybranego filtra." /> : null}</Panel></> : null}{filter === "all" || filter === "adjustments" ? <><SectionTitle>Zmiany administracyjne</SectionTitle><Panel className="divide-y divide-border p-0">{actions.map((action) => <AuditItem key={action.id} action={action} country={action.country_id ? countries.get(action.country_id) : undefined} />)}{actions.length === 0 ? <EmptyLine text="Brak zmian administracyjnych." /> : null}</Panel></> : null}{filter === "all" || filter === "missiles" ? <><SectionTitle>Operacje rakietowe</SectionTitle><Panel className="divide-y divide-border p-0">{strikes.map((strike) => <div key={strike.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{MISSILE_LABELS[strike.missile_code] ?? strike.missile_code} · {strike.region_name}</p><p className="truncate text-xs text-muted-foreground">{countries.get(strike.attacker_country_id ?? "") ?? "Nieznane"} → {countries.get(strike.defender_country_id ?? "") ?? "Nieznane"} · {dateTime(strike.created_at)}</p></div><Badge variant={strike.result === "PRZECHWYCONA" ? "outline" : "destructive"} className={strike.result === "PRZECHWYCONA" ? "border-success/40 text-success" : ""}>{strike.result}</Badge></div>)}{strikes.length === 0 ? <EmptyLine text="Brak operacji rakietowych." /> : null}</Panel></> : null}</div>}</div>;
 }
 
 function classifyTransaction(transaction: TransactionRow): HistoryFilter {
