@@ -188,11 +188,21 @@ const SHOP_NUMERIC = [
 
 
 function Update4Tools() {
+  const [activeOperation, setActiveOperation] = useState<"building" | "bonus" | "occupation">("building");
   const { data: countries } = useQuery(countriesQuery);
-  const activeBonuses = useQuery(activeIncomeBonusesQuery);
-  const activeOccupations = useQuery(adminActiveRegionOccupationsQuery());
+  const activeBonuses = useQuery({
+    ...activeIncomeBonusesQuery,
+    enabled: activeOperation === "bonus",
+  });
+  const activeOccupations = useQuery({
+    ...adminActiveRegionOccupationsQuery(),
+    enabled: activeOperation === "occupation",
+  });
   const queryClient = useQueryClient();
-  const { data: regions } = useQuery(allRegionOptionsQuery);
+  const { data: regions } = useQuery({
+    ...allRegionOptionsQuery,
+    enabled: activeOperation === "building" || activeOperation === "occupation",
+  });
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
   const [occupationCountry, setOccupationCountry] = useState("");
@@ -207,7 +217,6 @@ function Update4Tools() {
   const [selectedBonus, setSelectedBonus] = useState<NonNullable<typeof activeBonuses.data>[number] | null>(null);
   const [hours, setHours] = useState("24");
   const [confirm, setConfirm] = useState<"building" | "bonus" | "occupation" | null>(null);
-  const [activeOperation, setActiveOperation] = useState<"building" | "bonus" | "occupation">("building");
   const [, startOperationTransition] = useTransition();
 
   const run = async (fn: string, args: Record<string, unknown>, label: string) => {
