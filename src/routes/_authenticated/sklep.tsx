@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { countriesQuery, meQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
+import { countriesQuery, meQuery, publicCountryQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
 import type { RegionWithSlots, ShopItem } from "@/lib/api";
 import { BUILDING_LABELS, RESOURCE_LABELS, fmtKR, fmtNum, kr, units } from "@/lib/format";
 
@@ -85,12 +85,15 @@ function firstFreeSlot(region: RegionWithSlots): number | null {
 
 function Shop() {
   const { data: me } = useQuery(meQuery);
-  const { data: countries } = useQuery(countriesQuery);
+  const { data: countries } = useQuery({
+    ...countriesQuery,
+    enabled: !!me?.isAdmin,
+  });
   const { data: shop } = useQuery(shopQuery);
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
   const countryId = selected ?? me?.countryId ?? null;
-  const country = countries?.find((c) => c.country_id === countryId);
+  const { data: country } = useQuery(publicCountryQuery(countryId));
   const { data: regions } = useQuery(regionsQuery(countryId));
   const [item, setItem] = useState<ShopItem | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
