@@ -83,15 +83,6 @@ const STEP_TITLES = [
 ];
 
 function Arsenal() {
-  const { data: me } = useQuery(meQuery);
-  const { data: countries } = useQuery(countriesQuery);
-  const { data: allRegions } = useQuery(allRegionsQuery);
-  const { data: myRegions } = useQuery(regionsQuery(me?.countryId));
-  const { data: strikes } = useQuery(strikesQuery(me?.countryId));
-  const queryClient = useQueryClient();
-
-  const country = countries?.find((c) => c.country_id === me?.countryId);
-
   const [step, setStep] = useState(1);
   const [missile, setMissile] = useState<MissileCode | null>(null);
   const [targetCountry, setTargetCountry] = useState<string | null>(null);
@@ -101,6 +92,18 @@ function Arsenal() {
   const [countText, setCountText] = useState("1");
   const [phase, setPhase] = useState<Phase>("wizard");
   const [result, setResult] = useState<SalvoResult | null>(null);
+
+  const { data: me } = useQuery(meQuery);
+  const { data: countries } = useQuery(countriesQuery);
+  const { data: allRegions, isPending: allRegionsPending } = useQuery({
+    ...allRegionsQuery,
+    enabled: step >= 3 && !!targetCountry,
+  });
+  const { data: myRegions } = useQuery(regionsQuery(me?.countryId));
+  const { data: strikes } = useQuery(strikesQuery(me?.countryId));
+  const queryClient = useQueryClient();
+
+  const country = countries?.find((c) => c.country_id === me?.countryId);
 
   const count = Math.min(100, Math.max(1, Math.floor(Number(countText) || 0) || 1));
   const spec = MISSILES.find((m) => m.code === missile) ?? null;
@@ -329,7 +332,9 @@ function Arsenal() {
                   </span>
                 </button>
               ))}
-              {enemyRegions.length === 0 ? (
+              {allRegionsPending ? (
+                <p className="text-muted-foreground py-3 text-sm">Wczytywanie regionów…</p>
+              ) : enemyRegions.length === 0 ? (
                 <p className="text-muted-foreground py-3 text-sm">To państwo nie ma regionów.</p>
               ) : null}
             </div>
