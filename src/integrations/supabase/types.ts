@@ -1025,6 +1025,10 @@ export type Database = {
         Args: { p_item_code: string; p_region_id: string; p_slot_index: number }
         Returns: Json
       }
+      build_factories_batch: {
+        Args: { p_item_code: string; p_targets: Json }
+        Returns: Json
+      }
       cancel_country_suggestion: { Args: { p_id: string }; Returns: undefined }
       charge_country: {
         Args: {
