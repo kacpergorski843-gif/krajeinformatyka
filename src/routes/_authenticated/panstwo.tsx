@@ -196,10 +196,10 @@ function MyCountry() {
           <p className="mt-2 text-xs text-muted-foreground">Aktualny stan skarbca</p>
         </Panel>
         <div className="mt-3">
-          <div className="daily-income-card relative isolate flex min-h-28 min-w-0 flex-col justify-center rounded-xl border border-border/80 bg-card p-5 shadow-sm sm:min-h-32 sm:p-6">
-            <p className="text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase sm:text-xs">Przychód na dobę</p>
-            <p className="daily-income-value num mt-3 break-words text-xl font-semibold tracking-tight sm:text-2xl">{fmtKR(country.gross_income)}</p>
-          </div>
+          <Panel className="rounded-xl border-border/80 p-6 shadow-sm sm:p-8">
+            <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.gross_income)}</p>
+            <p className="mt-2 text-xs text-muted-foreground">Przychód na dobę</p>
+          </Panel>
         </div>
       </section>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
