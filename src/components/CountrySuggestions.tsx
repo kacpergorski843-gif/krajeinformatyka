@@ -84,7 +84,21 @@ export function AdminSuggestionsTab() {
   });
   const review = useMutation({
     mutationFn: ({ id, accept }: { id: string; accept: boolean }) => rpc("admin_review_country_suggestion", { p_id: id, p_accept: accept }),
-    onSuccess: (_d, v) => { toast.success(v.accept ? "Państwo utworzone i przypisane" : "Propozycja odrzucona"); setConfirm(null); void qc.invalidateQueries(); },
+    onSuccess: (_d, v) => {
+      toast.success(v.accept ? "Państwo utworzone i przypisane" : "Propozycja odrzucona");
+      setConfirm(null);
+      void qc.invalidateQueries({ queryKey: ["admin_country_suggestions"] });
+      void qc.invalidateQueries({ queryKey: ["my_country_suggestions"] });
+      void qc.invalidateQueries({ queryKey: ["admin_actions"] });
+      if (v.accept) {
+        void qc.invalidateQueries({ queryKey: ["admin_users"] });
+        void qc.invalidateQueries({ queryKey: ["country_stats"] });
+        void qc.invalidateQueries({ queryKey: ["public_countries"] });
+        void qc.invalidateQueries({ queryKey: ["all_region_options"] });
+        void qc.invalidateQueries({ queryKey: ["all_regions"] });
+        void qc.invalidateQueries({ queryKey: ["regions"] });
+      }
+    },
     onError: (e) => toast.error(msg(e)),
   });
   const who = (s: Suggestion) => s.profiles?.username ?? s.profiles?.display_name ?? s.profiles?.email ?? s.user_id.slice(0, 8);
