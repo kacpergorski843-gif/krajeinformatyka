@@ -24,8 +24,8 @@ begin
   end if;
 
   v_count := jsonb_array_length(p_targets);
-  if v_count < 1 or v_count > 81 then
-    raise exception 'Wybierz od 1 do 81 miejsc budowy';
+  if v_count < 1 or v_count > 500 then
+    raise exception 'Wybierz od 1 do 500 miejsc budowy';
   end if;
 
   select * into v_item
