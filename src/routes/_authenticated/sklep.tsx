@@ -101,10 +101,6 @@ function Shop() {
   const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
 
   const isBuilding = !!item?.building;
-  const coalHave = Number(country?.coal ?? 0);
-  const coalProd = Number(country?.coal_prod ?? 0);
-  const coalUse = Number(country?.coal_upkeep ?? 0);
-  const coalLeft = coalHave + coalProd - coalUse;
   const region = (regions ?? []).find((r) => r.id === regionId) ?? null;
 
   function openItem(i: ShopItem) {
