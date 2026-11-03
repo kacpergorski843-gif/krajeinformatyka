@@ -1102,6 +1102,7 @@ export type Database = {
         Args: { p_item_code: string; p_region_id: string; p_slot_index: number }
         Returns: Json
       }
+      claim_device: { Args: { p_device_id: string }; Returns: boolean }
       username_taken: { Args: { p_username: string }; Returns: boolean }
     }
     Enums: {
