@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { countriesQuery, meQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
+import { countriesQuery, meQuery, publicCountryQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
 import type { RegionWithSlots, ShopItem } from "@/lib/api";
 import { BUILDING_LABELS, RESOURCE_LABELS, fmtKR, fmtNum, kr, units } from "@/lib/format";
 
@@ -85,12 +85,15 @@ function firstFreeSlot(region: RegionWithSlots): number | null {
 
 function Shop() {
   const { data: me } = useQuery(meQuery);
-  const { data: countries } = useQuery(countriesQuery);
+  const { data: countries } = useQuery({
+    ...countriesQuery,
+    enabled: !!me?.isAdmin,
+  });
   const { data: shop } = useQuery(shopQuery);
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
   const countryId = selected ?? me?.countryId ?? null;
-  const country = countries?.find((c) => c.country_id === countryId);
+  const { data: country } = useQuery(publicCountryQuery(countryId));
   const { data: regions } = useQuery(regionsQuery(countryId));
   const [item, setItem] = useState<ShopItem | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
@@ -98,10 +101,6 @@ function Shop() {
   const qty = Math.max(1, Math.floor(Number(qtyText) || 0) || 1);
 
   const isBuilding = !!item?.building;
-  const coalHave = Number(country?.coal ?? 0);
-  const coalProd = Number(country?.coal_prod ?? 0);
-  const coalUse = Number(country?.coal_upkeep ?? 0);
-  const coalLeft = coalHave + coalProd - coalUse;
   const region = (regions ?? []).find((r) => r.id === regionId) ?? null;
 
   function openItem(i: ShopItem) {
