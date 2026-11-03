@@ -15,7 +15,7 @@ const NAV = [
   { to: "/panstwo", label: "Państwo", icon: Landmark },
   { to: "/swiat", label: "Świat", icon: Globe2 },
   { to: "/regiony", label: "Regiony", icon: Map },
-  { to: "/arsenal", label: "Wojsko", icon: Rocket },
+  { to: "/arsenal", label: "Arsenał", icon: Rocket },
   { to: "/sklep", label: "Sklep", icon: ShoppingCart },
   { to: "/ranking", label: "Ranking", icon: Trophy },
   { to: "/transfer", label: "Transfery", icon: ArrowRightLeft },

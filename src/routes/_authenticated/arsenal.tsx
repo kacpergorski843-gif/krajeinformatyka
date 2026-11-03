@@ -87,7 +87,7 @@ function Arsenal() {
   const { data: countries } = useQuery(countriesQuery);
   const { data: allRegions } = useQuery(allRegionsQuery);
   const { data: myRegions } = useQuery(regionsQuery(me?.countryId));
-  const { data: strikes } = useQuery(strikesQuery);
+  const { data: strikes } = useQuery(strikesQuery(me?.countryId));
   const queryClient = useQueryClient();
 
   const country = countries?.find((c) => c.country_id === me?.countryId);
