@@ -246,7 +246,7 @@ function Regions() {
           const open = expanded === r.id;
           const free = 9 - r.slots.length;
           return (
-            <Panel key={r.id} className="hud-frame p-0">
+            <Panel key={r.id} className="p-0">
               <div
                 className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-2 sm:p-3"
               >
