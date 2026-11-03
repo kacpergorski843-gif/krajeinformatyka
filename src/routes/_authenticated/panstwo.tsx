@@ -32,6 +32,17 @@ export const Route = createFileRoute("/_authenticated/panstwo")({
   component: MyCountry,
 });
 
+function DailyCycleCountdown() {
+  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCountdown(timeToDailyCycle()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return <span className="num font-medium text-primary">{countdown}</span>;
+}
+
 function MyCountry() {
   const queryClient = useQueryClient();
   const { data: me } = useQuery(meQuery);
@@ -46,14 +57,9 @@ function MyCountry() {
   const occupiedByMe = (occupationHistory ?? []).filter(
     (occupation) => occupation.is_active && occupation.controller_country_id === me?.countryId,
   );
-  const [countdown, setCountdown] = useState(() => timeToDailyCycle());
   const [flagFile, setFlagFile] = useState<File | null>(null);
   const [flagSaving, setFlagSaving] = useState(false);
 
-  useEffect(() => {
-    const t = setInterval(() => setCountdown(timeToDailyCycle()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   if (!me) return null;
 
@@ -203,7 +209,7 @@ function MyCountry() {
           <div className="mt-2 flex items-center gap-2 px-1 text-xs text-muted-foreground">
             <Timer className="size-3.5" strokeWidth={1.5} />
             <span>Do rozliczenia dobowego:</span>
-            <span className="num font-medium text-primary">{countdown}</span>
+            <DailyCycleCountdown />
           </div>
         </div>
       </section>
