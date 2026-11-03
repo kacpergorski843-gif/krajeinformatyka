@@ -638,6 +638,18 @@ function AdminPanel() {
 }
 
 
+const MAINTENANCE_PAGES = [
+  { path: "/panstwo", label: "Państwo" },
+  { path: "/regiony", label: "Regiony" },
+  { path: "/swiat", label: "Świat" },
+  { path: "/swiat/:id", label: "Profil państwa" },
+  { path: "/ranking", label: "Ranking" },
+  { path: "/sklep", label: "Sklep" },
+  { path: "/arsenal", label: "Arsenał" },
+  { path: "/transfer", label: "Transfer" },
+  { path: "/umowy", label: "Umowy" },
+] as const;
+
 function MaintenanceTab() {
   const getMode = useServerFn(getMaintenanceMode);
   const setMode = useServerFn(setMaintenanceMode);
@@ -646,14 +658,47 @@ function MaintenanceTab() {
     queryKey: ["maintenance_mode"],
     queryFn: () => getMode(),
   });
+  const [draft, setDraft] = useState<{
+    enabled: boolean;
+    pages: string[];
+    messageTitle: string;
+    messageBody: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (mode.data) {
+      setDraft({
+        enabled: mode.data.enabled,
+        pages: mode.data.pages,
+        messageTitle: mode.data.messageTitle,
+        messageBody: mode.data.messageBody,
+      });
+    }
+  }, [mode.data]);
+
+  const current = draft ?? {
+    enabled: mode.data?.enabled ?? false,
+    pages: mode.data?.pages ?? [],
+    messageTitle: mode.data?.messageTitle ?? "Ekonomia jest aktualnie w remoncie",
+    messageBody: mode.data?.messageBody ?? "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.",
+  };
+
   const update = useMutation({
-    mutationFn: (enabled: boolean) => setMode({ data: { enabled } }),
+    mutationFn: (config: typeof current) => setMode({ data: config }),
     onSuccess: async (result) => {
+      setDraft(result);
       await queryClient.invalidateQueries({ queryKey: ["maintenance_mode"] });
-      toast.success(result.enabled ? "Tryb konserwacji został włączony" : "Strona jest ponownie dostępna");
+      toast.success("Ustawienia konserwacji zostały zapisane");
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
+  const togglePage = (path: string, enabled: boolean) => {
+    const pages = enabled
+      ? [...current.pages.filter((item) => item !== path), path]
+      : current.pages.filter((item) => item !== path);
+    setDraft({ ...current, pages });
+  };
 
   return (
     <div className="mx-auto grid min-w-0 max-w-3xl gap-4">
@@ -665,33 +710,89 @@ function MaintenanceTab() {
           <div className="min-w-0">
             <p className="label-hud">DOSTĘPNOŚĆ GRY</p>
             <h2 className="mt-1 font-display text-lg font-semibold">Tryb konserwacji</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Tymczasowo ukryj aplikację przed władcami na czas prac technicznych i aktualizacji.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Wyłącz całą grę albo wybierz konkretne strony. Administratorzy nadal mają dostęp.</p>
           </div>
         </div>
+
         <div className="flex flex-col gap-3 rounded-md border border-border bg-secondary/30 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className={`size-2 rounded-full ${mode.data?.enabled ? "bg-amber-400" : "bg-emerald-400"}`} />
-              <p className="text-sm font-medium">{mode.isLoading ? "Sprawdzanie statusu…" : mode.data?.enabled ? "Strona wyłączona dla władców" : "Strona działa normalnie"}</p>
+              <span className={`size-2 rounded-full ${current.enabled ? "bg-amber-400" : "bg-emerald-400"}`} />
+              <p className="text-sm font-medium">{current.enabled ? "Cała strona wyłączona dla władców" : current.pages.length ? `Wyłączone strony: ${current.pages.length}` : "Strona działa normalnie"}</p>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Zmiana zacznie obowiązywać przy kolejnym wejściu lub odświeżeniu strony.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Globalny przełącznik zachowuje dotychczasowe działanie i ma pierwszeństwo przed wyborem pojedynczych stron.</p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            <span className="text-xs text-muted-foreground">{mode.data?.enabled ? "Włączony" : "Wyłączony"}</span>
+            <span className="text-xs text-muted-foreground">{current.enabled ? "Włączony" : "Wyłączony"}</span>
             <Switch
-              checked={mode.data?.enabled === true}
+              checked={current.enabled}
               disabled={mode.isLoading || mode.isError || update.isPending}
-              onCheckedChange={(enabled) => update.mutate(enabled)}
-              aria-label="Włącz tryb konserwacji"
+              onCheckedChange={(enabled) => setDraft({ ...current, enabled })}
+              aria-label="Włącz globalny tryb konserwacji"
             />
           </div>
         </div>
-        <div className="rounded-md border border-border/70 p-4">
-          <p className="label-hud">KOMUNIKAT DLA GRACZY</p>
-          <p className="mt-2 font-display text-base font-semibold">Ekonomia jest aktualnie w remoncie</p>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.</p>
+
+        <div className="space-y-3 rounded-md border border-border/70 p-4">
+          <div>
+            <p className="label-hud">KONSERWACJA POJEDYNCZYCH STRON</p>
+            <p className="mt-1 text-xs text-muted-foreground">Wybierz, które sekcje mają być niedostępne dla graczy. Pozostałe strony będą działały normalnie.</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {MAINTENANCE_PAGES.map((page) => (
+              <label key={page.path} className="flex min-h-11 items-center justify-between gap-3 rounded-md border border-border/70 px-3 py-2 text-sm">
+                <span>{page.label}</span>
+                <Switch
+                  checked={current.pages.includes(page.path)}
+                  disabled={mode.isLoading || mode.isError || update.isPending}
+                  onCheckedChange={(enabled) => togglePage(page.path, enabled)}
+                  aria-label={`Konserwacja: ${page.label}`}
+                />
+              </label>
+            ))}
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">Panel administracyjny pozostaje dostępny dla administratorów. Tylko główny administrator może zmieniać ten przełącznik.</p>
+
+        <div className="space-y-3 rounded-md border border-border/70 p-4">
+          <p className="label-hud">KOMUNIKAT DLA GRACZY</p>
+          <div className="grid gap-2">
+            <Label htmlFor="maintenance-title">Nagłówek komunikatu</Label>
+            <Input
+              id="maintenance-title"
+              value={current.messageTitle}
+              maxLength={120}
+              onChange={(event) => setDraft({ ...current, messageTitle: event.target.value })}
+              disabled={mode.isLoading || mode.isError || update.isPending}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="maintenance-body">Treść komunikatu</Label>
+            <textarea
+              id="maintenance-body"
+              value={current.messageBody}
+              maxLength={1000}
+              rows={4}
+              onChange={(event) => setDraft({ ...current, messageBody: event.target.value })}
+              disabled={mode.isLoading || mode.isError || update.isPending}
+              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+          <div className="rounded-md bg-secondary/40 p-3">
+            <p className="label-hud">PODGLĄD</p>
+            <p className="mt-2 font-display text-base font-semibold">{current.messageTitle || "Nagłówek komunikatu"}</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{current.messageBody}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground">Tylko główny administrator może zmieniać te ustawienia.</p>
+          <Button
+            onClick={() => update.mutate(current)}
+            disabled={mode.isLoading || mode.isError || update.isPending || !current.messageTitle.trim()}
+          >
+            {update.isPending ? "Zapisywanie…" : "Zapisz ustawienia"}
+          </Button>
+        </div>
         {mode.isError ? <p role="alert" className="text-sm text-destructive">Nie udało się pobrać statusu konserwacji. Odśwież stronę.</p> : null}
       </Panel>
     </div>
