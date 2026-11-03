@@ -108,10 +108,13 @@ export const setMaintenanceMode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     enabled: z.boolean(),
-    pages: z.array(z.enum([
-      "/panstwo", "/regiony", "/swiat", "/swiat/$id", "/ranking",
-      "/sklep", "/arsenal", "/transfer", "/umowy",
-    ])).max(20),
+    pages: z.array(z.string().min(1).max(32)).max(20).refine((pages) => {
+      const allowed = new Set([
+        "/panstwo", "/regiony", "/swiat", "/swiat/$id", "/ranking",
+        "/sklep", "/arsenal", "/transfer", "/umowy",
+      ]);
+      return pages.every((page) => allowed.has(page));
+    }),
     messageTitle: z.string().trim().min(1).max(120),
     messageBody: z.string().max(1000),
   }).parse(data))
