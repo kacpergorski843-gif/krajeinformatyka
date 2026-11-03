@@ -697,7 +697,9 @@ function MaintenanceTab() {
     const pages = enabled
       ? [...current.pages.filter((item) => item !== path), path]
       : current.pages.filter((item) => item !== path);
-    setDraft({ ...current, pages });
+    const next = { ...current, pages };
+    setDraft(next);
+    update.mutate(next);
   };
 
   return (
@@ -727,7 +729,11 @@ function MaintenanceTab() {
             <Switch
               checked={current.enabled}
               disabled={mode.isLoading || mode.isError || update.isPending}
-              onCheckedChange={(enabled) => setDraft({ ...current, enabled })}
+              onCheckedChange={(enabled) => {
+                const next = { ...current, enabled };
+                setDraft(next);
+                update.mutate(next);
+              }}
               aria-label="Włącz globalny tryb konserwacji"
             />
           </div>
