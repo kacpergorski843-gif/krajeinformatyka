@@ -50,13 +50,20 @@ function MyCountry() {
   const { data: countries } = useQuery(countriesQuery);
   const country = countries?.find((c) => c.country_id === me?.countryId);
   const { data: economyBonus } = useQuery(economyBonusQuery(me?.countryId));
-  const { data: regions } = useQuery(regionsQuery(me?.countryId));
-  const { data: shop } = useQuery(shopQuery);
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 50));
   const { data: occupationHistory } = useQuery(regionOccupationsQuery(me?.countryId));
   const occupiedByMe = (occupationHistory ?? []).filter(
     (occupation) => occupation.is_active && occupation.controller_country_id === me?.countryId,
   );
+  const hasOccupiedRegions = occupiedByMe.length > 0;
+  const { data: regions } = useQuery({
+    ...regionsQuery(me?.countryId),
+    enabled: !!me?.countryId && hasOccupiedRegions,
+  });
+  const { data: shop } = useQuery({
+    ...shopQuery,
+    enabled: hasOccupiedRegions,
+  });
   const [flagFile, setFlagFile] = useState<File | null>(null);
   const [flagSaving, setFlagSaving] = useState(false);
 
