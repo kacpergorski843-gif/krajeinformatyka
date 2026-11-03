@@ -200,6 +200,11 @@ function MyCountry() {
             <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.gross_income)}</p>
             <p className="mt-2 text-xs text-muted-foreground">Przychód na dobę</p>
           </Panel>
+          <div className="mt-2 flex items-center gap-2 px-1 text-xs text-muted-foreground">
+            <Timer className="size-3.5" strokeWidth={1.5} />
+            <span>Do rozliczenia dobowego:</span>
+            <span className="num font-medium text-primary">{countdown}</span>
+          </div>
         </div>
       </section>
       {economyBonus ? <Panel className="mb-4 border-primary/30 bg-primary/5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="label-hud">Bonus ekonomiczny</p><p className="num mt-1 text-2xl font-semibold text-primary">+{economyBonus.percent}% zarobków</p></div><p className="text-sm text-muted-foreground">Aktywny do {new Date(economyBonus.ends_at).toLocaleString("pl-PL")}</p></div></Panel> : null}
@@ -306,10 +311,6 @@ function MyCountry() {
       <OperationsHistory rows={(history ?? []) as unknown as TxRow[]} />
 
 
-      <div className="text-inactive mt-3 flex items-center gap-2 text-xs">
-        <Timer className="size-3.5" strokeWidth={1.5} /> Do rozliczenia dobowego:{" "}
-        <span className="num text-primary">{countdown}</span>
-      </div>
       {claimPanel}
     </AppShell>
   );
