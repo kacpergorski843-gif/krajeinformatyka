@@ -1360,3 +1360,81 @@
   border-color: color-mix(in oklab, var(--color-primary) 50%, transparent);
   border-radius: 0.75rem;
 }
+
+
+/* Premium, roomier action notifications with native-feeling right-swipe dismissal. */
+.premium-toaster {
+  width: min(460px, calc(100vw - 24px)) !important;
+  padding: 12px !important;
+}
+.premium-toaster [data-sonner-toast],
+.premium-toast {
+  width: 100% !important;
+  min-height: 88px !important;
+  padding: 17px 19px !important;
+  gap: 12px !important;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 38%, var(--color-border)) !important;
+  border-radius: 16px !important;
+  color: var(--color-foreground) !important;
+  background: linear-gradient(145deg,
+    color-mix(in oklab, var(--color-card) 98%, white 2%),
+    color-mix(in oklab, var(--color-background) 94%, var(--color-card))) !important;
+  box-shadow: 0 18px 54px oklch(0.02 0.02 260 / 52%),
+    inset 0 1px 0 oklch(1 0 0 / 5%) !important;
+  backdrop-filter: blur(18px);
+}
+.premium-toaster [data-sonner-toast] [data-title] {
+  color: var(--color-foreground) !important;
+  font-size: .94rem !important;
+  line-height: 1.35 !important;
+  font-weight: 650 !important;
+  letter-spacing: -.01em;
+}
+.premium-toaster [data-sonner-toast] [data-description],
+.premium-toast-description {
+  color: var(--color-muted-foreground) !important;
+  font-size: .82rem !important;
+  line-height: 1.5 !important;
+  margin-top: 3px !important;
+}
+.premium-toaster [data-sonner-toast] [data-icon] {
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--color-primary) 11%, var(--color-card));
+  color: var(--color-primary);
+}
+.premium-toaster [data-sonner-toast] [data-button],
+.premium-toast-action {
+  min-height: 36px !important;
+  padding: 0 13px !important;
+  border-radius: 9px !important;
+  font-size: .78rem !important;
+  font-weight: 650 !important;
+}
+.premium-toast-cancel {
+  border-radius: 9px !important;
+}
+.premium-toaster [data-sonner-toast] [data-close-button] {
+  border-radius: 9px !important;
+  background: color-mix(in oklab, var(--color-secondary) 78%, transparent) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-muted-foreground) !important;
+}
+@media (max-width: 640px) {
+  .premium-toaster {
+    width: calc(100vw - 16px) !important;
+    padding: 8px !important;
+    left: 8px !important;
+    right: 8px !important;
+  }
+  .premium-toaster [data-sonner-toast],
+  .premium-toast {
+    min-height: 84px !important;
+    padding: 15px 16px !important;
+    border-radius: 14px !important;
+  }
+}
