@@ -186,7 +186,7 @@ function Shop() {
   }
 
   // Braki dla aktualnie wybranego produktu i ilości
-  const effectiveQty = isFactory ? Math.max(1, factoryTargets.length) : isBuilding ? 1 : qty;
+  const effectiveQty = isFactory ? factoryTargets.length : isBuilding ? 1 : qty;
   const needKr = item ? Number(item.cost_kr) * effectiveQty : 0;
   const haveKr = Number(country?.balance ?? 0);
   const krShort = item ? haveKr < needKr : false;
@@ -625,6 +625,11 @@ function Shop() {
                       );                    })}
                   </div>
 
+                  {isFactory ? (
+                    <p className="text-xs text-muted-foreground">
+                      Wybrano: {factoryTargets.length} {factoryTargets.length === 1 ? "miejsce" : "miejsca"}
+                    </p>
+                  ) : null}
                   {upgradeTarget ? (
                     <p className="text-primary text-xs">
                       Wybrany region: ulepszenie zastąpi{" "}
@@ -673,9 +678,9 @@ function Shop() {
                 <Button
                   className="flex-1"
                   disabled={buy.isPending || cannotBuy}
-                  onClick={() => buy.mutate({ item, qty })}
+                  onClick={() => buy.mutate({ item, qty, targets: factoryTargets })}
                 >
-                  {buy.isPending ? "Realizuję…" : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
+                  {buy.isPending ? "Realizuję…" : isFactory ? (isFactoryUpgrade ? `Ulepsz ${factoryTargets.length}` : `Kup ${factoryTargets.length} fabryk`) : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
                 </Button>
               </div>
             </div>
