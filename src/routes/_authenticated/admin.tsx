@@ -642,7 +642,7 @@ const MAINTENANCE_PAGES = [
   { path: "/panstwo", label: "Państwo" },
   { path: "/regiony", label: "Regiony" },
   { path: "/swiat", label: "Świat" },
-  { path: "/swiat/:id", label: "Profil państwa" },
+  { path: "/swiat/$id", label: "Profil państwa" },
   { path: "/ranking", label: "Ranking" },
   { path: "/sklep", label: "Sklep" },
   { path: "/arsenal", label: "Arsenał" },
