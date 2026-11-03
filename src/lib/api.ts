@@ -221,6 +221,27 @@ type RegionRow = {
 };
 
 
+export function regionAaQuery(countryId: string | null | undefined) {
+  return queryOptions({
+    queryKey: ["region_aa", countryId],
+    enabled: !!countryId,
+    queryFn: async (): Promise<Array<{ id: string; name: string; aa_defense: number }>> => {
+      const rows = await unwrap(
+        supabase
+          .from("regions")
+          .select("id,name,aa_defense")
+          .eq("country_id", countryId!)
+          .order("created_at"),
+      );
+      return (rows ?? []).map((region) => ({
+        id: region.id,
+        name: region.name,
+        aa_defense: region.aa_defense ?? 0,
+      }));
+    },
+  });
+}
+
 export function regionsQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["regions", countryId],

@@ -66,6 +66,7 @@ import {
   economyRunsQuery,
   meQuery,
   regionsQuery,
+  regionAaQuery,
   rpc,
   strikesQuery,
   transactionsQuery,
@@ -896,6 +897,10 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
     ...regionsQuery(country?.country_id ?? null),
     enabled: !!country && countryTab === "regions",
   });
+  const regionAa = useQuery({
+    ...regionAaQuery(country?.country_id ?? null),
+    enabled: !!country && countryTab === "quick",
+  });
   const history = useQuery({
     ...transactionsQuery(country?.country_id ?? null, 50),
     enabled: !!country && countryTab === "history",
@@ -966,10 +971,10 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
     onError: (error: Error) => toast.error(error.message),
   });
   const assign = useMutation({ mutationFn: (userId: string) => country ? rpc("admin_assign_country", { p_user_id: userId, p_country_id: country?.country_id }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Właściciel państwa został zmieniony"); void queryClient.invalidateQueries({ queryKey: ["admin_users"] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const addRegion = useMutation({ mutationFn: () => country ? rpc("admin_create_region", { p_country_id: country?.country_id, p_name: regionName.trim() }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Region dodany"); setRegionName(""); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const removeRegion = useMutation({ mutationFn: (id: string) => rpc("admin_delete_region", { p_region_id: id }), onSuccess: () => { toast.success("Region usunięty"); setRegionToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
+  const addRegion = useMutation({ mutationFn: () => country ? rpc("admin_create_region", { p_country_id: country?.country_id, p_name: regionName.trim() }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Region dodany"); setRegionName(""); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
+  const removeRegion = useMutation({ mutationFn: (id: string) => rpc("admin_delete_region", { p_region_id: id }), onSuccess: () => { toast.success("Region usunięty"); setRegionToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const removeSlot = useMutation({ mutationFn: (id: string) => rpc("demolish_slot", { p_slot_id: id }), onSuccess: () => { toast.success("Obiekt wyburzony"); setSlotToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const setRegionAa = useMutation({ mutationFn: ({ regionId, value }: { regionId: string; value: number }) => rpc("admin_set_region_aa", { p_region_id: regionId, p_value: value }), onSuccess: () => { toast.success("OPL regionu zaktualizowane"); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
+  const setRegionAa = useMutation({ mutationFn: ({ regionId, value }: { regionId: string; value: number }) => rpc("admin_set_region_aa", { p_region_id: regionId, p_value: value }), onSuccess: () => { toast.success("OPL regionu zaktualizowane"); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const deleteCountry = useMutation({ mutationFn: () => country ? rpc("admin_delete_country", { p_country_id: country.country_id }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Państwo usunięte"); setConfirmDelete(false); onClose(); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); void queryClient.invalidateQueries({ queryKey: ["admin_users"] }); void queryClient.invalidateQueries({ queryKey: ["public_countries"] }); }, onError: (error: Error) => toast.error(error.message) });
 
   if (!country) return null;
@@ -1006,7 +1011,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
               <div className="space-y-3"><SectionHeading icon={<CircleDollarSign />} title="Skarbiec" description="Szybka korekta KR" /><AdjustmentField field="balance" country={country} value={changes.balance} onChange={(value) => setChanges((current) => ({ ...current, balance: value }))} /></div>
               <div className="space-y-3"><SectionHeading icon={<Boxes />} title="Surowce" description="Stan, produkcja i zużycie dobowe" /><div className="grid gap-3 lg:grid-cols-2">{RESOURCE_FIELDS.map((field) => <ResourceAdjustment key={field} field={field} country={country} value={changes[field]} onChange={(value) => setChanges((current) => ({ ...current, [field]: value }))} />)}</div></div>
               <div className="space-y-3"><SectionHeading icon={<Shield />} title="Wojsko" description="Żołnierze, czołgi i rakiety — bez limitów" /><div className="grid gap-3 lg:grid-cols-2">{MILITARY_FIELDS.map((field) => <MilitaryAdjustment key={field} field={field} country={country} value={changes[field]} onChange={(value) => setChanges((current) => ({ ...current, [field]: value }))} />)}</div><Panel className="grid gap-3 p-3 sm:grid-cols-3"><MiniStat label="Potencjał głosów" value={`${country.vote_potential}`} /><MiniStat label="Fortyfikacje" value={`${country.fort_votes} głosów`} /><MiniStat label="Razem" value={`${country.total_votes} głosów`} tone="primary" /></Panel></div>
-              <div className="space-y-3"><SectionHeading icon={<Radar />} title="OPL regionów" description={`Łącznie ${units(country.region_aa_total)} — jedna wartość dla całej gry`} /><RegionAaEditor regions={regions.data ?? []} pending={setRegionAa.isPending} onSave={(regionId, value) => setRegionAa.mutate({ regionId, value })} /></div>
+              <div className="space-y-3"><SectionHeading icon={<Radar />} title="OPL regionów" description={`Łącznie ${units(country.region_aa_total)} — jedna wartość dla całej gry`} /><RegionAaEditor regions={regionAa.data ?? []} pending={setRegionAa.isPending} onSave={(regionId, value) => setRegionAa.mutate({ regionId, value })} /></div>
             </TabsContent>
             <TabsContent value="regions" className="m-0 space-y-4"><RegionManagement country={country} regions={regions.data ?? []} shopItems={shop.data ?? []} regionName={regionName} onRegionName={setRegionName} onAdd={() => addRegion.mutate()} adding={addRegion.isPending} onRemoveRegion={setRegionToRemove} onRemoveSlot={setSlotToRemove} loading={regions.isLoading} /></TabsContent>
             <TabsContent value="history" className="m-0 space-y-4"><CountryHistory transactions={(history.data ?? []) as unknown as TransactionRow[]} strikes={countryStrikes} countryId={country.country_id} loading={history.isLoading || strikes.isLoading} /></TabsContent>
@@ -1060,7 +1065,7 @@ function ValueBox({ label, value, hint, tone = "default" }: { label: string; val
   return <div className="min-w-0 border border-border/70 bg-secondary/30 p-2"><span className="block text-[10px] uppercase text-muted-foreground">{label}</span><span className={`num mt-1 block break-words text-sm ${toneClass}`}>{value}</span>{hint ? <span className={`num mt-0.5 block text-[10px] ${toneClass}`}>{hint}</span> : null}</div>;
 }
 
-function RegionAaEditor({ regions, pending, onSave }: { regions: RegionWithSlots[]; pending: boolean; onSave: (regionId: string, value: number) => void }) {
+function RegionAaEditor({ regions, pending, onSave }: { regions: Array<{ id: string; name: string; aa_defense: number }>; pending: boolean; onSave: (regionId: string, value: number) => void }) {
   const [values, setValues] = useState<Record<string, string>>({});
   if (regions.length === 0) return <EmptyLine text="To państwo nie ma regionów." />;
   return (
