@@ -1049,7 +1049,13 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const save = useMutation({
     mutationFn: async () => {
       if (!country) throw new Error("Nie wybrano państwa");
-      let nextPatch = patch;
+      let nextPatch = {
+        ...patch,
+        ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+      };
+      if (nextPatch.name !== undefined && !nextPatch.name) {
+        throw new Error("Nazwa państwa nie może być pusta");
+      }
       if (flagFile) {
         const extension = flagFile.name.split(".").pop()?.toLowerCase() || "png";
         const path = country.country_id + "/flag-" + Date.now() + "." + extension;
@@ -1063,7 +1069,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
       }
       return rpc("admin_adjust_country", { p_country_id: country.country_id, p_patch: nextPatch, p_note: "Korekta z panelu administratora" });
     },
-    onSuccess: () => { toast.success("Zapisano korektę"); setChanges({}); setIdentity({}); setFlagFile(null); setFlagPreview(null); setConfirmChanges(false); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); void queryClient.invalidateQueries({ queryKey: ["public_countries"] }); void queryClient.invalidateQueries({ queryKey: ["transactions", country?.country_id] }); },
+    onSuccess: () => { toast.success("Zmiany państwa zostały zapisane"); setChanges({}); setIdentity({}); setFlagFile(null); setFlagPreview(null); setConfirmChanges(false); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); void queryClient.invalidateQueries({ queryKey: ["public_countries"] }); void queryClient.invalidateQueries({ queryKey: ["admin_users"] }); void queryClient.invalidateQueries({ queryKey: ["transactions", country?.country_id] }); },
     onError: (error: Error) => toast.error(error.message),
   });
   const assign = useMutation({ mutationFn: (userId: string) => country ? rpc("admin_assign_country", { p_user_id: userId, p_country_id: country?.country_id }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Właściciel państwa został zmieniony"); void queryClient.invalidateQueries({ queryKey: ["admin_users"] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
@@ -1102,6 +1108,12 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
               </div>
               <Panel className="p-4"><Label className="label-hud mb-2 block">Właściciel</Label><Select value={owner?.id ?? "unassigned"} onValueChange={(value) => value !== "unassigned" && assign.mutate(value)}><SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Wybierz gracza" /></SelectTrigger><SelectContent><SelectItem value="unassigned" disabled>Brak właściciela</SelectItem>{users.map((user) => <SelectItem key={user.id} value={user.id}>{user.display_name ?? "Użytkownik"}{user.country_name ? ` — ${user.country_name}` : ""}</SelectItem>)}</SelectContent></Select><p className="mt-2 text-xs text-muted-foreground">Wybranie gracza przypisze mu to państwo przez bezpieczną operację administracyjną.</p></Panel>
               <div className="grid gap-3 sm:grid-cols-3"><MiniStat label="Przychód dobowy" value={`+${fmtKR(country.gross_income)}`} tone="success" /><MiniStat label="Głosy wojenne" value={`${country.total_votes}`} /><MiniStat label="Wartość militarna" value={fmtKR(country.military_value)} tone="primary" /></div>
+              <div className="space-y-2 border-t border-border pt-4">
+                {hasChanges ? <p className="text-xs text-muted-foreground">Masz niezapisane zmiany. Zatwierdź je, aby zapisać je w państwie.</p> : null}
+                <Button className="w-full sm:w-auto" disabled={!hasChanges || save.isPending || (identity.name !== undefined && !identity.name.trim())} onClick={() => setConfirmChanges(true)}>
+                  {save.isPending ? "Zapisywanie…" : "Zapisz zmiany"}
+                </Button>
+              </div>
             </TabsContent>
             <TabsContent value="quick" className="m-0 space-y-6">
               <div className="space-y-3"><SectionHeading icon={<CircleDollarSign />} title="Skarbiec" description="Szybka korekta KR" /><AdjustmentField field="balance" country={country} value={changes.balance} onChange={(value) => setChanges((current) => ({ ...current, balance: value }))} /></div>
