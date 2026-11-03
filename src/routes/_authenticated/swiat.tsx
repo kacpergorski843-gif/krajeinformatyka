@@ -26,7 +26,10 @@ export const Route = createFileRoute("/_authenticated/swiat")({
 
 function World() {
   const { data: me } = useQuery(meQuery);
-  const { data: countries, isPending, isError, error } = useQuery(publicCountriesQuery);
+  const { data: countries, isPending, isError, error } = useQuery({
+    ...publicCountriesQuery,
+    enabled: !selectedId,
+  });
   const [q, setQ] = useState("");
   const deferredQ = useDeferredValue(q);
   const [selectedId, setSelectedId] = useState<string | null>(() =>
