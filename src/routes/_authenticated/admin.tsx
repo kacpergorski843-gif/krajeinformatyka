@@ -877,14 +877,17 @@ function CountriesTab() {
 
 function CountryDashboard({ country, users, onClose }: { country: CountryStats | null; users: AdminUser[]; onClose: () => void }) {
   const queryClient = useQueryClient();
-  const regions = useQuery(regionsQuery(country?.country_id ?? null));
+  const regions = useQuery({
+    ...regionsQuery(country?.country_id ?? null),
+    enabled: !!country && countryTab === "regions",
+  });
   const [countryTab, setCountryTab] = useState("quick");
   const history = useQuery({
     ...transactionsQuery(country?.country_id ?? null, 50),
     enabled: !!country && countryTab === "history",
   });
   const strikes = useQuery({
-    ...strikesQuery,
+    ...strikesQuery(country?.country_id ?? null),
     enabled: !!country && countryTab === "history",
   });
   const shop = useQuery({
@@ -916,9 +919,10 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
     if (!country) return;
     if (tab === "history") {
       void queryClient.prefetchQuery(transactionsQuery(country.country_id, 50));
-      void queryClient.prefetchQuery(strikesQuery);
+      void queryClient.prefetchQuery(strikesQuery(country.country_id));
     }
     if (tab === "regions") {
+      void queryClient.prefetchQuery(regionsQuery(country.country_id));
       void queryClient.prefetchQuery(adminShopQuery);
     }
   };
@@ -1479,11 +1483,20 @@ function EconomyTab({ countdown }: { countdown: string }) {
 
 type HistoryFilter = "all" | "adjustments" | "build" | "cycles" | "military" | "missiles";
 function HistoryTab() {
-  const txQuery = useQuery(transactionsQuery(null, 100));
-  const actionQuery = useQuery(adminActionsQuery);
-  const strikeQuery = useQuery(strikesQuery);
-  const countryQuery = useQuery(countriesQuery);
   const [filter, setFilter] = useState<HistoryFilter>("all");
+  const txQuery = useQuery({
+    ...transactionsQuery(null, 100),
+    enabled: filter !== "adjustments" && filter !== "missiles",
+  });
+  const actionQuery = useQuery({
+    ...adminActionsQuery,
+    enabled: filter === "all" || filter === "adjustments",
+  });
+  const strikeQuery = useQuery({
+    ...adminStrikesQuery,
+    enabled: filter === "all" || filter === "missiles",
+  });
+  const countryQuery = useQuery(countriesQuery);
   const [hideZero, setHideZero] = useState(true);
   const countries = useMemo(() => new Map((countryQuery.data ?? []).map((country) => [country.country_id, country.name])), [countryQuery.data]);
   const transactions = useMemo(() => ((txQuery.data ?? []) as unknown as TransactionRow[]).filter((transaction) => (!hideZero || Number(transaction.amount_kr) !== 0) && (filter === "all" || classifyTransaction(transaction) === filter)), [txQuery.data, hideZero, filter]);
