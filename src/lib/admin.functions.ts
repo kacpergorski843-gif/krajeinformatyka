@@ -109,7 +109,7 @@ export const setMaintenanceMode = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
     enabled: z.boolean(),
     pages: z.array(z.enum([
-      "/panstwo", "/regiony", "/swiat", "/swiat/:id", "/ranking",
+      "/panstwo", "/regiony", "/swiat", "/swiat/$id", "/ranking",
       "/sklep", "/arsenal", "/transfer", "/umowy",
     ])).max(20),
     messageTitle: z.string().trim().min(1).max(120),
