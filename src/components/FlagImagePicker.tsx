@@ -23,6 +23,8 @@ export function FlagImagePicker({
   const [positionY, setPositionY] = useState(50);
   const [error, setError] = useState("");
   const imageRef = useRef<HTMLImageElement>(null);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   const [sourceName, setSourceName] = useState("flaga");
 
   useEffect(() => {
@@ -49,12 +51,12 @@ export function FlagImagePicker({
         if (!blob) return;
         const file = new File([blob], sourceName.replace(/\.[^.]+$/, "") + "-flag.png", { type: "image/png" });
         const preview = URL.createObjectURL(blob);
-        onChange(file, preview);
+        onChangeRef.current(file, preview);
       }, "image/png", 0.92);
     };
     if (image.complete) render();
     else image.onload = render;
-  }, [source, shape, zoom, positionX, positionY, sourceName, onChange]);
+  }, [source, shape, zoom, positionX, positionY, sourceName]);
 
   return (
     <div className="space-y-3">
