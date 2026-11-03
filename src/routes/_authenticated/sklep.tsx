@@ -438,10 +438,12 @@ function Shop() {
                     <p className="label-hud">
                       {isBuilding ? "Wybierz region budowy" : "Wybierz region obrony"}
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Podgląd pokazuje układ wszystkich regionów i wszystkie 9 slotów.
-                      Przy ulepszeniach od razu widać, gdzie znajduje się wymagany poziom.
-                    </p>
+                    {!item.building?.startsWith("factory_") ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Podgląd pokazuje układ wszystkich regionów i wszystkie 9 slotów.
+                        Przy ulepszeniach od razu widać, gdzie znajduje się wymagany poziom.
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="grid gap-2">
@@ -484,67 +486,73 @@ function Shop() {
                                 : "border-border/50 bg-muted/20 opacity-55",
                           ].join(" ")}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="font-semibold">{r.name}</p>
-                              <p className="mt-0.5 text-xs text-muted-foreground">
-                                {r.slots.length}/9 slotów · {units(r.aa_defense)} OPL
-                              </p>
-                            </div>
-                            <span
-                              className={[
-                                "shrink-0 text-[10px] font-semibold uppercase tracking-wider",
-                                upgradeSlot || selectable
-                                  ? "text-primary"
-                                  : "text-muted-foreground",
-                              ].join(" ")}
-                            >
-                              {upgradeSlot
-                                ? `ULEPSZENIE · SLOT ${upgradeSlot.slot_index}`
-                                : selectable
-                                  ? "DOSTĘPNY"
-                                  : "NIEDOSTĘPNY"}
-                            </span>
-                          </div>
-
-                          <div className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-5">
-                            {Array.from({ length: 9 }, (_, index) => {
-                              const slotIndex = index + 1;
-                              const slot = r.slots.find((s) => s.slot_index === slotIndex);
-                              const isUpgrade = slot?.building === required;
-                              return (
-                                <div
-                                  key={slotIndex}
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="font-semibold">{r.name}</p>
+                            {!item.building?.startsWith("factory_") ? (
+                              <>
+                                <span className="text-xs text-muted-foreground">
+                                  {r.slots.length}/9 · {units(r.aa_defense)} OPL
+                                </span>
+                                <span
                                   className={[
-                                    "min-h-12 rounded border px-1.5 py-1 text-center",
-                                    isUpgrade
-                                      ? "border-primary bg-primary/15 text-primary"
-                                      : slot
-                                        ? "border-border bg-muted/30 text-foreground"
-                                        : "border-dashed border-border/60 text-muted-foreground",
+                                    "shrink-0 text-[10px] font-semibold uppercase tracking-wider",
+                                    upgradeSlot || selectable
+                                      ? "text-primary"
+                                      : "text-muted-foreground",
                                   ].join(" ")}
                                 >
-                                  <p className="text-[9px] uppercase tracking-wider opacity-70">
-                                    S{slotIndex}
-                                  </p>
-                                  <p className="mt-1 line-clamp-2 text-[10px] leading-tight">
-                                    {slot
-                                      ? BUILDING_LABELS[slot.building] ?? slot.building
-                                      : "Pusty"}
-                                  </p>
-                                </div>
-                              );
-                            })}
+                                  {upgradeSlot
+                                    ? `ULEPSZENIE · SLOT ${upgradeSlot.slot_index}`
+                                    : selectable
+                                      ? "DOSTĘPNY"
+                                      : "NIEDOSTĘPNY"}
+                                </span>
+                              </>
+                            ) : null}
                           </div>
 
-                          {upgradeSlot ? (
-                            <p className="mt-2 text-[11px] font-medium text-primary">
-                              Tutaj możesz kupić {item.name} — zastąpi{" "}
-                              {BUILDING_LABELS[upgradeSlot.building] ?? upgradeSlot.building}{" "}
-                              w slocie {upgradeSlot.slot_index}.
-                            </p>
-                          ) : regionBlock && isBuilding ? (
-                            <p className="mt-2 text-[11px] text-destructive">{regionBlock}</p>
+                          {!item.building?.startsWith("factory_") ? (
+                            <>
+                              <div className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+                                {Array.from({ length: 9 }, (_, index) => {
+                                  const slotIndex = index + 1;
+                                  const slot = r.slots.find((s) => s.slot_index === slotIndex);
+                                  const isUpgrade = slot?.building === required;
+                                  return (
+                                    <div
+                                      key={slotIndex}
+                                      className={[
+                                        "min-h-12 rounded border px-1.5 py-1 text-center",
+                                        isUpgrade
+                                          ? "border-primary bg-primary/15 text-primary"
+                                          : slot
+                                            ? "border-border bg-muted/30 text-foreground"
+                                            : "border-dashed border-border/60 text-muted-foreground",
+                                      ].join(" ")}
+                                    >
+                                      <p className="text-[9px] uppercase tracking-wider opacity-70">
+                                        S{slotIndex}
+                                      </p>
+                                      <p className="mt-1 line-clamp-2 text-[10px] leading-tight">
+                                        {slot
+                                          ? BUILDING_LABELS[slot.building] ?? slot.building
+                                          : "Pusty"}
+                                      </p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {upgradeSlot ? (
+                                <p className="mt-2 text-[11px] font-medium text-primary">
+                                  Tutaj możesz kupić {item.name} — zastąpi{" "}
+                                  {BUILDING_LABELS[upgradeSlot.building] ?? upgradeSlot.building}{" "}
+                                  w slocie {upgradeSlot.slot_index}.
+                                </p>
+                              ) : regionBlock && isBuilding ? (
+                                <p className="mt-2 text-[11px] text-destructive">{regionBlock}</p>
+                              ) : null}
+                            </>
                           ) : null}
                         </button>
                       );
