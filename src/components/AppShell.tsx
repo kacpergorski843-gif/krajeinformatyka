@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
-import { ROLE_LABELS } from "@/lib/format";
 
 // Set to true to restore navigation icons without changing the menu structure.
 const SHOW_NAV_ICONS = false;
