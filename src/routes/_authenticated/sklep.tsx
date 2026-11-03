@@ -483,6 +483,61 @@ function Shop() {
                         : !buildBlockReason(r, "aa");
                       const selectedRegion = regionId === r.id;
 
+                      if (isFactory) {
+                        const factoryRequired = level > 1 ? `factory_${level - 1}` : null;
+                        const factoryRegionBlocked =
+                          buildBlockReason(r, building) ?? levelLockForRegion(r, building);
+                        return (
+                          <div key={r.id} className="rounded-lg border border-border bg-background/30 p-3">
+                            <p className="mb-3 font-semibold">{r.name}</p>
+                            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                              {Array.from({ length: 9 }, (_, index) => {
+                                const slotIndex = index + 1;
+                                const slot = r.slots.find((candidate) => candidate.slot_index === slotIndex);
+                                const isUpgradeSlot = !!factoryRequired && slot?.building === factoryRequired;
+                                const available = factoryRequired
+                                  ? isUpgradeSlot
+                                  : !slot && !factoryRegionBlocked;
+                                const selectedTarget = factoryTargets.some(
+                                  (target) => target.region_id === r.id && target.slot_index === slotIndex,
+                                );
+                                return (
+                                  <button
+                                    key={slotIndex}
+                                    type="button"
+                                    aria-label={`${r.name}, slot ${slotIndex}${isUpgradeSlot ? ", miejsce ulepszenia" : ""}`}
+                                    aria-pressed={selectedTarget}
+                                    disabled={!available}
+                                    onClick={() =>
+                                      setFactoryTargets((current) =>
+                                        selectedTarget
+                                          ? current.filter(
+                                              (target) =>
+                                                !(target.region_id === r.id && target.slot_index === slotIndex),
+                                            )
+                                          : [...current, { region_id: r.id, slot_index: slotIndex }],
+                                      )
+                                    }
+                                    className={[
+                                      "min-h-12 rounded-md border text-sm font-semibold transition-colors",
+                                      selectedTarget
+                                        ? "border-primary bg-primary text-primary-foreground"
+                                        : available
+                                          ? isUpgradeSlot
+                                            ? "border-primary/60 bg-primary/10 text-primary hover:bg-primary/20"
+                                            : "border-dashed border-border bg-background hover:border-primary/60"
+                                          : "border-border/40 bg-muted/30 text-muted-foreground/40",
+                                    ].join(" ")}
+                                  >
+                                    {slotIndex}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <button
                           key={r.id}
@@ -567,8 +622,7 @@ function Shop() {
                             </>
                           ) : null}
                         </button>
-                      );
-                    })}
+                      );                    })}
                   </div>
 
                   {upgradeTarget ? (
