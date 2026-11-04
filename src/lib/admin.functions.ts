@@ -89,11 +89,29 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
 export const getMaintenanceMode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await (context.supabase as any)
-      .from("app_maintenance_mode")
+    const maintenanceTable = (context.supabase as any).from("app_maintenance_mode");
+    let { data, error } = await maintenanceTable
       .select("enabled, pages, message_title, message_body")
       .eq("id", 1)
       .maybeSingle();
+
+    // Older production databases may have migration 0067 but not 0071 yet.
+    // Missing optional columns must not prevent reading the global switch.
+    const missingExtendedColumns = error && (
+      error.code === "42703" ||
+      error.code === "PGRST204" ||
+      /column .* does not exist|could not find .* column|schema cache/i.test(error.message)
+    );
+    if (missingExtendedColumns) {
+      const fallback = await (context.supabase as any)
+        .from("app_maintenance_mode")
+        .select("enabled")
+        .eq("id", 1)
+        .maybeSingle();
+      data = fallback.data;
+      error = fallback.error;
+    }
+
     if (error) throw new Error(error.message);
     return {
       enabled: data?.enabled === true,
