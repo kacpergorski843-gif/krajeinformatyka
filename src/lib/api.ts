@@ -598,7 +598,7 @@ export const adminActionsQuery = queryOptions({
   queryKey: ["admin_actions"],
   queryFn: async () =>
     await unwrap(
-      supabase.from("admin_actions").select("id,action,created_at,country_id,details").order("created_at", { ascending: false }).limit(50),
+      supabase.from("admin_actions").select("id,action,created_at,country_id,details").order("created_at", { ascending: false }).limit(200),
     ),
 });
 
