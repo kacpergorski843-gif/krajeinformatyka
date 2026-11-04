@@ -230,6 +230,14 @@ function Update4Tools() {
         await queryClient.invalidateQueries({ queryKey: ["regions"] });
         await queryClient.invalidateQueries({ queryKey: ["region_occupations"] });
         await queryClient.invalidateQueries({ queryKey: ["occupied_regions"] });
+        await queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+        await queryClient.invalidateQueries({ queryKey: ["public_countries"] });
+        await queryClient.invalidateQueries({ queryKey: ["public_country"] });
+        await queryClient.invalidateQueries({ queryKey: ["public_ranking"] });
+        await queryClient.invalidateQueries({ queryKey: ["region_aa"] });
+        await queryClient.invalidateQueries({ queryKey: ["transfer_regions"] });
+        await queryClient.invalidateQueries({ queryKey: ["all_region_options"] });
+        await queryClient.invalidateQueries({ queryKey: ["all_regions"] });
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Operacja nie powiodła się");
@@ -271,6 +279,14 @@ function Update4Tools() {
       await queryClient.invalidateQueries({ queryKey: ["regions"] });
       await queryClient.invalidateQueries({ queryKey: ["region_occupations"] });
       await queryClient.invalidateQueries({ queryKey: ["occupied_regions"] });
+      await queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+      await queryClient.invalidateQueries({ queryKey: ["public_countries"] });
+      await queryClient.invalidateQueries({ queryKey: ["public_country"] });
+      await queryClient.invalidateQueries({ queryKey: ["public_ranking"] });
+      await queryClient.invalidateQueries({ queryKey: ["region_aa"] });
+      await queryClient.invalidateQueries({ queryKey: ["transfer_regions"] });
+      await queryClient.invalidateQueries({ queryKey: ["all_region_options"] });
+      await queryClient.invalidateQueries({ queryKey: ["all_regions"] });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udało się cofnąć okupacji");
     }
@@ -480,7 +496,7 @@ function Update4Tools() {
           </div>
           <div className="admin-v4-fields">
             <div className="admin-v4-field">
-              <Label>Kraj</Label>
+              <Label>Obecny kontroler</Label>
               <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); setOccupationTargetCountry(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz kraj" /></SelectTrigger>
                 <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
@@ -495,14 +511,14 @@ function Update4Tools() {
             </div>
           </div>
           <div className="admin-v4-field">
-            <Label>Nowy właściciel</Label>
+            <Label>Państwo przejmujące</Label>
             <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
               <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz nowe państwo" : "Najpierw wybierz region"} /></SelectTrigger>
               <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="admin-v4-summary admin-v4-summary-danger">
-            <span>PRZEJĘCIE REGIONU</span><strong>{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</strong><small>{occupationIsSameCountry ? "Nowy właściciel musi być innym państwem." : "Przejęcie zmieni właściciela regionu, zachowa budynki i zapisze pełną historię operacji."}</small>
+            <span>PRZEJĘCIE REGIONU</span><strong>{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</strong><small>{occupationIsSameCountry ? "Nowy właściciel musi być innym państwem." : "Zmieni się aktualny kontroler regionu. Właściciel prawny i infrastruktura pozostaną zapisani."}</small>
           </div>
           <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przejmij region <ChevronRight /></Button>
           <div className="mt-5 border-t border-border pt-4">
@@ -514,7 +530,7 @@ function Update4Tools() {
                     <div>
                       <p className="text-sm font-semibold">{occupation.region_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">{occupation.occupier_country_name}</span> kontroluje region · poprzedni właściciel: {occupation.previous_country_name}
+                        <span className="font-medium text-foreground">{occupation.occupier_country_name}</span> kontroluje region · właściciel prawny: {occupation.previous_country_name}
                       </p>
                     </div>
                     <Button size="sm" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => void revertOccupation(occupation.region_id)}>
