@@ -20,7 +20,7 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
   const queryClient = useQueryClient();
   const shown = useRef<Set<string>>(new Set());
 
-  // Daily payout at 20:00 Europe/Warsaw
+  // Daily payout at 20:05 Europe/Warsaw
   useEffect(() => {
     const tick = () => {
       const { h, m, day } = warsawHM();
@@ -29,8 +29,8 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
         if (shown.current.has(k) || localStorage.getItem(k)) return;
         shown.current.add(k); localStorage.setItem(k, "1"); fn();
       };
-      if (h === 19 && m >= 55) once("payout-soon", () => toast.info("Wypłata dzienna za kilka minut (20:00)."));
-      if (h === 20 && m >= 10) once("payout-done", () => {
+      if (h === 19 && m >= 55) once("payout-soon", () => toast.info("Wypłata dzienna za 10 minut (20:05)."));
+      if (h === 20 && m >= 15) once("payout-done", () => {
         void queryClient.invalidateQueries();
         toast.success("Wypłata dzienna została rozliczona. Sprawdź skarbiec.");
         notifyBrowser("Wypłata dzienna", "Twoje państwo otrzymało dzisiejszy dochód.");
