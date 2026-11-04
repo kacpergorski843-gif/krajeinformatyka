@@ -297,29 +297,37 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
     queryKey: ["region_occupations", countryId],
     enabled: !!countryId,
     queryFn: async (): Promise<RegionOccupation[]> => {
-      const rows = await unwrap(
+      const rows = (await unwrap(
         supabase
           .from("region_occupations")
-          .select("id, region_id, previous_country_id, current_country_id, occupied_at, event_type, regions(name,country_id,owner_country_id)")
+          .select(
+            "id, region_id, previous_country_id, current_country_id, occupied_at, event_type, regions(name,country_id,owner_country_id)",
+          )
           .or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`)
           .order("occupied_at", { ascending: false })
           .limit(100),
-      ) as unknown as Array<RegionOccupation & {
-        regions?: { name?: string; country_id?: string; owner_country_id?: string } | null;
-      }>;
+      )) as unknown as Array<
+        RegionOccupation & {
+          regions?: { name?: string; country_id?: string; owner_country_id?: string } | null;
+        }
+      >;
 
       if (!rows.length) return [];
 
       // A country can appear in several historical takeovers of the same region.
       // Determine the latest event across all countries before marking any row active.
-      const latestEvents = await unwrap(
+      const latestEvents = (await unwrap(
         supabase
           .from("region_occupations")
           .select("id, region_id, event_type")
           .in("region_id", [...new Set(rows.map((row) => row.region_id))])
           .order("occupied_at", { ascending: false })
           .order("id", { ascending: false }),
-      ) as Array<{ id: string; region_id: string; event_type: "OCCUPATION" | "REVERT" }>;
+      )) as Array<{
+        id: string;
+        region_id: string;
+        event_type: "OCCUPATION" | "REVERT";
+      }>;
 
       const latestByRegion = new Map<string, (typeof latestEvents)[number]>();
       for (const event of latestEvents) {
