@@ -379,72 +379,68 @@ export function adminActiveRegionOccupationsQuery() {
   return queryOptions({
     queryKey: ["admin_active_region_occupations"],
     queryFn: async (): Promise<AdminActiveRegionOccupation[]> => {
-      // Read the base table directly. The derived region_control_state view can
-      // be missing from a not-yet-refreshed PostgREST schema cache after deploys,
-      // which previously made the UI silently show an empty list.
+      // Do not depend on owner_country_id: older production schemas may not
+      // have the legal-owner migration yet. Active control is determined by
+      // comparing the latest occupation event with regions.country_id.
       const regions = await unwrap(
         supabase
           .from("regions")
-          .select("id,name,country_id,owner_country_id")
-          .not("owner_country_id", "is", null)
+          .select("id,name,country_id")
           .order("name", { ascending: true }),
+      ) as Array<{ id: string; name: string; country_id: string }>;
+
+      if (!regions.length) return [];
+
+      const events = await unwrap(
+        supabase
+          .from("region_occupations")
+          .select("id,region_id,previous_country_id,current_country_id,occupied_at,event_type")
+          .in("region_id", regions.map((region) => region.id))
+          .order("occupied_at", { ascending: false })
+          .order("id", { ascending: false }),
       ) as Array<{
         id: string;
-        name: string;
-        country_id: string;
-        owner_country_id: string;
+        region_id: string;
+        previous_country_id: string;
+        current_country_id: string;
+        occupied_at: string;
+        event_type: "OCCUPATION" | "REVERT";
       }>;
-
-      const occupied = regions.filter((region) => region.owner_country_id !== region.country_id);
-      if (!occupied.length) return [];
-
-      const regionIds = occupied.map((region) => region.id);
-      const countryIds = [...new Set(occupied.flatMap((region) => [region.owner_country_id, region.country_id]))];
-
-      const [events, countries] = await Promise.all([
-        unwrap(
-          supabase
-            .from("region_occupations")
-            .select("id,region_id,current_country_id,occupied_at,event_type")
-            .in("region_id", regionIds)
-            .order("occupied_at", { ascending: false })
-            .order("id", { ascending: false }),
-        ) as Promise<Array<{
-          id: string;
-          region_id: string;
-          current_country_id: string;
-          occupied_at: string;
-          event_type: "OCCUPATION" | "REVERT";
-        }>>,
-        unwrap(
-          supabase.from("countries").select("id,name").in("id", countryIds),
-        ) as Promise<Array<{ id: string; name: string }>>,
-      ]);
 
       const latestByRegion = new Map<string, (typeof events)[number]>();
       for (const event of events) {
         if (!latestByRegion.has(event.region_id)) latestByRegion.set(event.region_id, event);
       }
-      const countryNames = new Map(countries.map((country) => [country.id, country.name]));
 
-      return occupied.flatMap((region) => {
+      const active = regions.flatMap((region) => {
         const latest = latestByRegion.get(region.id);
         if (
           !latest ||
           latest.event_type !== "OCCUPATION" ||
           latest.current_country_id !== region.country_id
         ) return [];
-
-        return [{
-          region_id: region.id,
-          region_name: region.name,
-          occupier_country_id: region.country_id,
-          occupier_country_name: countryNames.get(region.country_id) ?? "Nieznane państwo",
-          previous_country_id: region.owner_country_id,
-          previous_country_name: countryNames.get(region.owner_country_id) ?? "Nieznane państwo",
-          occupied_at: latest.occupied_at,
-        }];
+        return [{ region, event: latest }];
       });
+      if (!active.length) return [];
+
+      const countryIds = [...new Set(active.flatMap(({ region, event }) => [
+        region.country_id,
+        event.previous_country_id,
+      ]))];
+      const countries = await unwrap(
+        supabase.from("countries").select("id,name").in("id", countryIds),
+      ) as Array<{ id: string; name: string }>;
+      const countryNames = new Map(countries.map((country) => [country.id, country.name]));
+
+      return active.map(({ region, event }) => ({
+        region_id: region.id,
+        region_name: region.name,
+        occupier_country_id: region.country_id,
+        occupier_country_name: countryNames.get(region.country_id) ?? "Nieznane państwo",
+        previous_country_id: event.previous_country_id,
+        previous_country_name: countryNames.get(event.previous_country_id) ?? "Nieznane państwo",
+        occupied_at: event.occupied_at,
+      }));
     },
   });
 }
