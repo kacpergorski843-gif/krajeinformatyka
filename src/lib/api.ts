@@ -379,9 +379,8 @@ export function adminActiveRegionOccupationsQuery() {
   return queryOptions({
     queryKey: ["admin_active_region_occupations"],
     queryFn: async (): Promise<AdminActiveRegionOccupation[]> => {
-      // Do not depend on owner_country_id: older production schemas may not
-      // have the legal-owner migration yet. Active control is determined by
-      // comparing the latest occupation event with regions.country_id.
+      // Read only columns present in the original production schema.
+      // Older deployments may not have owner_country_id or event_type.
       const regions = await unwrap(
         supabase
           .from("regions")
@@ -394,7 +393,7 @@ export function adminActiveRegionOccupationsQuery() {
       const events = await unwrap(
         supabase
           .from("region_occupations")
-          .select("id,region_id,previous_country_id,current_country_id,occupied_at,event_type")
+          .select("id,region_id,previous_country_id,current_country_id,occupied_at")
           .in("region_id", regions.map((region) => region.id))
           .order("occupied_at", { ascending: false })
           .order("id", { ascending: false }),
@@ -404,8 +403,38 @@ export function adminActiveRegionOccupationsQuery() {
         previous_country_id: string;
         current_country_id: string;
         occupied_at: string;
-        event_type: "OCCUPATION" | "REVERT";
       }>;
+
+      if (!events.length) return [];
+
+      // In legacy schemas a revert is recorded as a reverse country transition.
+      // Match those rows to the corresponding admin audit entry instead of
+      // relying on the event_type column introduced by a later migration.
+      const revertActions = await unwrap(
+        supabase
+          .from("admin_actions")
+          .select("details")
+          .eq("action", "REVERT_REGION_OCCUPATION"),
+      ) as Array<{ details: Record<string, unknown> | null }>;
+
+      const isRevertEvent = (event: (typeof events)[number]) =>
+        revertActions.some(({ details }) => {
+          if (!details || details.region_id !== event.region_id) return false;
+          const previousOccupier =
+            details.previous_occupier_country_id ?? details.previous_controller_country_id;
+          const restoredCountry =
+            details.restored_owner_country_id ?? details.restored_country_id;
+          if (
+            previousOccupier !== event.previous_country_id ||
+            restoredCountry !== event.current_country_id
+          ) return false;
+          const revertedAt = details.reverted_at;
+          if (typeof revertedAt !== "string") return true;
+          const delta = Math.abs(
+            new Date(event.occupied_at).getTime() - new Date(revertedAt).getTime(),
+          );
+          return Number.isFinite(delta) && delta <= 5000;
+        });
 
       const latestByRegion = new Map<string, (typeof events)[number]>();
       for (const event of events) {
@@ -416,8 +445,9 @@ export function adminActiveRegionOccupationsQuery() {
         const latest = latestByRegion.get(region.id);
         if (
           !latest ||
-          latest.event_type !== "OCCUPATION" ||
-          latest.current_country_id !== region.country_id
+          isRevertEvent(latest) ||
+          latest.current_country_id !== region.country_id ||
+          latest.previous_country_id === latest.current_country_id
         ) return [];
         return [{ region, event: latest }];
       });
