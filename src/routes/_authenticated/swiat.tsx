@@ -122,9 +122,10 @@ function World() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {(regions ?? []).map((r) => (
                   <Panel key={r.id} className="transition-colors hover:border-primary/30">
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
                       <p className="truncate text-sm font-semibold">{r.name}</p>
                       <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">{r.slots.length}/9</span>
+                      <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs text-info">{units(r.aa_defense)} OPL</span>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-1.5">
                       {Array.from({ length: 9 }, (_, i) => i + 1).map((idx) => {
