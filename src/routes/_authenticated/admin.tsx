@@ -525,7 +525,9 @@ function Update4Tools() {
           <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przejmij region <ChevronRight /></Button>
           <div className="mt-5 border-t border-border pt-4">
             <p className="label-hud mb-2">AKTYWNE OKUPACJE</p>
-            {activeOccupations.isLoading ? <LoadingRows /> : activeOccupations.data?.length ? (
+            {activeOccupations.isLoading ? <LoadingRows /> : activeOccupations.error ? (
+              <p className="text-xs text-destructive">Nie udało się pobrać aktywnych okupacji: {activeOccupations.error.message}</p>
+            ) : activeOccupations.data?.length ? (
               <div className="space-y-2">
                 {activeOccupations.data.map((occupation) => (
                   <div key={occupation.region_id} className="grid gap-3 border border-destructive/30 bg-destructive/5 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
