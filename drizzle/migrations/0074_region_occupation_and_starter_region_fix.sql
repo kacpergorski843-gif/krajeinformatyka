@@ -21,29 +21,35 @@ create or replace function public.admin_revert_region_occupation(p_region_id uui
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $function$
 declare
   v_role text;
   v_controller uuid;
   v_owner uuid;
   v_occupied_at timestamptz;
+  v_latest_event_type text;
+  v_latest_country_id uuid;
 begin
-  select role::text into v_role
-  from public.user_roles
-  where user_id = auth.uid()
-    and role in ('ADMIN','MAIN_ADMIN')
-  order by role desc
+  select ur.role::text into v_role
+  from public.user_roles ur
+  where ur.user_id = (select auth.uid())
+    and ur.role in ('ADMIN','MAIN_ADMIN')
+  order by ur.role desc
   limit 1;
 
   if v_role is null then
     raise exception 'Brak uprawnień administratora';
   end if;
 
-  select country_id, coalesce(owner_country_id, country_id)
+  if p_region_id is null then
+    raise exception 'Nie wybrano regionu';
+  end if;
+
+  select r.country_id, coalesce(r.owner_country_id, r.country_id)
     into v_controller, v_owner
-  from public.regions
-  where id = p_region_id
+  from public.regions r
+  where r.id = p_region_id
   for update;
 
   if v_controller is null then
@@ -54,17 +60,16 @@ begin
     raise exception 'Ten region nie jest obecnie okupowany';
   end if;
 
-  select occupied_at into v_occupied_at
-  from public.region_occupations
-  where region_id = p_region_id
-    and event_type = 'OCCUPATION'
-    and current_country_id = v_controller
-    and previous_country_id <> current_country_id
-  order by occupied_at desc
+  select ro.event_type, ro.current_country_id, ro.occupied_at
+    into v_latest_event_type, v_latest_country_id, v_occupied_at
+  from public.region_occupations ro
+  where ro.region_id = p_region_id
+  order by ro.occupied_at desc, ro.id desc
   limit 1;
 
-  if v_occupied_at is null then
-    raise exception 'Nie znaleziono aktywnej okupacji';
+  if v_latest_event_type is distinct from 'OCCUPATION'
+     or v_latest_country_id is distinct from v_controller then
+    raise exception 'Nie znaleziono aktywnej okupacji — odśwież panel i spróbuj ponownie';
   end if;
 
   update public.regions
@@ -90,7 +95,7 @@ begin
       'original_occupied_at', v_occupied_at,
       'reverted_at', now()
     ),
-    auth.uid()
+    (select auth.uid())
   );
 
   return jsonb_build_object(
