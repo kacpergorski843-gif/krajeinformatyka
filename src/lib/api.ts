@@ -304,11 +304,31 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
           .or(`previous_country_id.eq.${countryId},current_country_id.eq.${countryId}`)
           .order("occupied_at", { ascending: false })
           .limit(100),
-      );
-      return ((rows ?? []) as unknown as Array<RegionOccupation & {
+      ) as unknown as Array<RegionOccupation & {
         regions?: { name?: string; country_id?: string; owner_country_id?: string } | null;
-      }>).map((row) => {
+      }>;
+
+      if (!rows.length) return [];
+
+      // A country can appear in several historical takeovers of the same region.
+      // Determine the latest event across all countries before marking any row active.
+      const latestEvents = await unwrap(
+        supabase
+          .from("region_occupations")
+          .select("id, region_id, event_type")
+          .in("region_id", [...new Set(rows.map((row) => row.region_id))])
+          .order("occupied_at", { ascending: false })
+          .order("id", { ascending: false }),
+      ) as Array<{ id: string; region_id: string; event_type: "OCCUPATION" | "REVERT" }>;
+
+      const latestByRegion = new Map<string, (typeof latestEvents)[number]>();
+      for (const event of latestEvents) {
+        if (!latestByRegion.has(event.region_id)) latestByRegion.set(event.region_id, event);
+      }
+
+      return rows.map((row) => {
         const controllerCountryId = row.regions?.country_id ?? "";
+        const latestEvent = latestByRegion.get(row.region_id);
         return {
           id: row.id,
           region_id: row.region_id,
@@ -319,7 +339,10 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
           region_name: row.regions?.name ?? "Nieznany region",
           controller_country_id: controllerCountryId,
           owner_country_id: row.regions?.owner_country_id ?? row.previous_country_id,
-          is_active: row.event_type === "OCCUPATION" && controllerCountryId === row.current_country_id,
+          is_active:
+            latestEvent?.id === row.id &&
+            latestEvent.event_type === "OCCUPATION" &&
+            controllerCountryId === row.current_country_id,
         };
       });
     },
