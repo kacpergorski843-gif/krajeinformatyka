@@ -125,10 +125,20 @@
   html,
   body {
     max-width: 100%;
+    min-height: 100%;
     overflow-x: clip;
+    background-color: var(--color-background);
+    color-scheme: dark;
+  }
+
+  html {
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   body {
+    min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-body);
