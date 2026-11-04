@@ -3,8 +3,8 @@ import { QueryClient } from "@tanstack/react-query";
 /**
  * Shared React Query configuration.
  *
- * Keep these defaults behavior-compatible: several screens rely on the
- * existing polling cadence and cache lifetime.
+ * Queries should opt into polling only when they need live updates.
+ * Keep the shared cache lifetime and retry behavior stable.
  */
 export function createAppQueryClient() {
   return new QueryClient({
