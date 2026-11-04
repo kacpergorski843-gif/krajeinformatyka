@@ -1,20 +1,9 @@
-import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
+import { createAppQueryClient } from "@/lib/query-client";
 
 export const getRouter = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 30_000,
-        gcTime: 10 * 60_000,
-        refetchOnWindowFocus: false,
-        refetchInterval: 10_000,
-        refetchIntervalInBackground: false,
-        retry: 1,
-      },
-    },
-  });
+  const queryClient = createAppQueryClient();
 
   const router = createRouter({
     routeTree,
