@@ -509,7 +509,7 @@ function Shop() {
                                   <button
                                     key={slotIndex}
                                     type="button"
-                                    aria-label={`${r.name}, slot ${slotIndex}${isUpgradeSlot ? ", miejsce ulepszenia" : ""}`}
+                                    aria-label={`${r.name}, slot ${slotIndex}: ${slot ? BUILDING_LABELS[slot.building] ?? slot.building : "Pusty"}${isUpgradeSlot ? ", miejsce ulepszenia" : ""}`}
                                     aria-pressed={selectedTarget}
                                     disabled={!available || (!selectedTarget && factoryTargets.length >= 500)}
                                     onClick={() =>
@@ -535,7 +535,16 @@ function Shop() {
                                           : "border-border/40 bg-muted/30 text-muted-foreground/40",
                                     ].join(" ")}
                                   >
-                                    {slotIndex}
+                                    <span className="flex h-full min-h-12 flex-col items-center justify-center gap-1 px-1 py-1.5">
+                                      <span className="text-[9px] uppercase tracking-wider opacity-70">
+                                        S{slotIndex}
+                                      </span>
+                                      <span className="line-clamp-2 text-[10px] leading-tight">
+                                        {slot
+                                          ? BUILDING_LABELS[slot.building] ?? slot.building
+                                          : "Pusty"}
+                                      </span>
+                                    </span>
                                   </button>
                                 );
                               })}
