@@ -10,6 +10,9 @@ import type { Me } from "@/lib/api";
 // Set to true to restore navigation icons without changing the menu structure.
 const SHOW_NAV_ICONS = false;
 
+// Set to true to restore navigation icons without changing the menu structure.
+const SHOW_NAV_ICONS = false;
+
 const NAV = [
   { to: "/panstwo", label: "Państwo", icon: Landmark },
   { to: "/swiat", label: "Świat", icon: Globe2 },
