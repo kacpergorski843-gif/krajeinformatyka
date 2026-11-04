@@ -336,6 +336,7 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
 
       return rows.map((row) => {
         const controllerCountryId = row.regions?.country_id ?? "";
+        const ownerCountryId = row.regions?.owner_country_id ?? row.previous_country_id;
         const latestEvent = latestByRegion.get(row.region_id);
         return {
           id: row.id,
@@ -346,11 +347,12 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
           event_type: row.event_type,
           region_name: row.regions?.name ?? "Nieznany region",
           controller_country_id: controllerCountryId,
-          owner_country_id: row.regions?.owner_country_id ?? row.previous_country_id,
+          owner_country_id: ownerCountryId,
           is_active:
             latestEvent?.id === row.id &&
             latestEvent.event_type === "OCCUPATION" &&
-            controllerCountryId === row.current_country_id,
+            controllerCountryId === row.current_country_id &&
+            ownerCountryId !== controllerCountryId,
         };
       });
     },
