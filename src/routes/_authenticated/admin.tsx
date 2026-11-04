@@ -183,96 +183,164 @@ type ApplicationExport = {
   auth_users: unknown[];
 };
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+function compactExportValue(value: unknown, maxLength = 220): string {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "string") return value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
+  if (typeof value !== "object") return String(value);
+  if (Array.isArray(value)) return `[${value.length} elementów]`;
+  const record = value as Record<string, unknown>;
+  const entries = Object.entries(record)
+    .filter(([key, item]) => !/^(details|metadata|summary|content|messages|conversation|raw|payload|description)$/i.test(key) && (item === null || ["string", "number", "boolean"].includes(typeof item)))
+    .slice(0, 9)
+    .map(([key, item]) => `${key}: ${String(item ?? "—").slice(0, 70)}`);
+  return entries.join(" · ") || "Rekord";
 }
 
-function openApplicationExportPdf(data: ApplicationExport) {
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) throw new Error("Przeglądarka zablokowała nowe okno. Zezwól na wyskakujące okna dla aplikacji.");
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
 
-  const sections = Object.entries(data.tables)
-    .map(([table, rows]) => {
-      const json = JSON.stringify(rows, null, 2);
-      return `
-        <section>
-          <h2>${escapeHtml(table)}</h2>
-          <p class="meta">Rekordów: ${rows.length}</p>
-          <pre>${escapeHtml(json)}</pre>
-        </section>
-      `;
-    })
-    .join("");
+async function createExportPdf(data: ApplicationExport) {
+  const pageWidth = 1240;
+  const pageHeight = 1754;
+  const margin = 88;
+  const lineHeight = 34;
+  const pages: HTMLCanvasElement[] = [];
+  let canvas = document.createElement("canvas");
+  let context = canvas.getContext("2d");
+  if (!context) throw new Error("Nie można uruchomić generatora PDF w tej przeglądarce.");
 
-  const authJson = JSON.stringify(data.auth_users, null, 2);
-  const errors = data.errors.length
-    ? `
-      <section>
-        <h2>Problemy podczas eksportu</h2>
-        <pre>${escapeHtml(JSON.stringify(data.errors, null, 2))}</pre>
-      </section>
-    `
-    : "";
+  const startPage = () => {
+    canvas = document.createElement("canvas");
+    canvas.width = pageWidth;
+    canvas.height = pageHeight;
+    context = canvas.getContext("2d");
+    if (!context) throw new Error("Nie można przygotować strony PDF.");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, pageWidth, pageHeight);
+    context.fillStyle = "#172033";
+    context.font = "22px Arial, sans-serif";
+    context.textBaseline = "top";
+    y = margin;
+  };
+  let y = margin;
+  startPage();
 
-  printWindow.document.open();
-  printWindow.document.write(`
-    <!doctype html>
-    <html lang="pl">
-      <head>
-        <meta charset="utf-8">
-        <title>Nation Dynamics — pełny eksport danych</title>
-        <style>
-          @page { size: A4; margin: 12mm; }
-          * { box-sizing: border-box; }
-          body { margin: 0; color: #111; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.45; }
-          main { max-width: 100%; }
-          .cover { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; }
-          h1 { font-size: 24px; margin: 0 0 10px; }
-          h2 { font-size: 16px; margin: 0 0 4px; border-bottom: 1px solid #bbb; padding-bottom: 4px; }
-          p { margin: 5px 0; }
-          .meta { color: #555; font-size: 9px; }
-          .note { margin-top: 18px; padding: 10px; border: 1px solid #ccc; background: #f7f7f7; }
-          section { break-before: page; page-break-before: always; }
-          pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font: 8px/1.35 "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
-          footer { margin-top: 18px; color: #666; font-size: 8px; }
-        </style>
-      </head>
-      <body>
-        <main>
-          <div class="cover">
-            <h1>Nation Dynamics — pełny eksport danych</h1>
-            <p>Eksport przygotowany dla administratora. Dane są zapisane w formacie strukturalnym JSON, dzięki czemu dokument można przekazać np. ChatGPT do analizy.</p>
-            <p class="meta">Wygenerowano: ${escapeHtml(data.generated_at)}</p>
-            <p class="meta">Tabele: ${Object.keys(data.tables).length} · Użytkownicy Auth: ${data.auth_users.length}</p>
-            <div class="note">
-              <strong>Jak zapisać PDF:</strong> w oknie drukowania wybierz „Zapisz jako PDF”. Nie zmieniaj orientacji na poziomą — dokument jest przygotowany pod A4.
-            </div>
-            <footer>Eksport zawiera dane bazy aplikacji dostępne dla administratora, w tym historię, audyt, ekonomię, regiony, wojsko, okupacje i rozmowy z Doradcą AI.</footer>
-          </div>
-          <section>
-            <h2>auth.users</h2>
-            <p class="meta">Rekordów: ${data.auth_users.length}</p>
-            <pre>${escapeHtml(authJson)}</pre>
-          </section>
-          ${sections}
-          ${errors}
-        </main>
-        <script>
-          window.addEventListener("load", () => {
-            setTimeout(() => {
-              window.focus();
-              window.print();
-            }, 250);
-          });
-          window.addEventListener("afterprint", () => window.close());
-        </script>
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
+  const addText = (text: string, options: { size?: number; bold?: boolean; color?: string; gap?: number } = {}) => {
+    const size = options.size ?? 21;
+    context!.font = `${options.bold ? "700 " : ""}${size}px Arial, sans-serif`;
+    context!.fillStyle = options.color ?? "#202938";
+    const maxWidth = pageWidth - margin * 2;
+    const words = String(text).split(/\s+/);
+    let line = "";
+    const lines: string[] = [];
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (context!.measureText(candidate).width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else line = candidate;
+    }
+    if (line) lines.push(line);
+    for (const part of lines) {
+      if (y + lineHeight > pageHeight - margin) {
+        pages.push(canvas);
+        startPage();
+      }
+      context!.font = `${options.bold ? "700 " : ""}${size}px Arial, sans-serif`;
+      context!.fillStyle = options.color ?? "#202938";
+      context!.fillText(part, margin, y, maxWidth);
+      y += Math.max(lineHeight, size + 12);
+    }
+    y += options.gap ?? 7;
+  };
+
+  addText("Nation Dynamics — eksport danych", { size: 38, bold: true, gap: 18 });
+  addText(`Wygenerowano: ${data.generated_at}`, { size: 19, color: "#64748b" });
+  addText(`Tabele: ${Object.keys(data.tables).length} · Konta: ${data.auth_users.length} · Błędy: ${data.errors.length}`, { size: 19, color: "#64748b", gap: 28 });
+  addText("Skrócony raport administracyjny", { size: 27, bold: true, gap: 12 });
+  addText("Dokument zawiera najważniejsze pola rekordów. Pominięto długie treści, techniczne metadane i rozbudowane obiekty szczegółów, aby PDF był lekki i czytelny.", { size: 20, gap: 28 });
+
+  for (const [table, rows] of Object.entries(data.tables)) {
+    addText(table, { size: 27, bold: true, color: "#0f4c81", gap: 5 });
+    addText(`Łącznie rekordów: ${rows.length} · W raporcie: ${Math.min(rows.length, 80)}`, { size: 17, color: "#64748b", gap: 8 });
+    const visibleRows = rows.slice(-80);
+    for (const row of visibleRows) addText(`• ${compactExportValue(row)}`, { size: 17, gap: 2 });
+    if (rows.length > visibleRows.length) addText(`Pominięto ${rows.length - visibleRows.length} starszych rekordów w tej tabeli.`, { size: 17, color: "#64748b", gap: 16 });
+    y += 18;
+  }
+
+  addText("Konta użytkowników", { size: 27, bold: true, color: "#0f4c81", gap: 5 });
+  addText(`Łącznie kont: ${data.auth_users.length} · W raporcie: ${Math.min(data.auth_users.length, 100)}`, { size: 17, color: "#64748b", gap: 8 });
+  for (const user of data.auth_users.slice(-100)) addText(`• ${compactExportValue(user)}`, { size: 17, gap: 2 });
+  if (data.auth_users.length > 100) addText(`Pominięto ${data.auth_users.length - 100} starszych kont.`, { size: 17, color: "#64748b" });
+
+  if (data.errors.length) {
+    addText("Problemy podczas eksportu", { size: 27, bold: true, color: "#9a3412", gap: 8 });
+    for (const error of data.errors) addText(`• ${error.table}: ${error.message}`, { size: 17 });
+  }
+  pages.push(canvas);
+
+  const jpegPages: { bytes: Uint8Array; width: number; height: number }[] = [];
+  for (const page of pages) {
+    const blob = await new Promise<Blob>((resolve, reject) => page.toBlob((value) => value ? resolve(value) : reject(new Error("Nie udało się zakodować strony PDF.")), "image/jpeg", 0.82));
+    jpegPages.push({ bytes: new Uint8Array(await blob.arrayBuffer()), width: page.width, height: page.height });
+  }
+
+  const encoder = new TextEncoder();
+  const chunks: Uint8Array[] = [];
+  const offsets: number[] = [0];
+  let byteLength = 0;
+  const push = (chunk: Uint8Array) => { chunks.push(chunk); byteLength += chunk.length; };
+  const ascii = (value: string) => encoder.encode(value);
+  push(ascii("%PDF-1.4\n%PDFGEN\n"));
+  const object = (id: number, body: Uint8Array) => {
+    offsets[id] = byteLength;
+    push(ascii(`${id} 0 obj\n`));
+    push(body);
+    push(ascii("\nendobj\n"));
+  };
+  const pageIds = jpegPages.map((_, index) => 3 + index * 3);
+  object(1, ascii("<< /Type /Catalog /Pages 2 0 R >>"));
+  object(2, ascii(`<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageIds.length} >>`));
+  jpegPages.forEach((page, index) => {
+    const pageId = pageIds[index];
+    const imageId = pageId + 1;
+    const contentId = pageId + 2;
+    object(pageId, ascii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${imageId} 0 R >> >> /Contents ${contentId} 0 R >>`));
+    offsets[imageId] = byteLength;
+    push(ascii(`${imageId} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${page.width} /Height ${page.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.bytes.length} >>\nstream\n`));
+    push(page.bytes);
+    push(ascii("\nendstream\nendobj\n"));
+    const stream = ascii(`q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ\n`);
+    object(contentId, concatBytes([ascii(`<< /Length ${stream.length} >>\nstream\n`), stream, ascii("endstream")]));
+  });
+  const xrefOffset = byteLength;
+  push(ascii(`xref\n0 ${offsets.length}\n0000000000 65535 f \n`));
+  for (let id = 1; id < offsets.length; id++) push(ascii(`${String(offsets[id]).padStart(10, "0")} 00000 n \n`));
+  push(ascii(`trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`));
+  return new Blob([concatBytes(chunks)], { type: "application/pdf" });
+}
+
+function concatBytes(parts: Uint8Array[]) {
+  const result = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let offset = 0;
+  for (const part of parts) { result.set(part, offset); offset += part.length; }
+  return result;
+}
+
+async function openApplicationExportPdf(data: ApplicationExport) {
+  const pdf = await createExportPdf(data);
+  const date = new Date().toISOString().slice(0, 10);
+  downloadBlob(pdf, `nation-dynamics-eksport-${date}.pdf`);
 }
 
 const SHOP_NUMERIC = [
@@ -972,8 +1040,8 @@ function AdminDataExportButton() {
     setPending(true);
     try {
       const data = await exportData();
-      openApplicationExportPdf(data);
-      toast.success("Dane przygotowane do eksportu PDF");
+      await openApplicationExportPdf(data);
+      toast.success("Plik PDF został pobrany");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udało się przygotować eksportu danych");
     } finally {
@@ -986,7 +1054,7 @@ function AdminDataExportButton() {
       <div className="min-w-0">
         <p className="label-hud">EKSPORT DANYCH</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Pełny zrzut danych aplikacji w strukturze czytelnej dla ChatGPT i innych narzędzi AI.
+          Skrócony, czytelny raport PDF z najważniejszymi danymi administracyjnymi.
         </p>
       </div>
       <Button className="shrink-0" onClick={() => void handleExport()} disabled={pending}>
