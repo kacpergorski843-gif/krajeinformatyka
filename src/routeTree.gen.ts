@@ -16,9 +16,11 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as RankingPublicznyRouteImport } from './routes/ranking-publiczny'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedMasterkiRouteImport } from './routes/_authenticated/masterki'
 import { Route as AuthenticatedArsenalRouteImport } from './routes/_authenticated/arsenal'
 import { Route as AuthenticatedPanstwoRouteImport } from './routes/_authenticated/panstwo'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
+import { Route as AuthenticatedRynekRouteImport } from './routes/_authenticated/rynek'
 import { Route as AuthenticatedRegionyRouteImport } from './routes/_authenticated/regiony'
 import { Route as AuthenticatedSklepRouteImport } from './routes/_authenticated/sklep'
 import { Route as AuthenticatedSwiatRouteImport } from './routes/_authenticated/swiat'
@@ -62,6 +64,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMasterkiRoute = AuthenticatedMasterkiRouteImport.update({
+  id: '/masterki',
+  path: '/masterki',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedArsenalRoute = AuthenticatedArsenalRouteImport.update({
   id: '/arsenal',
   path: '/arsenal',
@@ -75,6 +82,11 @@ const AuthenticatedPanstwoRoute = AuthenticatedPanstwoRouteImport.update({
 const AuthenticatedRankingRoute = AuthenticatedRankingRouteImport.update({
   id: '/ranking',
   path: '/ranking',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRynekRoute = AuthenticatedRynekRouteImport.update({
+  id: '/rynek',
+  path: '/rynek',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRegionyRoute = AuthenticatedRegionyRouteImport.update({
@@ -120,9 +132,11 @@ export interface FileRoutesByFullPath {
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/masterki': typeof AuthenticatedMasterkiRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/rynek': typeof AuthenticatedRynekRoute
   '/regiony': typeof AuthenticatedRegionyRoute
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
@@ -138,9 +152,11 @@ export interface FileRoutesByTo {
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/masterki': typeof AuthenticatedMasterkiRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/rynek': typeof AuthenticatedRynekRoute
   '/regiony': typeof AuthenticatedRegionyRoute
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
@@ -158,9 +174,11 @@ export interface FileRoutesById {
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/masterki': typeof AuthenticatedMasterkiRoute
   '/_authenticated/arsenal': typeof AuthenticatedArsenalRoute
   '/_authenticated/panstwo': typeof AuthenticatedPanstwoRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
+  '/_authenticated/rynek': typeof AuthenticatedRynekRoute
   '/_authenticated/regiony': typeof AuthenticatedRegionyRoute
   '/_authenticated/sklep': typeof AuthenticatedSklepRoute
   '/_authenticated/swiat': typeof AuthenticatedSwiatRouteWithChildren
@@ -178,9 +196,11 @@ export interface FileRouteTypes {
     | '/ranking-publiczny'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/masterki'
     | '/arsenal'
     | '/panstwo'
     | '/ranking'
+    | '/rynek'
     | '/regiony'
     | '/sklep'
     | '/swiat'
@@ -196,9 +216,11 @@ export interface FileRouteTypes {
     | '/ranking-publiczny'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/masterki'
     | '/arsenal'
     | '/panstwo'
     | '/ranking'
+    | '/rynek'
     | '/regiony'
     | '/sklep'
     | '/swiat'
@@ -215,9 +237,11 @@ export interface FileRouteTypes {
     | '/ranking-publiczny'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
+    | '/_authenticated/masterki'
     | '/_authenticated/arsenal'
     | '/_authenticated/panstwo'
     | '/_authenticated/ranking'
+    | '/_authenticated/rynek'
     | '/_authenticated/regiony'
     | '/_authenticated/sklep'
     | '/_authenticated/swiat'
@@ -374,9 +398,11 @@ const AuthenticatedSwiatRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedMasterkiRoute: typeof AuthenticatedMasterkiRoute
   AuthenticatedArsenalRoute: typeof AuthenticatedArsenalRoute
   AuthenticatedPanstwoRoute: typeof AuthenticatedPanstwoRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
+  AuthenticatedRynekRoute: typeof AuthenticatedRynekRoute
   AuthenticatedRegionyRoute: typeof AuthenticatedRegionyRoute
   AuthenticatedSklepRoute: typeof AuthenticatedSklepRoute
   AuthenticatedSwiatRoute: typeof AuthenticatedSwiatRouteWithChildren
@@ -386,9 +412,11 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedMasterkiRoute: AuthenticatedMasterkiRoute,
   AuthenticatedArsenalRoute: AuthenticatedArsenalRoute,
   AuthenticatedPanstwoRoute: AuthenticatedPanstwoRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
+  AuthenticatedRynekRoute: AuthenticatedRynekRoute,
   AuthenticatedRegionyRoute: AuthenticatedRegionyRoute,
   AuthenticatedSklepRoute: AuthenticatedSklepRoute,
   AuthenticatedSwiatRoute: AuthenticatedSwiatRouteWithChildren,
