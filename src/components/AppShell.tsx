@@ -1,11 +1,13 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
+import { getMaintenanceMode } from "@/lib/admin.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 
 // Set to true to restore navigation icons without changing the menu structure.
@@ -30,6 +32,12 @@ export function AppShell({ me, title, children }: {
   const queryClient = useQueryClient();
   const [confirmOut, setConfirmOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const getMode = useServerFn(getMaintenanceMode);
+  const maintenanceMode = useQuery({
+    queryKey: ["maintenance_mode"],
+    queryFn: () => getMode(),
+    enabled: !!me && !me.isAdmin,
+  });
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -53,6 +61,11 @@ export function AppShell({ me, title, children }: {
   }
 
   const items = me?.isAdmin ? [...NAV, { to: "/admin", label: "Administracja", icon: ShieldHalf } as const] : NAV;
+  const isInMaintenance = (path: string) => me?.isAdmin !== true && (
+    maintenanceMode.data?.enabled === true ||
+    maintenanceMode.data?.pages.includes(path) === true ||
+    (path === "/swiat" && maintenanceMode.data?.pages.includes("/swiat/$id") === true)
+  );
   const nav = (mobile = false) => (
     <div className={mobile ? "grid gap-1" : "space-y-1"}>
       {items.map((item) => (
@@ -62,7 +75,7 @@ export function AppShell({ me, title, children }: {
           prefetch="intent"
           onClick={() => mobile && setMobileOpen(false)}
           activeProps={{ className: "nav-active" }}
-          className="nav-item"
+          className={`nav-item ${isInMaintenance(item.to) ? "opacity-40 grayscale" : ""}`}
         >
           {SHOW_NAV_ICONS ? <item.icon className="size-[18px] shrink-0" strokeWidth={1.8} /> : null}
           <span className="truncate">{item.label}</span>
