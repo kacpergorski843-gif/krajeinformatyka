@@ -43,7 +43,6 @@ export function AppShell({ me, title, children }: {
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
-      setInstallStatus("available");
     };
     const onAppInstalled = () => {
       setInstallPrompt(null);
@@ -60,6 +59,12 @@ export function AppShell({ me, title, children }: {
 
   async function checkOrInstallPwa() {
     if (installStatus === "installed") return;
+
+    if (installStatus !== "available") {
+      setInstallStatus(installPrompt ? "available" : "unavailable");
+      return;
+    }
+
     if (!installPrompt) {
       setInstallStatus("unavailable");
       return;
