@@ -32,6 +32,8 @@ const NAV = [
   { to: "/regiony", label: "Regiony", icon: Map },
   { to: "/arsenal", label: "Arsenał", icon: Rocket },
   { to: "/sklep", label: "Sklep", icon: ShoppingCart },
+  { to: "/rynek", label: "Rynek", icon: ShoppingCart },
+  { to: "/masterki", label: "Masterki", icon: Trophy },
   { to: "/ranking", label: "Ranking", icon: Trophy },
   { to: "/transfer", label: "Transfery", icon: ArrowRightLeft },
 ] as const;
