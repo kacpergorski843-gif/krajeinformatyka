@@ -12,6 +12,17 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
+let deferredPwaInstallPrompt: BeforeInstallPromptEvent | null = null;
+const pwaInstallPromptListeners = new Set<(event: BeforeInstallPromptEvent) => void>();
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (event: Event) => {
+    event.preventDefault();
+    deferredPwaInstallPrompt = event as BeforeInstallPromptEvent;
+    pwaInstallPromptListeners.forEach((listener) => listener(deferredPwaInstallPrompt!));
+  });
+}
+
 // Set to true to restore navigation icons without changing the menu structure.
 const SHOW_NAV_ICONS = false;
 
@@ -32,7 +43,7 @@ export function AppShell({ me, title, children }: {
   const queryClient = useQueryClient();
   const [confirmOut, setConfirmOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(() => deferredPwaInstallPrompt);
   const [installStatus, setInstallStatus] = useState<"unchecked" | "available" | "unavailable" | "installed">("unchecked");
 
   useEffect(() => {
@@ -40,19 +51,21 @@ export function AppShell({ me, title, children }: {
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     if (isInstalled) setInstallStatus("installed");
 
-    const onBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event as BeforeInstallPromptEvent);
+    const onInstallPrompt = (event: BeforeInstallPromptEvent) => {
+      setInstallPrompt(event);
     };
     const onAppInstalled = () => {
+      deferredPwaInstallPrompt = null;
       setInstallPrompt(null);
       setInstallStatus("installed");
     };
 
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    // Catch an event that may have fired before the authenticated menu mounted.
+    if (deferredPwaInstallPrompt) setInstallPrompt(deferredPwaInstallPrompt);
+    pwaInstallPromptListeners.add(onInstallPrompt);
     window.addEventListener("appinstalled", onAppInstalled);
     return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      pwaInstallPromptListeners.delete(onInstallPrompt);
       window.removeEventListener("appinstalled", onAppInstalled);
     };
   }, []);
@@ -71,6 +84,7 @@ export function AppShell({ me, title, children }: {
     }
 
     const promptEvent = installPrompt;
+    deferredPwaInstallPrompt = null;
     setInstallPrompt(null);
     try {
       await promptEvent.prompt();
