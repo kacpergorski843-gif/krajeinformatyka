@@ -1,9 +1,11 @@
-import { createFileRoute, Outlet, redirect, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useLocation, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery } from "@/lib/api";
 import { getMaintenanceMode } from "@/lib/admin.functions";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -18,6 +20,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const me = useQuery(meQuery);
   const location = useLocation();
+  const router = useRouter();
   const getMode = useServerFn(getMaintenanceMode);
   const mode = useQuery({
     queryKey: ["maintenance_mode"],
@@ -41,6 +44,12 @@ function AuthenticatedLayout() {
         <p className="mx-auto mt-3 max-w-sm whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
           {mode.data?.messageBody || "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem."}
         </p>
+        <Button variant="outline" className="mt-6" onClick={() => {
+          if (window.history.length > 1) router.history.back();
+          else void router.navigate({ to: "/panstwo" });
+        }}>
+          <ArrowLeft className="mr-2 size-4" /> Wróć
+        </Button>
       </section>
     </main>
   );
