@@ -1,27 +1,12 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft, Download } from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-}
-
-let deferredPwaInstallPrompt: BeforeInstallPromptEvent | null = null;
-const pwaInstallPromptListeners = new Set<(event: BeforeInstallPromptEvent) => void>();
-
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeinstallprompt", (event: Event) => {
-    event.preventDefault();
-    deferredPwaInstallPrompt = event as BeforeInstallPromptEvent;
-    pwaInstallPromptListeners.forEach((listener) => listener(deferredPwaInstallPrompt!));
-  });
-}
 
 // Set to true to restore navigation icons without changing the menu structure.
 const SHOW_NAV_ICONS = false;
@@ -45,82 +30,6 @@ export function AppShell({ me, title, children }: {
   const queryClient = useQueryClient();
   const [confirmOut, setConfirmOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(() => deferredPwaInstallPrompt);
-  const [installStatus, setInstallStatus] = useState<"unchecked" | "available" | "unavailable" | "installed">("unchecked");
-
-  useEffect(() => {
-    const isInstalled = window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
-    if (isInstalled) setInstallStatus("installed");
-
-    const onInstallPrompt = (event: BeforeInstallPromptEvent) => {
-      setInstallPrompt(event);
-    };
-    const onAppInstalled = () => {
-      deferredPwaInstallPrompt = null;
-      setInstallPrompt(null);
-      setInstallStatus("installed");
-    };
-
-    // Catch an event that may have fired before the authenticated menu mounted.
-    if (deferredPwaInstallPrompt) setInstallPrompt(deferredPwaInstallPrompt);
-    pwaInstallPromptListeners.add(onInstallPrompt);
-    window.addEventListener("appinstalled", onAppInstalled);
-    return () => {
-      pwaInstallPromptListeners.delete(onInstallPrompt);
-      window.removeEventListener("appinstalled", onAppInstalled);
-    };
-  }, []);
-
-  async function checkOrInstallPwa() {
-    if (installStatus === "installed") return;
-
-    if (installStatus !== "available") {
-      setInstallStatus(installPrompt ? "available" : "unavailable");
-      return;
-    }
-
-    if (!installPrompt) {
-      setInstallStatus("unavailable");
-      return;
-    }
-
-    const promptEvent = installPrompt;
-    deferredPwaInstallPrompt = null;
-    setInstallPrompt(null);
-    try {
-      await promptEvent.prompt();
-      const choice = await promptEvent.userChoice;
-      setInstallStatus(choice.outcome === "accepted" ? "installed" : "unchecked");
-    } catch {
-      setInstallStatus("unavailable");
-    }
-  }
-
-  const installLabel = installStatus === "available"
-    ? "Instaluj"
-    : installStatus === "installed"
-      ? "Aplikacja zainstalowana"
-      : "Sprawdź możliwość instalacji";
-
-  const installAction = (
-    <div className="space-y-1">
-      <button
-        type="button"
-        onClick={() => void checkOrInstallPwa()}
-        disabled={installStatus === "installed"}
-        className="nav-item w-full text-left disabled:cursor-default disabled:opacity-70"
-      >
-        <Download className="size-[18px] shrink-0" />
-        <span>{installLabel}</span>
-      </button>
-      {installStatus === "unavailable" ? (
-        <p className="px-3 text-xs leading-relaxed text-muted-foreground">
-          Instalacja PWA nie jest teraz dostępna w tej przeglądarce.
-        </p>
-      ) : null}
-    </div>
-  );
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -168,7 +77,6 @@ export function AppShell({ me, title, children }: {
         <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
           <div className="command-section">{nav()}</div>
           <div className="mt-auto space-y-2">
-            {installAction}
             <button type="button" onClick={() => setConfirmOut(true)} className="nav-item w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
           </div>
         </div>
@@ -186,7 +94,6 @@ export function AppShell({ me, title, children }: {
         <button className="ml-auto mb-4 block" onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button>
         <div className="min-h-0 flex-1 overflow-y-auto">{nav(true)}</div>
         <div className="mt-auto space-y-2 pt-4">
-          {installAction}
           <button type="button" onClick={() => { setMobileOpen(false); setConfirmOut(true); }} className="nav-item w-full">
             <LogOut className="size-[18px]" /> Wyloguj
           </button>
