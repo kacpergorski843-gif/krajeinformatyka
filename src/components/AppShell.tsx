@@ -1,6 +1,11 @@
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft } from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft, Download } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -27,6 +32,71 @@ export function AppShell({ me, title, children }: {
   const queryClient = useQueryClient();
   const [confirmOut, setConfirmOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installStatus, setInstallStatus] = useState<"unchecked" | "available" | "unavailable" | "installed">("unchecked");
+
+  useEffect(() => {
+    const isInstalled = window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    if (isInstalled) setInstallStatus("installed");
+
+    const onBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+      setInstallStatus("available");
+    };
+    const onAppInstalled = () => {
+      setInstallPrompt(null);
+      setInstallStatus("installed");
+    };
+
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onAppInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onAppInstalled);
+    };
+  }, []);
+
+  async function checkOrInstallPwa() {
+    if (installStatus === "installed") return;
+    if (!installPrompt) {
+      setInstallStatus("unavailable");
+      return;
+    }
+
+    const promptEvent = installPrompt;
+    setInstallPrompt(null);
+    await promptEvent.prompt();
+    const choice = await promptEvent.userChoice;
+    if (choice.outcome === "accepted") setInstallStatus("installed");
+    else setInstallStatus("unchecked");
+  }
+
+  const installLabel = installStatus === "available"
+    ? "Instaluj"
+    : installStatus === "installed"
+      ? "Aplikacja zainstalowana"
+      : "Sprawdź możliwość instalacji";
+
+  const installAction = (
+    <div className="space-y-1">
+      <button
+        type="button"
+        onClick={() => void checkOrInstallPwa()}
+        disabled={installStatus === "installed"}
+        className="nav-item w-full text-left disabled:cursor-default disabled:opacity-70"
+      >
+        <Download className="size-[18px] shrink-0" />
+        <span>{installLabel}</span>
+      </button>
+      {installStatus === "unavailable" ? (
+        <p className="px-3 text-xs leading-relaxed text-muted-foreground">
+          Instalacja PWA nie jest teraz dostępna w tej przeglądarce.
+        </p>
+      ) : null}
+    </div>
+  );
 
   useEffect(() => {
     if (!mobileOpen) return;
