@@ -132,7 +132,7 @@ export const setMaintenanceMode = createServerFn({ method: "POST" })
     pages: z.array(z.string().min(1).max(32)).max(20).refine((pages) => {
       const allowed = new Set([
         "/panstwo", "/regiony", "/swiat", "/swiat/$id", "/ranking",
-        "/sklep", "/arsenal", "/transfer", "/umowy",
+        "/sklep", "/rynek", "/masterki", "/arsenal", "/transfer", "/umowy",
       ]);
       return pages.every((page) => allowed.has(page));
     }),
