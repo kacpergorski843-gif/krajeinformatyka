@@ -90,6 +90,7 @@ export const getMaintenanceMode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const maintenanceTable = (context.supabase as any).from("app_maintenance_mode");
+    let supportsExtendedSettings = true;
     let { data, error } = await maintenanceTable
       .select("enabled, pages, message_title, message_body")
       .eq("id", 1)
@@ -103,6 +104,7 @@ export const getMaintenanceMode = createServerFn({ method: "GET" })
       /column .* does not exist|could not find .* column|schema cache/i.test(error.message)
     );
     if (missingExtendedColumns) {
+      supportsExtendedSettings = false;
       const fallback = await (context.supabase as any)
         .from("app_maintenance_mode")
         .select("enabled")
@@ -118,6 +120,7 @@ export const getMaintenanceMode = createServerFn({ method: "GET" })
       pages: Array.isArray(data?.pages) ? data.pages as string[] : [],
       messageTitle: data?.message_title || "Ekonomia jest aktualnie w remoncie",
       messageBody: data?.message_body || "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.",
+      supportsExtendedSettings,
     };
   });
 
@@ -144,20 +147,44 @@ export const setMaintenanceMode = createServerFn({ method: "POST" })
     if (roleError) throw new Error(roleError.message);
     if (isMainAdmin !== true) throw new Error("Tylko główny administrator może zmienić tryb konserwacji");
 
-    const { error } = await (context.supabase as any)
-      .from("app_maintenance_mode")
-      .upsert({
+    const maintenanceTable = (context.supabase as any).from("app_maintenance_mode");
+    const { error } = await maintenanceTable.upsert({
+      id: 1,
+      enabled: data.enabled,
+      pages: data.pages,
+      message_title: data.messageTitle,
+      message_body: data.messageBody,
+    }, { onConflict: "id" });
+
+    const missingExtendedColumns = error && (
+      error.code === "42703" ||
+      error.code === "PGRST204" ||
+      /column .* does not exist|could not find .* column|schema cache/i.test(error.message)
+    );
+
+    // Older production schemas can still save the global switch. Extended
+    // settings remain unavailable until the matching database migration exists.
+    if (missingExtendedColumns) {
+      const fallback = await maintenanceTable.upsert({
         id: 1,
         enabled: data.enabled,
-        pages: data.pages,
-        message_title: data.messageTitle,
-        message_body: data.messageBody,
       }, { onConflict: "id" });
+      if (fallback.error) throw new Error(fallback.error.message);
+      return {
+        enabled: data.enabled,
+        pages: [],
+        messageTitle: "Ekonomia jest aktualnie w remoncie",
+        messageBody: "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.",
+        supportsExtendedSettings: false,
+      };
+    }
+
     if (error) throw new Error(error.message);
     return {
       enabled: data.enabled,
       pages: data.pages,
       messageTitle: data.messageTitle,
       messageBody: data.messageBody,
+      supportsExtendedSettings: true,
     };
   });
