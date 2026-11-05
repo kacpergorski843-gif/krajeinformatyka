@@ -72,10 +72,13 @@ export function AppShell({ me, title, children }: {
 
     const promptEvent = installPrompt;
     setInstallPrompt(null);
-    await promptEvent.prompt();
-    const choice = await promptEvent.userChoice;
-    if (choice.outcome === "accepted") setInstallStatus("installed");
-    else setInstallStatus("unchecked");
+    try {
+      await promptEvent.prompt();
+      const choice = await promptEvent.userChoice;
+      setInstallStatus(choice.outcome === "accepted" ? "installed" : "unchecked");
+    } catch {
+      setInstallStatus("unavailable");
+    }
   }
 
   const installLabel = installStatus === "available"
