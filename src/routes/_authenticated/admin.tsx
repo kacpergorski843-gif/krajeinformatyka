@@ -878,7 +878,11 @@ function MaintenanceTab() {
     onSuccess: async (result) => {
       setDraft(result);
       await queryClient.invalidateQueries({ queryKey: ["maintenance_mode"] });
-      toast.success("Ustawienia konserwacji zostały zapisane");
+      if (result.supportsExtendedSettings === false) {
+        toast.warning("Zapisano przełącznik globalny. Ustawienia stron i komunikatu wymagają aktualizacji schematu bazy.");
+      } else {
+        toast.success("Ustawienia konserwacji zostały zapisane");
+      }
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -929,6 +933,10 @@ function MaintenanceTab() {
           </div>
         </div>
 
+        {mode.data?.supportsExtendedSettings === false ? (
+          <p className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-muted-foreground">Dostępny jest tylko globalny tryb konserwacji. Ustawienia pojedynczych stron i własnego komunikatu są tymczasowo wyłączone, ponieważ baza danych nie udostępnia jeszcze wymaganych kolumn.</p>
+        ) : (
+        <>
         <div className="space-y-3 rounded-md border border-border/70 p-4">
           <div>
             <p className="label-hud">KONSERWACJA POJEDYNCZYCH STRON</p>
@@ -979,6 +987,8 @@ function MaintenanceTab() {
             <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{current.messageBody}</p>
           </div>
         </div>
+        </>
+        )}
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">Tylko główny administrator może zmieniać te ustawienia.</p>
