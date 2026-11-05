@@ -1,8 +1,3 @@
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-}
-
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft, Download } from "lucide-react";
@@ -11,6 +6,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Me } from "@/lib/api";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
 
 // Set to true to restore navigation icons without changing the menu structure.
 const SHOW_NAV_ICONS = false;
@@ -148,7 +148,8 @@ export function AppShell({ me, title, children }: {
       <aside className="sidebar hidden w-[17rem] shrink-0 lg:flex">
         <div className="sticky top-0 flex h-screen w-full flex-col px-5 py-6">
           <div className="command-section">{nav()}</div>
-          <div className="mt-auto">
+          <div className="mt-auto space-y-2">
+            {installAction}
             <button type="button" onClick={() => setConfirmOut(true)} className="nav-item w-full"><LogOut className="size-[18px]" /> Wyloguj</button>
           </div>
         </div>
@@ -165,7 +166,8 @@ export function AppShell({ me, title, children }: {
       <aside className="mobile-drawer flex flex-col" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
         <button className="ml-auto mb-4 block" onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button>
         <div className="min-h-0 flex-1 overflow-y-auto">{nav(true)}</div>
-        <div className="mt-auto pt-4">
+        <div className="mt-auto space-y-2 pt-4">
+          {installAction}
           <button type="button" onClick={() => { setMobileOpen(false); setConfirmOut(true); }} className="nav-item w-full">
             <LogOut className="size-[18px]" /> Wyloguj
           </button>
