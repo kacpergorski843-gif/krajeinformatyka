@@ -90,36 +90,36 @@ export const getMaintenanceMode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const maintenanceTable = (context.supabase as any).from("app_maintenance_mode");
-    let supportsExtendedSettings = true;
-    let { data, error } = await maintenanceTable
-      .select("enabled, pages, message_title, message_body")
+
+    // Read the required global switch independently. This query works on the
+    // original table schema and does not depend on migration 0071.
+    const { data: baseData, error: baseError } = await maintenanceTable
+      .select("enabled")
       .eq("id", 1)
       .maybeSingle();
 
-    // Older production databases may have migration 0067 but not 0071 yet.
-    // Missing optional columns must not prevent reading the global switch.
-    const missingExtendedColumns = error && (
-      error.code === "42703" ||
-      error.code === "PGRST204" ||
-      /column .* does not exist|could not find .* column|schema cache/i.test(error.message)
-    );
-    if (missingExtendedColumns) {
-      supportsExtendedSettings = false;
-      const fallback = await (context.supabase as any)
-        .from("app_maintenance_mode")
-        .select("enabled")
-        .eq("id", 1)
-        .maybeSingle();
-      data = fallback.data;
-      error = fallback.error;
-    }
+    if (baseError) throw new Error(baseError.message);
 
-    if (error) throw new Error(error.message);
+    // Page-specific settings and custom copy are optional until migration
+    // 0071 is present. A missing-column/schema-cache response must never break
+    // the global maintenance status used by the player application.
+    const { data: extendedData, error: extendedError } = await maintenanceTable
+      .select("pages, message_title, message_body")
+      .eq("id", 1)
+      .maybeSingle();
+
+    const supportsExtendedSettings = !extendedError;
     return {
-      enabled: data?.enabled === true,
-      pages: Array.isArray(data?.pages) ? data.pages as string[] : [],
-      messageTitle: data?.message_title || "Ekonomia jest aktualnie w remoncie",
-      messageBody: data?.message_body || "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.",
+      enabled: baseData?.enabled === true,
+      pages: supportsExtendedSettings && Array.isArray(extendedData?.pages)
+        ? extendedData.pages as string[]
+        : [],
+      messageTitle: supportsExtendedSettings
+        ? extendedData?.message_title || "Ekonomia jest aktualnie w remoncie"
+        : "Ekonomia jest aktualnie w remoncie",
+      messageBody: supportsExtendedSettings
+        ? extendedData?.message_body || "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem."
+        : "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.",
       supportsExtendedSettings,
     };
   });
