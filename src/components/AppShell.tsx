@@ -68,19 +68,36 @@ export function AppShell({ me, title, children }: {
   );
   const nav = (mobile = false) => (
     <div className={mobile ? "grid gap-1" : "space-y-1"}>
-      {items.map((item) => (
-        <Link
-          key={item.to}
-          to={item.to}
-          prefetch="intent"
-          onClick={() => mobile && setMobileOpen(false)}
-          activeProps={{ className: "nav-active" }}
-          className={`nav-item ${isInMaintenance(item.to) ? "opacity-40 grayscale" : ""}`}
-        >
-          {SHOW_NAV_ICONS ? <item.icon className="size-[18px] shrink-0" strokeWidth={1.8} /> : null}
-          <span className="truncate">{item.label}</span>
-        </Link>
-      ))}
+      {items.map((item) => {
+        const disabled = isInMaintenance(item.to);
+        const content = (
+          <>
+            {SHOW_NAV_ICONS ? <item.icon className="size-[18px] shrink-0" strokeWidth={1.8} /> : null}
+            <span className="truncate">{item.label}</span>
+          </>
+        );
+
+        return disabled ? (
+          <div
+            key={item.to}
+            aria-disabled="true"
+            className="nav-item pointer-events-none cursor-not-allowed select-none opacity-40 grayscale"
+          >
+            {content}
+          </div>
+        ) : (
+          <Link
+            key={item.to}
+            to={item.to}
+            prefetch="intent"
+            onClick={() => mobile && setMobileOpen(false)}
+            activeProps={{ className: "nav-active" }}
+            className="nav-item"
+          >
+            {content}
+          </Link>
+        );
+      })}
     </div>
   );
 
