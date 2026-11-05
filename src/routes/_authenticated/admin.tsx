@@ -835,6 +835,8 @@ const MAINTENANCE_PAGES = [
   { path: "/swiat/$id", label: "Profil państwa" },
   { path: "/ranking", label: "Ranking" },
   { path: "/sklep", label: "Sklep" },
+  { path: "/rynek", label: "Rynek" },
+  { path: "/masterki", label: "Masterki" },
   { path: "/arsenal", label: "Arsenał" },
   { path: "/transfer", label: "Transfer" },
   { path: "/umowy", label: "Umowy" },
