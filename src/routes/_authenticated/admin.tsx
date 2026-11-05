@@ -1349,6 +1349,16 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
                   {save.isPending ? "Zapisywanie…" : "Zapisz zmiany"}
                 </Button>
               </div>
+              <div className="space-y-3 border-t border-destructive/30 pt-4">
+                <div>
+                  <p className="label-hud text-destructive">STREFA NIEBEZPIECZNA</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Trwale usuwa państwo wraz z regionami, budynkami i historią. Właściciel zostanie odłączony od państwa.</p>
+                </div>
+                <Button type="button" variant="destructive" className="w-full sm:w-auto" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 className="mr-2 size-4" />
+                  Usuń państwo
+                </Button>
+              </div>
             </TabsContent>
             <TabsContent value="quick" className="m-0 space-y-6">
               <div className="space-y-3"><SectionHeading icon={<CircleDollarSign />} title="Skarbiec" description="Szybka korekta KR" /><AdjustmentField field="balance" country={country} value={changes.balance} onChange={(value) => setChanges((current) => ({ ...current, balance: value }))} /></div>
