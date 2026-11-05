@@ -152,9 +152,11 @@ export interface FileRoutesByTo {
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/masterki': typeof AuthenticatedMasterkiRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/rynek': typeof AuthenticatedRynekRoute
   '/regiony': typeof AuthenticatedRegionyRoute
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
@@ -214,9 +216,11 @@ export interface FileRouteTypes {
     | '/ranking-publiczny'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/masterki'
     | '/arsenal'
     | '/panstwo'
     | '/ranking'
+    | '/rynek'
     | '/regiony'
     | '/sklep'
     | '/swiat'
