@@ -53,9 +53,9 @@ function MarketPage() {
   const [editPrice, setEditPrice] = useState("");
   const [counter, setCounter] = useState<{id:string; quantity:string; price:string} | null>(null);\n  const [priceResource, setPriceResource] = useState<MarketResource>("oil");\n  const [activePricePoint, setActivePricePoint] = useState<number | null>(null);
 
-  const offers = useQuery({ ...marketOffersQuery, refetchInterval: 20000 });
+  const offers = useQuery(marketOffersQuery);
   const mine = useQuery(marketMyOffersQuery(me?.countryId));
-  const negotiations = useQuery({ ...marketNegotiationsQuery, refetchInterval: 20000 });
+  const negotiations = useQuery(marketNegotiationsQuery);
   const sales = useQuery(marketSalesQuery);\n  const priceHistory = useQuery(marketPriceHistoryQuery);
   const refresh = async () => {
     await Promise.all([
