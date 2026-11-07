@@ -46,12 +46,18 @@ alter table public.market_offers enable row level security;
 alter table public.market_sales enable row level security;
 alter table public.market_negotiations enable row level security;
 grant select on public.market_offers, public.market_sales, public.market_negotiations to authenticated;
+create or replace function public.market_is_offer_seller(p_offer_id uuid)
+returns boolean language sql stable security definer set search_path=public as $
+ select exists(select 1 from public.market_offers where id=p_offer_id and seller_country_id=public.my_country_id());
+$;
+revoke all on function public.market_is_offer_seller(uuid) from public;
+grant execute on function public.market_is_offer_seller(uuid) to authenticated;
 drop policy if exists market_offers_read on public.market_offers;
-create policy market_offers_read on public.market_offers for select to authenticated using (status='ACTIVE' or public.my_country_id()=seller_country_id or public.my_country_id() in (select buyer_country_id from public.market_negotiations where offer_id=market_offers.id));
+create policy market_offers_read on public.market_offers for select to authenticated using (status='ACTIVE' or public.my_country_id()=seller_country_id);
 drop policy if exists market_sales_read on public.market_sales;
 create policy market_sales_read on public.market_sales for select to authenticated using (public.my_country_id() in (seller_country_id,buyer_country_id) or public.is_admin(auth.uid()));
 drop policy if exists market_negotiations_read on public.market_negotiations;
-create policy market_negotiations_read on public.market_negotiations for select to authenticated using (public.my_country_id()=buyer_country_id or public.my_country_id()=(select seller_country_id from public.market_offers where id=offer_id));
+create policy market_negotiations_read on public.market_negotiations for select to authenticated using (public.my_country_id()=buyer_country_id or public.market_is_offer_seller(offer_id));
 
 create or replace function public.market_expire_offers()
 returns integer language plpgsql security definer set search_path=public as $$
