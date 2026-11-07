@@ -39,9 +39,17 @@ kodu nie może zmieniać zachowania gracza, wyglądu interfejsu ani reguł gry.
 - Przypomnienia i powiadomienia o atakach w `src/components/GameAlerts.tsx`
   są mechanizmem przeglądarkowym. Nie są źródłem prawdy i nie zastępują
   serwerowego rozliczenia.
-- Polling TanStack Query jest konfigurowany centralnie w
-  `src/lib/query-client.ts`. Zmiana interwałów wymaga osobnej decyzji i
-  weryfikacji wpływu na aktualność danych oraz obciążenie Supabase.
+- Synchronizacja otwartych sesji korzysta z Supabase Realtime. Layout
+  `src/routes/_authenticated/route.tsx` subskrybuje zmiany tabel publicznych
+  opublikowanych w `supabase_realtime` i unieważnia cache TanStack Query;
+  widoki pochodne, takie jak `country_stats`, są ponownie pobierane po zmianie
+  tabel źródłowych. Payload zdarzenia nie jest używany do prezentowania danych.
+- Migracja `0073_publish_game_tables_realtime.sql` dodaje tabele aplikacji do
+  publikacji Realtime. RLS nadal kontroluje, które zdarzenia użytkownik może
+  otrzymać. Nowe tabele wymagają dopisania do migracji i listy subskrypcji.
+- Polling TanStack Query pozostaje wyłącznie zabezpieczeniem na wypadek
+  rozłączenia WebSocket lub braku zdarzenia (60 sekund); powrót do karty
+  odświeża dane przez `refetchOnWindowFocus`.
 
 ## Niezmienniki przy refaktoryzacji
 
