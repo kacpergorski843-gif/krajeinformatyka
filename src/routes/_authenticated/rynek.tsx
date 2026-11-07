@@ -153,26 +153,49 @@ function MarketPage() {
       ) : (
         <div className="space-y-3">
           <SectionTitle>Twoje propozycje</SectionTitle>
-          {proposals.map((proposal, index) => (
-            <Panel key={`${proposal.offerId}-${index}`} className="space-y-3 p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div><h3 className="font-semibold">{proposal.offerTitle}</h3><p className="mt-1 text-xs text-muted-foreground">{proposal.lastOfferBy === "Ty" ? `Ty → ${proposal.country} (sprzedający)` : `${proposal.country} (sprzedający) → Ty`}</p><p className="mt-1 text-[11px] text-muted-foreground">{proposal.lastOfferBy === "Ty" ? "Ostatnią propozycję wysłano do sprzedającego" : "Sprzedający odpowiedział kontrofertą"}</p></div>
-                <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${proposal.status === "Kontroferta" ? "bg-amber-500/10 text-amber-600" : proposal.status === "Zaakceptowana" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>{proposal.status}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 rounded-lg bg-secondary/40 p-3">
-                <div><p className="text-[10px] text-muted-foreground">Ilość</p><p className="num font-semibold">{proposal.quantity.toLocaleString("pl-PL")}</p></div>
-                <div><p className="text-[10px] text-muted-foreground">Cena za sztukę</p><p className="num font-semibold">{proposal.price.toLocaleString("pl-PL")} KR</p></div>
-                <div className="col-span-2 border-t border-border/60 pt-2"><p className="text-[10px] text-muted-foreground">Łączna wartość propozycji</p><p className="num text-lg font-bold text-primary">{(proposal.quantity * proposal.price).toLocaleString("pl-PL")} KR</p></div>
-              </div>
-              {proposal.status !== "Zaakceptowana" && proposal.status !== "Odrzucona" ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => setProposals((current) => current.map((p, i) => i === index ? { ...p, status: "Zaakceptowana" } : p))}>Akceptuj</Button>
-                  <Button size="sm" variant="outline" onClick={() => { setCounterIndex(index); setCounterPrice(String(proposal.price)); }}>Kontruj cenę</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setProposals((current) => current.map((p, i) => i === index ? { ...p, status: "Odrzucona" } : p))}>Odrzuć</Button>
+          {proposals.map((proposal, index) => {
+            const sellerResponded = proposal.lastOfferBy === "Sprzedający";
+            const total = proposal.quantity * proposal.price;
+            return (
+              <Panel key={`${proposal.offerId}-${index}`} className="space-y-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold">{proposal.offerTitle}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">Państwo sprzedające: {proposal.country}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${proposal.status === "Kontroferta" ? "bg-amber-500/10 text-amber-600" : proposal.status === "Zaakceptowana" ? "bg-primary/10 text-primary" : proposal.status === "Odrzucona" ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"}`}>{proposal.status}</span>
                 </div>
-              ) : null}
-            </Panel>
-          ))}
+
+                <div className={`rounded-lg border p-3 ${sellerResponded ? "border-amber-500/30 bg-amber-500/[0.06]" : "border-primary/20 bg-primary/[0.04]"}`}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Aktualna propozycja</p>
+                  <p className="mt-1 text-sm font-semibold">{sellerResponded ? `${proposal.country} składa kontrofertę Tobie` : "Twoja propozycja wysłana do sprzedającego"}</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div><p className="text-[10px] text-muted-foreground">Ilość</p><p className="num font-semibold">{proposal.quantity.toLocaleString("pl-PL")}</p></div>
+                    <div><p className="text-[10px] text-muted-foreground">Cena za jednostkę</p><p className="num font-semibold">{proposal.price.toLocaleString("pl-PL")} KR</p></div>
+                  </div>
+                  <div className="mt-3 border-t border-border/60 pt-2">
+                    <p className="text-[10px] text-muted-foreground">Łączna kwota do zapłaty</p>
+                    <p className="num text-2xl font-bold text-primary">{total.toLocaleString("pl-PL")} KR</p>
+                  </div>
+                </div>
+
+                {proposal.status === "Zaakceptowana" || proposal.status === "Odrzucona" ? (
+                  <p className="text-xs text-muted-foreground">{proposal.status === "Zaakceptowana" ? "Negocjacje zakończone — propozycja zaakceptowana." : "Negocjacje zakończone — propozycja odrzucona."}</p>
+                ) : sellerResponded ? (
+                  <>
+                    <p className="text-xs font-medium text-amber-600">Potrzebna jest Twoja decyzja.</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      <Button size="sm" onClick={() => setProposals((current) => current.map((p, i) => i === index ? { ...p, status: "Zaakceptowana" } : p))}>Akceptuj kontrofertę</Button>
+                      <Button size="sm" variant="outline" onClick={() => { setCounterIndex(index); setCounterPrice(String(proposal.price)); }}>Zaproponuj inną cenę</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setProposals((current) => current.map((p, i) => i === index ? { ...p, status: "Odrzucona" } : p))}>Odrzuć</Button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="rounded-md bg-secondary/50 px-3 py-2 text-xs text-muted-foreground"> <span className="font-semibold text-foreground">Teraz ruch sprzedającego.</span> Czekasz na akceptację lub kontrofertę od państwa {proposal.country}.</p>
+                )}
+              </Panel>
+            );
+          })}
           {proposals.length === 0 ? <Panel className="p-8 text-center text-sm text-muted-foreground">Nie masz jeszcze żadnych propozycji.</Panel> : null}
         </div>
       )}
