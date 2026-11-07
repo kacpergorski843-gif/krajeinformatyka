@@ -14,7 +14,7 @@ export function createAppQueryClient() {
         staleTime: 5_000,
         gcTime: 10 * 60_000,
         refetchOnWindowFocus: true,
-        refetchInterval: 5_000,
+        refetchInterval: 60_000,
         refetchIntervalInBackground: true,
         retry: 1,
       },
