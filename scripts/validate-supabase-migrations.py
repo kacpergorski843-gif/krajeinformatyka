@@ -46,7 +46,8 @@ def main() -> int:
             errors.append(f"Empty migration file: {path}")
     duplicates = {version: paths for version, paths in versions.items() if len(paths) > 1}
     for version, paths in sorted(duplicates.items()):
-        print(f"::warning::Existing duplicate migration version {version}: {", ".join(map(str, paths))}")
+        joined = ", ".join(map(str, paths))
+        print(f"::warning::Existing duplicate migration version {version}: {joined}")
     changed = changed_migrations()
     for path in changed:
         if not path.is_file():
