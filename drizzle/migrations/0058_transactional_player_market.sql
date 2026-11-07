@@ -115,7 +115,7 @@ declare v_offer public.market_offers;
 begin
  if p_unit_price is null or p_unit_price<1 or scale(p_unit_price)>0 then raise exception 'Nieprawidłowa cena'; end if;
  select * into v_offer from public.market_offers where id=p_offer_id for update;
- if not found or v_offer.seller_country_id<>public.my_country_id() then raise exception 'Nie znaleziono oferty'; end if;
+ if not found or public.my_country_id() is null or v_offer.seller_country_id<>public.my_country_id() then raise exception 'Nie znaleziono oferty'; end if;
  if v_offer.status<>'ACTIVE' or v_offer.expires_at<=now() then raise exception 'Oferta nie jest aktywna'; end if;
  update public.market_offers set unit_price=p_unit_price where id=p_offer_id;
 end $$;
@@ -190,12 +190,13 @@ create or replace function public.market_respond_negotiation(p_negotiation_id uu
 returns jsonb language plpgsql security definer set search_path=public as $$
 declare n public.market_negotiations; o public.market_offers; v_actor uuid:=public.my_country_id(); v_total numeric;
 begin
+ if auth.uid() is null or v_actor is null then raise exception 'Brak przypisanego państwa'; end if;
  select * into n from public.market_negotiations where id=p_negotiation_id for update;
  if not found or n.status<>'PENDING' or n.expires_at<=now() then raise exception 'Negocjacja nie jest aktywna'; end if;
  select * into o from public.market_offers where id=n.offer_id for update;
  if not found or o.status<>'ACTIVE' or o.expires_at<=now() then raise exception 'Oferta jest niedostępna'; end if;
  if p_action='REJECT' then
-   if v_actor not in (n.buyer_country_id,o.seller_country_id) then raise exception 'Brak uprawnień'; end if;
+   if v_actor is null or v_actor not in (n.buyer_country_id,o.seller_country_id) then raise exception 'Brak uprawnień'; end if;
    update public.market_negotiations set status='REJECTED',updated_at=now() where id=n.id; return jsonb_build_object('ok',true);
  elsif p_action='COUNTER' then
    if (v_actor=o.seller_country_id and n.last_offer_by<>'BUYER') or (v_actor=n.buyer_country_id and n.last_offer_by<>'SELLER') or v_actor not in (o.seller_country_id,n.buyer_country_id) then
