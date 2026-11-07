@@ -36,7 +36,8 @@ export function AppShell({ me, title, children }: {
   const maintenanceMode = useQuery({
     queryKey: ["maintenance_mode"],
     queryFn: () => getMode(),
-    enabled: !!me && !me.isAdmin,
+    // Only the main administrator is exempt from maintenance mode.
+    enabled: !!me && !me.isMainAdmin,
   });
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export function AppShell({ me, title, children }: {
   }
 
   const items = me?.isAdmin ? [...NAV, { to: "/admin", label: "Administracja", icon: ShieldHalf } as const] : NAV;
-  const isInMaintenance = (path: string) => me?.isAdmin !== true && (
+  const isInMaintenance = (path: string) => me?.isMainAdmin !== true && (
     maintenanceMode.data?.enabled === true ||
     maintenanceMode.data?.pages.includes(path) === true ||
     (path === "/swiat" && maintenanceMode.data?.pages.includes("/swiat/$id") === true)
