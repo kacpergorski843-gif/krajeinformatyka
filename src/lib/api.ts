@@ -905,26 +905,26 @@ export type MarketSale = {
 export const marketOffersQuery = queryOptions({
   queryKey: ["market", "offers"],
   queryFn: async (): Promise<MarketOffer[]> => {
-    const rows = await unwrap(supabase.from("market_offers").select("id,seller_country_id,resource,quantity_total,quantity_remaining,unit_price,created_at,expires_at,status").eq("status","ACTIVE").gt("expires_at",new Date().toISOString()).order("unit_price").order("created_at"));
+    const rows = await unwrap((supabase as any).from("market_offers").select("id,seller_country_id,resource,quantity_total,quantity_remaining,unit_price,created_at,expires_at,status").eq("status","ACTIVE").gt("expires_at",new Date().toISOString()).order("unit_price").order("created_at"));
     const offers = (rows ?? []) as unknown as MarketOffer[];
     if (!offers.length) return [];
     const ids = [...new Set(offers.map(o => o.seller_country_id))];
-    const countries = await unwrap(supabase.from("countries").select("id,name,flag").in("id",ids));
+    const countries = await unwrap((supabase as any).from("countries").select("id,name,flag").in("id",ids));
     const byId = new Map((countries ?? []).map(c => [c.id,{name:c.name,flag:c.flag}]));
     return offers.map(o => ({...o,seller:byId.get(o.seller_country_id)}));
   },
 });
 export const marketMyOffersQuery = (countryId: string | null | undefined) => queryOptions({
   queryKey: ["market","my-offers",countryId], enabled: !!countryId,
-  queryFn: async (): Promise<MarketOffer[]> => (await unwrap(supabase.from("market_offers").select("*").eq("seller_country_id",countryId!).order("created_at",{ascending:false}))) as unknown as MarketOffer[],
+  queryFn: async (): Promise<MarketOffer[]> => (await unwrap((supabase as any).from("market_offers").select("*").eq("seller_country_id",countryId!).order("created_at",{ascending:false}))) as unknown as MarketOffer[],
 });
 export const marketNegotiationsQuery = queryOptions({
   queryKey: ["market","negotiations"],
-  queryFn: async (): Promise<MarketNegotiation[]> => (await unwrap(supabase.from("market_negotiations").select("*").eq("status","PENDING").order("updated_at",{ascending:false}))) as unknown as MarketNegotiation[],
+  queryFn: async (): Promise<MarketNegotiation[]> => (await unwrap((supabase as any).from("market_negotiations").select("*").eq("status","PENDING").order("updated_at",{ascending:false}))) as unknown as MarketNegotiation[],
 });
 export const marketSalesQuery = queryOptions({
   queryKey: ["market","sales"],
-  queryFn: async (): Promise<MarketSale[]> => (await unwrap(supabase.from("market_sales").select("*").order("created_at",{ascending:false}).limit(100))) as unknown as MarketSale[],
+  queryFn: async (): Promise<MarketSale[]> => (await unwrap((supabase as any).from("market_sales").select("*").order("created_at",{ascending:false}).limit(100))) as unknown as MarketSale[],
 });
 export async function marketRpc<T = unknown>(name: string, args: Record<string, unknown> = {}): Promise<T> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -934,5 +934,5 @@ export async function marketRpc<T = unknown>(name: string, args: Record<string, 
 export type MarketPricePoint = { resource: MarketResource; created_at: string; unit_price: string; quantity: string };
 export const marketPriceHistoryQuery = queryOptions({
   queryKey: ["market","price-history"],
-  queryFn: async (): Promise<MarketPricePoint[]> => (await unwrap(supabase.from("market_price_history").select("resource,created_at,unit_price,quantity").order("created_at",{ascending:false}).limit(500))) as unknown as MarketPricePoint[],
+  queryFn: async (): Promise<MarketPricePoint[]> => (await unwrap((supabase as any).from("market_price_history").select("resource,created_at,unit_price,quantity").order("created_at",{ascending:false}).limit(500))) as unknown as MarketPricePoint[],
 });
