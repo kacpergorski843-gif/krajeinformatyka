@@ -37,7 +37,7 @@ export function AppShell({ me, title, children }: {
     queryKey: ["maintenance_mode"],
     queryFn: () => getMode(),
     // Poll the shared global setting so every connected client reacts without a reload.
-    refetchInterval: 3000,
+    refetchInterval: 60_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     // Only the main administrator is exempt from maintenance mode.
