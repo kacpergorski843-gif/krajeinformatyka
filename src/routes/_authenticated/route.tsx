@@ -39,20 +39,45 @@ function AuthenticatedLayout() {
   useEffect(() => {
     if (!me.data) return;
 
-    const channel = supabase
-      .channel("maintenance-mode-live")
-      .on(
+    // One authenticated Realtime channel keeps every open game session in sync.
+    // The payload is intentionally ignored; React Query reloads through existing RLS-protected queries.
+    const realtimeTables = [
+      "admin_actions",
+      "app_maintenance_mode",
+      "bilateral_agreement_runs",
+      "bilateral_agreements",
+      "countries",
+      "country_suggestions",
+      "economy_bonuses",
+      "economy_runs",
+      "missile_strikes",
+      "profiles",
+      "region_occupations",
+      "region_slots",
+      "regions",
+      "shop_items",
+      "transactions",
+      "user_roles",
+    ] as const;
+
+    let channel = supabase.channel("authenticated-game-realtime");
+    for (const table of realtimeTables) {
+      channel = channel.on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "app_maintenance_mode" },
+        { event: "*", schema: "public", table },
         () => {
-          void queryClient.invalidateQueries({ queryKey: ["maintenance_mode"] });
+          // Views such as country_stats are refreshed when their source tables change.
+          void queryClient.invalidateQueries();
         },
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          void queryClient.invalidateQueries({ queryKey: ["maintenance_mode"] });
-        }
-      });
+      );
+    }
+
+    channel = channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        // Reconcile changes that may have happened while the socket connected.
+        void queryClient.invalidateQueries();
+      }
+    });
 
     return () => {
       void supabase.removeChannel(channel);
