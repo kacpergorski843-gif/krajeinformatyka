@@ -53,6 +53,7 @@ function MarketPage() {
   const [view, setView] = useState<"offers" | "proposals" | "prices">("offers");
   const [priceItem, setPriceItem] = useState("Ropa naftowa");
   const [priceQuantity, setPriceQuantity] = useState("100");
+  const [activePricePoint, setActivePricePoint] = useState<number | null>(null);
   const [selected, setSelected] = useState<Offer | null>(null);
   const [detailsOffer, setDetailsOffer] = useState<Offer | null>(null);
   const [quantity, setQuantity] = useState("100");
@@ -155,7 +156,7 @@ function MarketPage() {
           </div>
           {filtered.length === 0 ? <Panel className="p-8 text-center"><p className="font-semibold">Brak pasujących ofert</p><p className="mt-1 text-sm text-muted-foreground">Zmień wyszukiwanie lub kategorię.</p></Panel> : null}
         </>
-      ) : (
+      ) : view === "proposals" ? (
         <div className="space-y-3">
           <SectionTitle>Twoje propozycje</SectionTitle>
           {proposals.map((proposal, index) => {
@@ -217,7 +218,9 @@ function MarketPage() {
         };
         const history = histories[priceItem] ?? histories["Ropa naftowa"];
         const qty = Math.max(1, Math.floor(Number(priceQuantity) || 1));
+        const dates = ["27.10", "28.10", "29.10", "30.10", "31.10", "01.11", "02.11", "03.11", "04.11", "05.11", "06.11", "07.11"];
         const totals = history.map((unitPrice) => unitPrice * qty);
+        const selectedPoint = activePricePoint ?? totals.length - 1;
         const min = Math.min(...totals);
         const max = Math.max(...totals);
         const avg = Math.round(totals.reduce((sum, value) => sum + value, 0) / totals.length);
@@ -252,12 +255,13 @@ function MarketPage() {
                 <span className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground">KR</span>
               </div>
               <div className="rounded-lg bg-secondary/20 p-2">
-                <svg viewBox="0 0 300 120" role="img" aria-label={`Wykres łącznej ceny dla ${qty} sztuk, od ${min} do ${max} KR`} className="h-44 w-full overflow-visible">
+                <svg viewBox="0 0 300 120" role="img" aria-label={`Interaktywny wykres cen. Wybierz punkt, aby zobaczyć datę i cenę dla ${qty} sztuk.`} className="h-44 w-full touch-pan-y overflow-visible" onPointerMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const localX = ((event.clientX - rect.left) / rect.width) * 300; const index = Math.max(0, Math.min(totals.length - 1, Math.round(((localX - 12) / 276) * (totals.length - 1)))); setActivePricePoint(index); }} onPointerLeave={() => setActivePricePoint(null)} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const localX = ((event.clientX - rect.left) / rect.width) * 300; setActivePricePoint(Math.max(0, Math.min(totals.length - 1, Math.round(((localX - 12) / 276) * (totals.length - 1))))); }}>
                   {[22, 63, 104].map((y) => <line key={y} x1="10" x2="290" y1={y} y2={y} stroke="currentColor" opacity="0.12" strokeDasharray="3 4" />)}
                   <polyline points={points} fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  {totals.map((value, index) => <circle key={index} cx={12 + (index * 276) / (totals.length - 1)} cy={104 - ((value - min) / Math.max(1, max - min)) * 82} r="2.8" fill="hsl(var(--primary))" />)}
+                  {totals.map((value, index) => <circle key={index} cx={12 + (index * 276) / (totals.length - 1)} cy={104 - ((value - min) / Math.max(1, max - min)) * 82} r={selectedPoint === index ? 5 : 2.8} fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth={selectedPoint === index ? 2 : 0} />)}
                 </svg>
-                <div className="flex justify-between px-1 text-[10px] text-muted-foreground"><span>12 sprzedaży temu</span><span>Ostatnia sprzedaż</span></div>
+                <div className="flex justify-between px-1 text-[10px] text-muted-foreground"><span>{dates[0]}.2026</span><span>{dates[5]}.2026</span><span>{dates[11]}.2026</span></div>
+                <div aria-live="polite" className="mt-2 rounded-md border border-primary/20 bg-card px-3 py-2 text-sm"><p className="text-[10px] text-muted-foreground">Wybrana sprzedaż · {dates[selectedPoint]}.2026</p><p className="num font-semibold text-primary">{totals[selectedPoint].toLocaleString("pl-PL")} KR łącznie</p><p className="num text-xs text-muted-foreground">{history[selectedPoint].toLocaleString("pl-PL")} KR / szt.</p></div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
                 <div><p className="text-muted-foreground">Ostatnia cena</p><p className="num mt-1 font-semibold">{last.toLocaleString("pl-PL")} KR</p></div>
