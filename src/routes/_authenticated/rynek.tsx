@@ -54,6 +54,8 @@ function MarketPage() {
   const [selected, setSelected] = useState<Offer | null>(null);
   const [quantity, setQuantity] = useState("100");
   const [price, setPrice] = useState("");
+  const [counterIndex, setCounterIndex] = useState<number | null>(null);
+  const [counterPrice, setCounterPrice] = useState("");
   const [proposals, setProposals] = useState<Proposal[]>([
     { offerId: 1, offerTitle: "Ropa naftowa", country: "Polska", quantity: 100, price: 40, status: "Kontroferta" },
     { offerId: 3, offerTitle: "Zestawy żołnierzy", country: "Francja", quantity: 10, price: 300, status: "Oczekuje" },
@@ -80,8 +82,12 @@ function MarketPage() {
     setView("proposals");
   }
 
-  function counterProposal(index: number) {
-    setProposals((current) => current.map((p, i) => i === index ? { ...p, price: Math.max(1, p.price - 2), status: "Kontroferta" } : p));
+  function submitCounterProposal() {
+    if (counterIndex === null) return;
+    const nextPrice = Number(counterPrice);
+    if (!Number.isFinite(nextPrice) || nextPrice <= 0) return;
+    setProposals((current) => current.map((p, i) => i === counterIndex ? { ...p, price: nextPrice, status: "Kontroferta" } : p));
+    setCounterIndex(null);
   }
 
   return (
@@ -163,7 +169,7 @@ function MarketPage() {
               {proposal.status !== "Zaakceptowana" && proposal.status !== "Odrzucona" ? (
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" onClick={() => setProposals((current) => current.map((p, i) => i === index ? { ...p, status: "Zaakceptowana" } : p))}>Akceptuj</Button>
-                  <Button size="sm" variant="outline" onClick={() => counterProposal(index)}>Kontruj cenę</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setCounterIndex(index); setCounterPrice(String(proposal.price)); }}>Kontruj cenę</Button>
                   <Button size="sm" variant="ghost" onClick={() => setProposals((current) => current.map((p, i) => i === index ? { ...p, status: "Odrzucona" } : p))}>Odrzuć</Button>
                 </div>
               ) : null}
@@ -173,7 +179,18 @@ function MarketPage() {
         </div>
       )}
 
-      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+
+      <Dialog open={counterIndex !== null} onOpenChange={(open) => !open && setCounterIndex(null)}>
+        <DialogContent className="admin-dialog">
+          <DialogHeader><DialogTitle>Zaproponuj cenę kontrującą</DialogTitle><DialogDescription>Zmień kwotę i wyślij kontrpropozycję. Bez wiadomości tekstowych.</DialogDescription></DialogHeader>
+          <div className="space-y-3">
+            <label className="block text-xs text-muted-foreground">Nowa cena za sztukę (KR)</label>
+            <Input type="number" min="1" value={counterPrice} onChange={(event) => setCounterPrice(event.target.value)} />
+            <Button className="w-full" onClick={submitCounterProposal} disabled={!Number.isFinite(Number(counterPrice)) || Number(counterPrice) <= 0}>Wyślij kontrofertę</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+\n      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="admin-dialog">
           <DialogHeader><DialogTitle>Zaproponuj własną cenę</DialogTitle><DialogDescription>{selected ? `${selected.title} · oferta ${selected.flag} ${selected.country}` : "Ustal ilość i cenę."} Nie wysyłasz wiadomości tekstowej — tylko propozycję handlową.</DialogDescription></DialogHeader>
           {selected ? <div className="space-y-4">
