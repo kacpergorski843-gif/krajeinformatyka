@@ -930,3 +930,9 @@ export async function marketRpc<T = unknown>(name: string, args: Record<string, 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return await unwrap((supabase.rpc as any)(name,args)) as T;
 }
+
+export type MarketPricePoint = { resource: MarketResource; created_at: string; unit_price: string; quantity: string };
+export const marketPriceHistoryQuery = queryOptions({
+  queryKey: ["market","price-history"],
+  queryFn: async (): Promise<MarketPricePoint[]> => (await unwrap(supabase.from("market_price_history").select("resource,created_at,unit_price,quantity").order("created_at",{ascending:false}).limit(500))) as unknown as MarketPricePoint[],
+});
