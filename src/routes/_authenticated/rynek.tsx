@@ -31,7 +31,7 @@ const fmt = (value: string | number | bigint) => {
   try { return BigInt(value).toLocaleString("pl-PL"); } catch { return "0"; }
 };
 const total = (a: string, b: string) => (BigInt(a) * BigInt(b)).toString();
-const validInt = (value: string) => /^[1-9]\\d*$/.test(value);
+const validInt = (value: string) => /^[1-9]\d*$/.test(value);
 const itemLabel = (resource: string) => ITEMS.find(item => item.value === resource)?.label ?? resource;
 
 function MarketPage() {
@@ -51,12 +51,15 @@ function MarketPage() {
   const [newPrice, setNewPrice] = useState("");
   const [editOffer, setEditOffer] = useState<MarketOffer | null>(null);
   const [editPrice, setEditPrice] = useState("");
-  const [counter, setCounter] = useState<{id:string; quantity:string; price:string} | null>(null);\n  const [priceResource, setPriceResource] = useState<MarketResource>("oil");\n  const [activePricePoint, setActivePricePoint] = useState<number | null>(null);
+  const [counter, setCounter] = useState<{id:string; quantity:string; price:string} | null>(null);
+  const [priceResource, setPriceResource] = useState<MarketResource>("oil");
+  const [activePricePoint, setActivePricePoint] = useState<number | null>(null);
 
   const offers = useQuery(marketOffersQuery);
   const mine = useQuery(marketMyOffersQuery(me?.countryId));
   const negotiations = useQuery(marketNegotiationsQuery);
-  const sales = useQuery(marketSalesQuery);\n  const priceHistory = useQuery(marketPriceHistoryQuery);
+  const sales = useQuery(marketSalesQuery);
+  const priceHistory = useQuery(marketPriceHistoryQuery);
   const refresh = async () => {
     await Promise.all([
       client.invalidateQueries({ queryKey: ["market"] }),
