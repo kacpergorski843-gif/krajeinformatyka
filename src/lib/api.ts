@@ -883,3 +883,56 @@ export function economyBonusQuery(countryId: string | null | undefined) {
     },
   });
 }
+
+
+export type MarketResource = "coal" | "oil" | "copper" | "iron" | "uranium" | "soldier_packs" | "tank_packs" | "missile_1" | "missile_2" | "missile_3";
+export type MarketOffer = {
+  id: string; seller_country_id: string; resource: MarketResource;
+  quantity_total: string; quantity_remaining: string; unit_price: string;
+  created_at: string; expires_at: string; status: "ACTIVE" | "SOLD" | "CANCELLED" | "EXPIRED";
+  seller?: { name: string; flag: string | null };
+};
+export type MarketNegotiation = {
+  id: string; offer_id: string; buyer_country_id: string; quantity: string;
+  unit_price: string; last_offer_by: "BUYER" | "SELLER";
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "EXPIRED";
+  expires_at: string; created_at: string; updated_at: string;
+};
+export type MarketSale = {
+  id: string; offer_id: string; seller_country_id: string; buyer_country_id: string;
+  resource: MarketResource; quantity: string; unit_price: string; total_price: string; created_at: string;
+};
+export const marketOffersQuery = queryOptions({
+  queryKey: ["market", "offers"],
+  queryFn: async (): Promise<MarketOffer[]> => {
+    const rows = await unwrap((supabase as any).from("market_offers").select("id,seller_country_id,resource,quantity_total,quantity_remaining,unit_price,created_at,expires_at,status").eq("status","ACTIVE").gt("expires_at",new Date().toISOString()).order("unit_price").order("created_at"));
+    const offers = (rows ?? []) as unknown as MarketOffer[];
+    if (!offers.length) return [];
+    const ids = [...new Set(offers.map(o => o.seller_country_id))];
+    const countries = await unwrap((supabase as any).from("countries").select("id,name,flag").in("id",ids));
+    const byId = new Map((countries ?? []).map(c => [c.id,{name:c.name,flag:c.flag}]));
+    return offers.map(o => ({...o,seller:byId.get(o.seller_country_id)}));
+  },
+});
+export const marketMyOffersQuery = (countryId: string | null | undefined) => queryOptions({
+  queryKey: ["market","my-offers",countryId], enabled: !!countryId,
+  queryFn: async (): Promise<MarketOffer[]> => (await unwrap((supabase as any).from("market_offers").select("*").eq("seller_country_id",countryId!).order("created_at",{ascending:false}))) as unknown as MarketOffer[],
+});
+export const marketNegotiationsQuery = queryOptions({
+  queryKey: ["market","negotiations"],
+  queryFn: async (): Promise<MarketNegotiation[]> => (await unwrap((supabase as any).from("market_negotiations").select("*").eq("status","PENDING").gt("expires_at",new Date().toISOString()).order("updated_at",{ascending:false}))) as unknown as MarketNegotiation[],
+});
+export const marketSalesQuery = queryOptions({
+  queryKey: ["market","sales"],
+  queryFn: async (): Promise<MarketSale[]> => (await unwrap((supabase as any).from("market_sales").select("*").order("created_at",{ascending:false}).limit(100))) as unknown as MarketSale[],
+});
+export async function marketRpc<T = unknown>(name: string, args: Record<string, unknown> = {}): Promise<T> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return await unwrap((supabase.rpc as any)(name,args)) as T;
+}
+
+export type MarketPricePoint = { resource: MarketResource; created_at: string; unit_price: string; quantity: string };
+export const marketPriceHistoryQuery = queryOptions({
+  queryKey: ["market","price-history"],
+  queryFn: async (): Promise<MarketPricePoint[]> => (await unwrap((supabase as any).from("market_price_history").select("resource,created_at,unit_price,quantity").order("created_at",{ascending:false}).limit(500))) as unknown as MarketPricePoint[],
+});

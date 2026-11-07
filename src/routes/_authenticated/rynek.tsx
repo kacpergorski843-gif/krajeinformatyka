@@ -1,333 +1,139 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowDownUp, ChartNoAxesCombined, Filter, Handshake, MessageCircle, Package, Search, Tag, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowDownUp, Handshake, Package, Plus, Search, Tag, X, ChartNoAxesCombined } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { meQuery } from "@/lib/api";
+import { meQuery, marketOffersQuery, marketMyOffersQuery, marketNegotiationsQuery, marketSalesQuery, marketPriceHistoryQuery, marketRpc, type MarketOffer, type MarketResource } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/rynek")({
-  head: () => ({
-    meta: [
-      { title: "Rynek — Nation Dynamics" },
-      { name: "description", content: "Rynek państw — oferty i negocjacje" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Rynek — Nation Dynamics" }, { name: "description", content: "Handel między państwami" }] }),
   component: MarketPage,
 });
 
-type Category = "Surowce" | "Uzbrojenie" | "Produkty";
-type Offer = {
-  id: number;
-  title: string;
-  category: Category;
-  country: string;
-  flag: string;
-  amount: number;
-  price: number;
-  unit: string;
-  description: string;
-  days: number;
-};
-
-const INITIAL_OFFERS: Offer[] = [
-  { id: 1, title: "Ropa naftowa", category: "Surowce", country: "Polska", flag: "🇵🇱", amount: 1200, price: 45, unit: "szt.", description: "Duży zapas ropy gotowy do natychmiastowej wymiany.", days: 2 },
-  { id: 2, title: "Węgiel", category: "Surowce", country: "Niemcy", flag: "🇩🇪", amount: 5000, price: 12, unit: "szt.", description: "Sprzedaż nadwyżek wydobycia.", days: 1 },
-  { id: 3, title: "Zestawy żołnierzy", category: "Uzbrojenie", country: "Francja", flag: "🇫🇷", amount: 25, price: 320, unit: "zest.", description: "Gotowe zestawy wojskowe.", days: 4 },
-  { id: 4, title: "Miedź", category: "Surowce", country: "Włochy", flag: "🇮🇹", amount: 850, price: 28, unit: "szt.", description: "Dostępna od ręki.", days: 0 },
-  { id: 5, title: "Zestawy czołgów", category: "Uzbrojenie", country: "Hiszpania", flag: "🇪🇸", amount: 12, price: 790, unit: "zest.", description: "Ograniczona liczba zestawów.", days: 3 },
-  { id: 6, title: "Żelazo", category: "Surowce", country: "Czechy", flag: "🇨🇿", amount: 2400, price: 19, unit: "szt.", description: "Oferta hurtowa.", days: 5 },
+const ITEMS: { value: MarketResource; label: string; category: "Surowce" | "Uzbrojenie"; unit: string }[] = [
+  { value: "coal", label: "Węgiel", category: "Surowce", unit: "szt." },
+  { value: "oil", label: "Ropa naftowa", category: "Surowce", unit: "szt." },
+  { value: "copper", label: "Miedź", category: "Surowce", unit: "szt." },
+  { value: "iron", label: "Żelazo", category: "Surowce", unit: "szt." },
+  { value: "uranium", label: "Uran", category: "Surowce", unit: "szt." },
+  { value: "soldier_packs", label: "Zestawy żołnierzy", category: "Uzbrojenie", unit: "zest." },
+  { value: "tank_packs", label: "Zestawy czołgów", category: "Uzbrojenie", unit: "zest." },
+  { value: "missile_1", label: "Rakiety I", category: "Uzbrojenie", unit: "szt." },
+  { value: "missile_2", label: "Rakiety II", category: "Uzbrojenie", unit: "szt." },
+  { value: "missile_3", label: "Rakiety III", category: "Uzbrojenie", unit: "szt." },
 ];
-
-type Proposal = { offerId: number; offerTitle: string; country: string; quantity: number; price: number; status: "Oczekuje" | "Kontroferta" | "Zaakceptowana" | "Odrzucona"; lastOfferBy: "Ty" | "Sprzedający" };
+type Tab = "offers" | "mine" | "negotiations" | "history" | "prices";
+const fmt = (value: string | number | bigint) => {
+  try { return BigInt(value).toLocaleString("pl-PL"); } catch { return "0"; }
+};
+const total = (a: string, b: string) => (BigInt(a) * BigInt(b)).toString();
+const validInt = (value: string) => /^[1-9]\\d*$/.test(value);
+const itemLabel = (resource: string) => ITEMS.find(item => item.value === resource)?.label ?? resource;
 
 function MarketPage() {
   const { data: me } = useQuery(meQuery);
-  const [offers] = useState(INITIAL_OFFERS);
+  const client = useQueryClient();
+  const [tab, setTab] = useState<Tab>("offers");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Wszystkie");
   const [sort, setSort] = useState("price");
-  const [view, setView] = useState<"offers" | "proposals" | "prices">("offers");
-  const [priceItem, setPriceItem] = useState("Ropa naftowa");
-  const [priceQuantity, setPriceQuantity] = useState("100");
-  const [activePricePoint, setActivePricePoint] = useState<number | null>(null);
-  const [selected, setSelected] = useState<Offer | null>(null);
-  const [detailsOffer, setDetailsOffer] = useState<Offer | null>(null);
-  const [quantity, setQuantity] = useState("100");
-  const [price, setPrice] = useState("");
-  const [counterIndex, setCounterIndex] = useState<number | null>(null);
-  const [counterPrice, setCounterPrice] = useState("");
-  const [proposals, setProposals] = useState<Proposal[]>([
-    { offerId: 1, offerTitle: "Ropa naftowa", country: "Polska", quantity: 100, price: 40, status: "Kontroferta", lastOfferBy: "Sprzedający" },
-    { offerId: 3, offerTitle: "Zestawy żołnierzy", country: "Francja", quantity: 10, price: 300, status: "Oczekuje", lastOfferBy: "Ty" },
-  ]);
+  const [selected, setSelected] = useState<MarketOffer | null>(null);
+  const [buyQuantity, setBuyQuantity] = useState("1");
+  const [proposalQuantity, setProposalQuantity] = useState("1");
+  const [proposalPrice, setProposalPrice] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [resource, setResource] = useState<MarketResource>("oil");
+  const [newQuantity, setNewQuantity] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [editOffer, setEditOffer] = useState<MarketOffer | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [counter, setCounter] = useState<{id:string; quantity:string; price:string} | null>(null);\n  const [priceResource, setPriceResource] = useState<MarketResource>("oil");\n  const [activePricePoint, setActivePricePoint] = useState<number | null>(null);
 
-  const filtered = useMemo(() => offers
-    .filter((offer) => category === "Wszystkie" || offer.category === category)
-    .filter((offer) => (offer.title + " " + offer.country).toLocaleLowerCase("pl-PL").includes(search.trim().toLocaleLowerCase("pl-PL")))
-    .sort((a, b) => sort === "price" ? a.price - b.price : sort === "newest" ? a.days - b.days : b.amount - a.amount), [offers, category, search, sort]);
+  const offers = useQuery({ ...marketOffersQuery, refetchInterval: 20000 });
+  const mine = useQuery(marketMyOffersQuery(me?.countryId));
+  const negotiations = useQuery({ ...marketNegotiationsQuery, refetchInterval: 20000 });
+  const sales = useQuery(marketSalesQuery);\n  const priceHistory = useQuery(marketPriceHistoryQuery);
+  const refresh = async () => {
+    await Promise.all([
+      client.invalidateQueries({ queryKey: ["market"] }),
+      client.invalidateQueries({ queryKey: ["country_stats"] }),
+      client.invalidateQueries({ queryKey: ["me"] }),
+    ]);
+  };
+  const mutation = useMutation({
+    mutationFn: ({ name, args }: { name: string; args: Record<string, unknown> }) => marketRpc(name, args),
+    onSuccess: async () => { await refresh(); toast.success("Operacja zakończona."); setSelected(null); setCreateOpen(false); setEditOffer(null); setCounter(null); },
+    onError: (error: Error) => toast.error(error.message || "Operacja nie powiodła się."),
+  });
+  const run = (name: string, args: Record<string, unknown>) => mutation.mutate({ name, args });
+  const visibleOffers = useMemo(() => (offers.data ?? [])
+    .filter(o => o.seller_country_id !== me?.countryId)
+    .filter(o => category === "Wszystkie" || ITEMS.find(i => i.value === o.resource)?.category === category)
+    .filter(o => (itemLabel(o.resource) + " " + (o.seller?.name ?? "")).toLocaleLowerCase("pl-PL").includes(search.trim().toLocaleLowerCase("pl-PL")))
+    .sort((a,b) => sort === "price" ? BigInt(a.unit_price) < BigInt(b.unit_price) ? -1 : BigInt(a.unit_price) > BigInt(b.unit_price) ? 1 : a.created_at.localeCompare(b.created_at) : sort === "newest" ? b.created_at.localeCompare(a.created_at) : BigInt(a.quantity_remaining) > BigInt(b.quantity_remaining) ? -1 : BigInt(a.quantity_remaining) < BigInt(b.quantity_remaining) ? 1 : 0),
+  [offers.data, me?.countryId, category, search, sort]);
 
-  function openProposal(offer: Offer) {
-    setSelected(offer);
-    setQuantity(String(Math.min(100, offer.amount)));
-    setPrice(String(offer.price));
-  }
+  const tabs: {id:Tab; label:string; icon:typeof Package}[] = [
+    {id:"offers",label:"Oferty",icon:Package},{id:"mine",label:"Moje oferty",icon:Tag},{id:"negotiations",label:"Negocjacje",icon:Handshake},{id:"history",label:"Historia",icon:ArrowDownUp},{id:"prices",label:"Ceny",icon:ChartNoAxesCombined},
+  ];
+  const create = () => {
+    if (!validInt(newQuantity) || !validInt(newPrice)) return toast.error("Podaj dodatnią ilość i cenę, bez części dziesiętnych.");
+    run("market_create_offer", {p_resource:resource,p_quantity:newQuantity,p_unit_price:newPrice});
+  };
+  const buy = () => {
+    if (!selected || !validInt(buyQuantity) || BigInt(buyQuantity)>BigInt(selected.quantity_remaining)) return toast.error("Nieprawidłowa ilość.");
+    run("market_buy", {p_offer_id:selected.id,p_quantity:buyQuantity});
+  };
+  const propose = () => {
+    if (!selected || !validInt(proposalQuantity) || !validInt(proposalPrice) || BigInt(proposalQuantity)>BigInt(selected.quantity_remaining)) return toast.error("Sprawdź ilość i cenę propozycji.");
+    run("market_propose", {p_offer_id:selected.id,p_quantity:proposalQuantity,p_unit_price:proposalPrice});
+  };
+  const respond = (id:string, action:string, quantity?:string, price?:string) => run("market_respond_negotiation", {p_negotiation_id:id,p_action:action,p_quantity:quantity ?? null,p_unit_price:price ?? null});
 
-  function submitProposal() {
-    if (!selected) return;
-    const qty = Math.floor(Number(quantity));
-    const amount = Number(price);
-    if (!Number.isFinite(qty) || qty < 1 || qty > selected.amount || !Number.isFinite(amount) || amount <= 0) return;
-    setProposals((current) => [{ offerId: selected.id, offerTitle: selected.title, country: selected.country, quantity: qty, price: amount, status: "Oczekuje", lastOfferBy: "Ty" }, ...current]);
-    setSelected(null);
-    setView("proposals");
-  }
+  return <AppShell me={me ?? null} title="Rynek">
+    <Panel className="mb-4 space-y-1 p-3">
+      <p className="flex items-center gap-2 text-sm font-semibold"><Tag className="size-4 text-primary"/> Rynek państw</p>
+      <p className="text-xs text-muted-foreground">0% prowizji · oferty ważne 7 dni · maksymalnie 10 aktywnych ofert na państwo. Wystawione towary są rezerwowane do sprzedaży, anulowania lub wygaśnięcia. Handel działa również podczas wojny.</p>
+    </Panel>
+    <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      {tabs.map(t => <button key={t.id} type="button" onClick={()=>setTab(t.id)} className={`rounded-lg border px-2 py-3 text-xs font-semibold ${tab===t.id?"border-primary bg-primary/10 text-primary":"border-border bg-card text-muted-foreground"}`}><span className="flex items-center justify-center gap-2"><t.icon className="size-4"/>{t.label}</span></button>)}
+    </div>
 
-  function submitCounterProposal() {
-    if (counterIndex === null) return;
-    const nextPrice = Number(counterPrice);
-    if (!Number.isFinite(nextPrice) || nextPrice <= 0) return;
-    setProposals((current) => current.map((p, i) => i === counterIndex ? { ...p, price: nextPrice, status: "Oczekuje", lastOfferBy: "Ty" } : p));
-    setCounterIndex(null);
-  }
+    {tab==="offers" && <div className="space-y-3">
+      <div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"/><Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Szukaj towaru lub państwa..." className="pl-9 pr-9"/>{search && <button onClick={()=>setSearch("")} aria-label="Wyczyść"><X className="absolute right-3 top-1/2 size-4 -translate-y-1/2"/></button>}</div>
+      <div className="flex gap-2 overflow-x-auto">{["Wszystkie","Surowce","Uzbrojenie"].map(v=><button key={v} onClick={()=>setCategory(v)} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs ${category===v?"border-primary bg-primary/10 text-primary":"border-border text-muted-foreground"}`}>{v}</button>)}</div>
+      <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{visibleOffers.length} ofert</span><select value={sort} onChange={e=>setSort(e.target.value)} className="rounded-md border border-border bg-card px-2 py-2 text-xs"><option value="price">Najniższa cena</option><option value="newest">Najnowsze</option><option value="amount">Największa ilość</option></select></div>
+      {offers.isLoading ? <Panel className="p-8 text-center text-sm text-muted-foreground">Ładowanie ofert…</Panel> : offers.isError ? <Panel className="p-5 text-sm text-destructive">Nie udało się pobrać ofert. Sprawdź, czy migracja rynku została wdrożona.</Panel> : visibleOffers.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{visibleOffers.map(o=><button key={o.id} onClick={()=>{setSelected(o);setBuyQuantity("1");setProposalQuantity("1");setProposalPrice(o.unit_price);}} className="panel flex min-w-0 flex-col gap-3 p-4 text-left hover:border-primary/50"><div className="flex items-center justify-between gap-2"><span className="rounded-full bg-secondary px-2 py-1 text-[10px]">{ITEMS.find(i=>i.value===o.resource)?.category}</span><span className="text-xs text-muted-foreground">{o.seller?.flag ?? "🏳️"} {o.seller?.name ?? "Państwo"}</span></div><div><h3 className="font-semibold">{itemLabel(o.resource)}</h3><p className="mt-1 text-xs text-muted-foreground">Dostępne: {fmt(o.quantity_remaining)}</p></div><div className="border-t border-border pt-3"><p className="num text-xl font-bold text-primary">{fmt(o.unit_price)} KR <span className="text-xs font-normal text-muted-foreground">/ jednostkę</span></p><p className="text-xs text-muted-foreground">Całość: {fmt(total(o.quantity_remaining,o.unit_price))} KR</p></div></button>)}</div> : <Panel className="p-8 text-center text-sm text-muted-foreground">Brak aktywnych ofert. Wystaw własną w zakładce „Moje oferty”.</Panel>}
+    </div>}
 
-  return (
-    <AppShell me={me ?? null} title="Rynek">
-      <div className="mb-4 rounded-xl border border-primary/25 bg-primary/[0.05] p-3 text-xs leading-relaxed text-muted-foreground">
-        <div className="flex items-center gap-2 font-semibold text-primary"><Tag className="size-4" /> Prototyp rynku</div>
-        Widoczne oferty i negocjacje są przykładowe. Zmiany działają lokalnie w tym widoku — bez pobierania ani przekazywania zasobów.
-      </div>
+    {tab==="mine" && <div className="space-y-3">
+      <div className="flex items-center justify-between"><SectionTitle>Moje oferty</SectionTitle><Button size="sm" onClick={()=>setCreateOpen(v=>!v)}><Plus className="mr-1 size-4"/>Wystaw</Button></div>
+      {createOpen && <Panel className="space-y-3 p-4"><h3 className="font-semibold">Nowa oferta</h3><label className="block text-xs text-muted-foreground">Towar<select value={resource} onChange={e=>setResource(e.target.value as MarketResource)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">{ITEMS.map(i=><option key={i.value} value={i.value}>{i.label}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="text-xs text-muted-foreground">Ilość<Input inputMode="numeric" value={newQuantity} onChange={e=>setNewQuantity(e.target.value)} placeholder="np. 100"/></label><label className="text-xs text-muted-foreground">Cena za jednostkę (KR)<Input inputMode="numeric" value={newPrice} onChange={e=>setNewPrice(e.target.value)} placeholder="np. 25"/></label></div><p className="text-xs text-muted-foreground">Wartość: {validInt(newQuantity)&&validInt(newPrice)?fmt(total(newQuantity,newPrice)):"—"} KR. Zasób zostanie odjęty z magazynu przy wystawieniu.</p><div className="flex gap-2"><Button disabled={mutation.isPending} onClick={create}>Wystaw ofertę</Button><Button variant="outline" onClick={()=>setCreateOpen(false)}>Anuluj</Button></div></Panel>}
+      {mine.isLoading ? <Panel className="p-6 text-sm text-muted-foreground">Ładowanie…</Panel> : (mine.data??[]).map(o=><Panel key={o.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><p className="font-semibold">{itemLabel(o.resource)}</p><p className="text-xs text-muted-foreground">Pozostało {fmt(o.quantity_remaining)} · {fmt(o.unit_price)} KR/jedn. · wygasa {new Date(o.expires_at).toLocaleDateString("pl-PL")}</p><p className="text-[10px] text-muted-foreground">{o.status==="ACTIVE"?"Aktywna":o.status==="SOLD"?"Sprzedana":o.status==="CANCELLED"?"Anulowana":"Wygasła"}</p></div>{o.status==="ACTIVE" && <div className="flex gap-2"><Button size="sm" variant="outline" onClick={()=>{setEditOffer(o);setEditPrice(o.unit_price);}}>Cena</Button><Button size="sm" variant="ghost" onClick={()=>run("market_cancel_offer",{p_offer_id:o.id})}>Anuluj</Button></div>}</Panel>)}
+      {!mine.isLoading&&!mine.data?.length&&<Panel className="p-8 text-center text-sm text-muted-foreground">Nie masz jeszcze ofert.</Panel>}
+      {editOffer && <Panel className="space-y-3 p-4"><h3 className="font-semibold">Zmień cenę — {itemLabel(editOffer.resource)}</h3><Input inputMode="numeric" value={editPrice} onChange={e=>setEditPrice(e.target.value)}/><p className="text-xs text-muted-foreground">Termin wygaśnięcia pozostaje bez zmian.</p><div className="flex gap-2"><Button disabled={!validInt(editPrice)} onClick={()=>run("market_update_offer_price",{p_offer_id:editOffer.id,p_unit_price:editPrice})}>Zapisz cenę</Button><Button variant="outline" onClick={()=>setEditOffer(null)}>Wróć</Button></div></Panel>}
+    </div>}
 
-      <div className="mb-5 grid grid-cols-3 gap-2">
-        <button type="button" onClick={() => setView("offers")} className={`rounded-lg border px-2 py-3 text-sm font-semibold transition-colors ${view === "offers" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
-          <span className="flex items-center justify-center gap-2"><Package className="size-4" /> Oferty</span>
-        </button>
-        <button type="button" onClick={() => setView("proposals")} className={`rounded-lg border px-2 py-3 text-sm font-semibold transition-colors ${view === "proposals" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
-          <span className="flex items-center justify-center gap-2"><Handshake className="size-4" /> Negocjacje <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px]">{proposals.length}</span></span>
-        </button>
-        <button type="button" onClick={() => setView("prices")} className={`rounded-lg border px-2 py-3 text-sm font-semibold transition-colors ${view === "prices" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
-          <span className="flex items-center justify-center gap-2"><ChartNoAxesCombined className="size-4" /> Ceny</span>
-        </button>
-      </div>
+    {tab==="negotiations" && <div className="space-y-3"><SectionTitle>Negocjacje</SectionTitle>{(negotiations.data??[]).map(n=>{
+      const offer=(offers.data??[]).find(o=>o.id===n.offer_id) ?? (mine.data??[]).find(o=>o.id===n.offer_id);
+      const seller=offer?.seller_country_id===me?.countryId;
+      const buyer=n.buyer_country_id===me?.countryId;
+      return <Panel key={n.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-2"><div><p className="font-semibold">{itemLabel(offer?.resource??"")}</p><p className="text-xs text-muted-foreground">{fmt(n.quantity)} szt. · {fmt(n.unit_price)} KR/jedn. · razem {fmt(total(n.quantity,n.unit_price))} KR</p><p className="text-[10px] text-muted-foreground">{n.last_offer_by==="BUYER"?"Ostatnia propozycja kupującego":"Ostatnia kontroferta sprzedającego"}</p></div><span className="rounded-full bg-secondary px-2 py-1 text-[10px]">Oczekuje</span></div>
+      {seller&&n.last_offer_by==="BUYER"&&<div className="flex flex-wrap gap-2"><Button size="sm" onClick={()=>respond(n.id,"ACCEPT")}>Akceptuj</Button><Button size="sm" variant="outline" onClick={()=>setCounter({id:n.id,quantity:n.quantity,price:n.unit_price})}>Kontroferta</Button><Button size="sm" variant="ghost" onClick={()=>respond(n.id,"REJECT")}>Odrzuć</Button></div>}
+      {buyer&&n.last_offer_by==="SELLER"&&<div className="flex flex-wrap gap-2"><Button size="sm" onClick={()=>respond(n.id,"ACCEPT_COUNTER")}>Akceptuj kontrofertę</Button><Button size="sm" variant="outline" onClick={()=>setCounter({id:n.id,quantity:n.quantity,price:n.unit_price})}>Zaproponuj inaczej</Button><Button size="sm" variant="ghost" onClick={()=>respond(n.id,"REJECT")}>Odrzuć</Button></div>}
+      {((buyer&&n.last_offer_by==="BUYER")||(seller&&n.last_offer_by==="SELLER"))&&<p className="text-xs text-muted-foreground">Czekasz na odpowiedź drugiej strony.</p>}
+      {counter?.id===n.id&&<div className="space-y-2 rounded-lg border border-border p-3"><label className="block text-xs text-muted-foreground">Ilość<Input inputMode="numeric" value={counter.quantity} onChange={e=>setCounter({...counter,quantity:e.target.value})}/></label><label className="block text-xs text-muted-foreground">Cena za jednostkę (KR)<Input inputMode="numeric" value={counter.price} onChange={e=>setCounter({...counter,price:e.target.value})}/></label><div className="flex gap-2"><Button size="sm" disabled={!validInt(counter.quantity)||!validInt(counter.price)} onClick={()=>respond(n.id,"COUNTER",counter.quantity,counter.price)}>Wyślij kontrofertę</Button><Button size="sm" variant="outline" onClick={()=>setCounter(null)}>Anuluj</Button></div></div>}
+      </Panel>;
+    })}{!negotiations.isLoading&&!negotiations.data?.length&&<Panel className="p-8 text-center text-sm text-muted-foreground">Brak aktywnych negocjacji.</Panel>}</div>}
 
-      {view === "offers" ? (
-        <>
-          <div className="mb-4 space-y-3">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Szukaj ofert lub państw..." aria-label="Szukaj ofert" className="pl-9 pr-9" />
-              {search ? <button type="button" onClick={() => setSearch("")} aria-label="Wyczyść wyszukiwanie" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><X className="size-4" /></button> : null}
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {["Wszystkie", "Surowce", "Uzbrojenie", "Produkty"].map((item) => (
-                <button key={item} type="button" onClick={() => setCategory(item)} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${category === item ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>{item}</button>
-              ))}
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground"><Filter className="mr-1 inline size-3.5" /> {filtered.length} ofert</p>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowDownUp className="size-3.5" />
-                <select value={sort} onChange={(event) => setSort(event.target.value)} className="max-w-[145px] rounded-md border border-border bg-card px-2 py-2 text-xs text-foreground">
-                  <option value="price">Najniższa cena</option><option value="newest">Najnowsze</option><option value="amount">Największa ilość</option>
-                </select>
-              </label>
-            </div>
-          </div>
+    {tab==="history" && <div className="space-y-3"><SectionTitle>Historia transakcji</SectionTitle>{(sales.data??[]).map(s=><Panel key={s.id} className="flex items-center justify-between gap-3 p-4"><div><p className="font-semibold">{itemLabel(s.resource)}</p><p className="text-xs text-muted-foreground">{fmt(s.quantity)} szt. · {fmt(s.unit_price)} KR/jedn. · {new Date(s.created_at).toLocaleString("pl-PL")}</p></div><div className="text-right"><p className="num font-semibold">{fmt(s.total_price)} KR</p><p className="text-[10px] text-muted-foreground">{s.buyer_country_id===me?.countryId?"Zakup":"Sprzedaż"}</p></div></Panel>)}{!sales.isLoading&&!sales.data?.length&&<Panel className="p-8 text-center text-sm text-muted-foreground">Brak transakcji.</Panel>}</div>}
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((offer) => (
-              <button key={offer.id} type="button" onClick={() => setDetailsOffer(offer)} className="panel flex min-w-0 cursor-pointer flex-col gap-3 border-border/80 p-4 text-left transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{offer.category}</span>
-                  <span className="text-xs text-muted-foreground">{offer.flag} {offer.country}</span>
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-base font-semibold">{offer.title}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">Ilość: {offer.amount.toLocaleString("pl-PL")} {offer.unit}</p>
-                </div>
-                <div className="mt-auto flex items-end justify-between gap-2 border-t border-border/70 pt-3">
-                  <div><p className="text-[10px] text-muted-foreground">Cena za całość</p><p className="num text-xl font-semibold text-primary">{(offer.amount * offer.price).toLocaleString("pl-PL")} KR</p></div>
-                  <span className="text-xs font-medium text-primary">Szczegóły <span aria-hidden="true">→</span></span>
-                </div>
-              </button>
-            ))}
-          </div>
-          {filtered.length === 0 ? <Panel className="p-8 text-center"><p className="font-semibold">Brak pasujących ofert</p><p className="mt-1 text-sm text-muted-foreground">Zmień wyszukiwanie lub kategorię.</p></Panel> : null}
-        </>
-      ) : view === "proposals" ? (
-        <div className="space-y-3">
-          <SectionTitle>Twoje propozycje</SectionTitle>
-          {proposals.map((proposal, index) => {
-            const sellerResponded = proposal.lastOfferBy === "Sprzedający";
-            const total = proposal.quantity * proposal.price;
-            return (
-              <Panel key={`${proposal.offerId}-${index}`} className="space-y-4 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="font-semibold">{proposal.offerTitle}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">Państwo sprzedające: {proposal.country}</p>
-                  </div>
-                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${proposal.status === "Kontroferta" ? "bg-amber-500/10 text-amber-600" : proposal.status === "Zaakceptowana" ? "bg-primary/10 text-primary" : proposal.status === "Odrzucona" ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"}`}>{proposal.status}</span>
-                </div>
+    {tab==="prices" && (() => { const rows=(priceHistory.data??[]).filter(p=>p.resource===priceResource).slice(0,40).reverse(); const values=rows.map(p=>BigInt(p.unit_price)); const min=values.length?values.reduce((a,b)=>a<b?a:b):0n; const max=values.length?values.reduce((a,b)=>a>b?a:b):1n; const span=max-min||1n; const index=Math.max(0,Math.min(rows.length-1,activePricePoint??rows.length-1)); const selectedPoint=rows[index]; const points=values.map((v,i)=>{const x=12+i*276/Math.max(1,values.length-1);const y=104-Number((v-min)*82n/span);return `${x},${y}`;}).join(" "); return <div className="space-y-3"><SectionTitle>Ceny transakcyjne</SectionTitle><p className="text-xs text-muted-foreground">Rzeczywiste, anonimowe ceny jednostkowe ze wszystkich zakończonych transakcji rynku.</p><Panel className="space-y-3 p-4"><label className="block text-xs text-muted-foreground">Towar<select value={priceResource} onChange={e=>{setPriceResource(e.target.value as MarketResource);setActivePricePoint(null);}} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">{ITEMS.map(i=><option key={i.value} value={i.value}>{i.label}</option>)}</select></label>{rows.length>0?<><div className="rounded-lg bg-secondary/20 p-2"><svg viewBox="0 0 300 120" preserveAspectRatio="none" className="h-44 w-full touch-pan-y" role="img" aria-label="Interaktywny wykres rzeczywistych cen"><line x1="10" x2="290" y1="104" y2="104" stroke="currentColor" opacity=".15"/><polyline points={points} fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>{values.map((v,i)=><circle key={i} cx={12+i*276/Math.max(1,values.length-1)} cy={104-Number((v-min)*82n/span)} r={i===index?5:2.5} fill="hsl(var(--primary))"/>)}<rect x="0" y="0" width="300" height="120" fill="transparent" onPointerMove={e=>{const rect=e.currentTarget.getBoundingClientRect();setActivePricePoint(Math.max(0,Math.min(rows.length-1,Math.round(((e.clientX-rect.left)/rect.width)*Math.max(0,rows.length-1)))));}} onClick={e=>{const rect=e.currentTarget.getBoundingClientRect();setActivePricePoint(Math.max(0,Math.min(rows.length-1,Math.round(((e.clientX-rect.left)/rect.width)*Math.max(0,rows.length-1)))));}}/></svg></div><div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3"><p className="text-[10px] uppercase text-muted-foreground">Wybrana transakcja</p><p className="num text-xl font-bold text-primary">{fmt(selectedPoint.unit_price)} KR / jednostkę</p><p className="text-xs text-muted-foreground">{new Date(selectedPoint.created_at).toLocaleString("pl-PL")} · ilość {fmt(selectedPoint.quantity)}</p></div><p className="text-[10px] text-muted-foreground">Punktów na wykresie: {rows.length}. Przesuń palcem lub kursorem po wykresie, aby wybrać transakcję.</p></>:<p className="py-8 text-center text-sm text-muted-foreground">Brak sprzedaży tego towaru. Historia cen pojawi się po pierwszej transakcji.</p>}</Panel></div>; })()}
 
-                <div className={`rounded-lg border p-3 ${sellerResponded ? "border-amber-500/30 bg-amber-500/[0.06]" : "border-primary/20 bg-primary/[0.04]"}`}>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Aktualna propozycja</p>
-                  <p className="mt-1 text-sm font-semibold">{sellerResponded ? `${proposal.country} składa kontrofertę Tobie` : "Twoja propozycja wysłana do sprzedającego"}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div><p className="text-[10px] text-muted-foreground">Ilość</p><p className="num font-semibold">{proposal.quantity.toLocaleString("pl-PL")}</p></div>
-                    <div><p className="text-[10px] text-muted-foreground">Cena za jednostkę</p><p className="num font-semibold">{proposal.price.toLocaleString("pl-PL")} KR</p></div>
-                  </div>
-                  <div className="mt-3 border-t border-border/60 pt-2">
-                    <p className="text-[10px] text-muted-foreground">Łączna kwota do zapłaty</p>
-                    <p className="num text-2xl font-bold text-primary">{total.toLocaleString("pl-PL")} KR</p>
-                  </div>
-                </div>
-
-                {proposal.status === "Zaakceptowana" || proposal.status === "Odrzucona" ? (
-                  <p className="text-xs text-muted-foreground">{proposal.status === "Zaakceptowana" ? "Negocjacje zakończone — propozycja zaakceptowana." : "Negocjacje zakończone — propozycja odrzucona."}</p>
-                ) : sellerResponded ? (
-                  <>
-                    <p className="text-xs font-medium text-amber-600">Potrzebna jest Twoja decyzja.</p>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                      <Button size="sm" onClick={() => setProposals((current) => current.map((p, i) => i === index ? { ...p, status: "Zaakceptowana" } : p))}>Akceptuj kontrofertę</Button>
-                      <Button size="sm" variant="outline" onClick={() => { setCounterIndex(index); setCounterPrice(String(proposal.price)); }}>Zaproponuj inną cenę</Button>
-                      <Button size="sm" variant="ghost" onClick={() => setProposals((current) => current.map((p, i) => i === index ? { ...p, status: "Odrzucona" } : p))}>Odrzuć</Button>
-                    </div>
-                  </>
-                ) : (
-                  <p className="rounded-md bg-secondary/50 px-3 py-2 text-xs text-muted-foreground"> <span className="font-semibold text-foreground">Teraz ruch sprzedającego.</span> Czekasz na akceptację lub kontrofertę od państwa {proposal.country}.</p>
-                )}
-              </Panel>
-            );
-          })}
-          {proposals.length === 0 ? <Panel className="p-8 text-center text-sm text-muted-foreground">Nie masz jeszcze żadnych propozycji.</Panel> : null}
-        </div>
-      ) : null}
-
-      {view === "prices" ? (() => {
-        const histories: Record<string, number[]> = {
-          "Ropa naftowa": [39, 41, 40, 44, 42, 46, 45, 43, 47, 45, 48, 45],
-          "Węgiel": [15, 14, 13, 14, 12, 13, 11, 12, 12, 13, 11, 12],
-          "Miedź": [24, 25, 27, 26, 28, 27, 29, 30, 28, 31, 29, 28],
-          "Żelazo": [17, 18, 17, 19, 18, 20, 19, 18, 21, 20, 19, 19],
-          "Zestawy żołnierzy": [290, 300, 295, 310, 305, 315, 320, 310, 325, 318, 322, 320],
-          "Zestawy czołgów": [740, 755, 760, 750, 775, 780, 790, 785, 800, 795, 780, 790],
-        };
-        const history = histories[priceItem] ?? histories["Ropa naftowa"];
-        const qty = Math.max(1, Math.floor(Number(priceQuantity) || 1));
-        const dates = ["27.10", "28.10", "29.10", "30.10", "31.10", "01.11", "02.11", "03.11", "04.11", "05.11", "06.11", "07.11"];
-        const totals = history.map((unitPrice) => unitPrice * qty);
-        const selectedPoint = activePricePoint ?? totals.length - 1;
-        const min = Math.min(...totals);
-        const max = Math.max(...totals);
-        const avg = Math.round(totals.reduce((sum, value) => sum + value, 0) / totals.length);
-        const last = totals[totals.length - 1];
-        const points = totals.map((value, index) => {
-          const x = 12 + (index * 276) / (totals.length - 1);
-          const y = 104 - ((value - min) / Math.max(1, max - min)) * 82;
-          return `${x},${y}`;
-        }).join(" ");
-        return (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-3 text-xs leading-relaxed text-muted-foreground">
-              <p className="font-semibold text-primary">Demo cen rynkowych</p>
-              Wykres wykorzystuje przykładową historię ostatnich 12 sprzedaży. Nie są to jeszcze rzeczywiste transakcje z gry.
-            </div>
-            <Panel className="space-y-3 p-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="market-price-item">Przedmiot</label>
-                <select id="market-price-item" value={priceItem} onChange={(event) => setPriceItem(event.target.value)} className="w-full rounded-md border border-border bg-card px-3 py-2.5 text-sm text-foreground">
-                  {Object.keys(histories).map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="market-price-quantity">Interesująca Cię ilość sztuk</label>
-                <Input id="market-price-quantity" type="number" min="1" step="1" value={priceQuantity} onChange={(event) => setPriceQuantity(event.target.value)} />
-              </div>
-              <p className="text-[11px] text-muted-foreground">Wszystkie kwoty na wykresie i w podsumowaniu są przeliczane dla podanej ilości: {qty.toLocaleString("pl-PL")} szt.</p>
-            </Panel>
-            <Panel className="space-y-3 p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div><h3 className="font-semibold">Historia ceny — {priceItem}</h3><p className="text-xs text-muted-foreground">Ostatnie 12 przykładowych sprzedaży</p></div>
-                <span className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground">KR</span>
-              </div>
-              <div className="rounded-lg bg-secondary/20 p-2">
-                <svg viewBox="0 0 300 120" role="img" aria-label={`Interaktywny wykres cen. Wybierz punkt, aby zobaczyć datę i cenę dla ${qty} sztuk.`} className="h-44 w-full touch-pan-y overflow-visible" preserveAspectRatio="none" tabIndex={0} onKeyDown={(event) => { if (event.key === "ArrowLeft") setActivePricePoint((current) => Math.max(0, (current ?? totals.length - 1) - 1)); if (event.key === "ArrowRight") setActivePricePoint((current) => Math.min(totals.length - 1, (current ?? totals.length - 1) + 1)); }} onPointerMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const localX = ((event.clientX - rect.left) / rect.width) * 300; const index = Math.max(0, Math.min(totals.length - 1, Math.round(((localX - 12) / 276) * (totals.length - 1)))); setActivePricePoint(index); }} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const localX = ((event.clientX - rect.left) / rect.width) * 300; setActivePricePoint(Math.max(0, Math.min(totals.length - 1, Math.round(((localX - 12) / 276) * (totals.length - 1))))); }}>
-                  {[22, 63, 104].map((y) => <line key={y} x1="10" x2="290" y1={y} y2={y} stroke="currentColor" opacity="0.12" strokeDasharray="3 4" />)}
-                  <polyline points={points} fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  {totals.map((value, index) => <circle key={index} cx={12 + (index * 276) / (totals.length - 1)} cy={104 - ((value - min) / Math.max(1, max - min)) * 82} r={selectedPoint === index ? 5 : 2.8} fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth={selectedPoint === index ? 2 : 0} />)}
-                </svg>
-                <div className="flex justify-between px-1 text-[10px] text-muted-foreground"><span>{dates[0]}.2026</span><span>{dates[5]}.2026</span><span>{dates[11]}.2026</span></div>
-                <div aria-live="polite" className="mt-2 rounded-md border border-primary/20 bg-card px-3 py-2 text-sm"><p className="text-[10px] text-muted-foreground">Wybrana sprzedaż · {dates[selectedPoint]}.2026</p><p className="num font-semibold text-primary">{totals[selectedPoint].toLocaleString("pl-PL")} KR łącznie</p><p className="num text-xs text-muted-foreground">{history[selectedPoint].toLocaleString("pl-PL")} KR / szt.</p></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-                <div><p className="text-muted-foreground">Ostatnia cena</p><p className="num mt-1 font-semibold">{last.toLocaleString("pl-PL")} KR</p></div>
-                <div><p className="text-muted-foreground">Średnia</p><p className="num mt-1 font-semibold">{avg.toLocaleString("pl-PL")} KR</p></div>
-                <div><p className="text-muted-foreground">Najniższa</p><p className="num mt-1 font-semibold">{min.toLocaleString("pl-PL")} KR</p></div>
-                <div><p className="text-muted-foreground">Najwyższa</p><p className="num mt-1 font-semibold">{max.toLocaleString("pl-PL")} KR</p></div>
-              </div>
-            </Panel>
-            <Panel className="p-4">
-              <p className="text-xs text-muted-foreground">Ostatnia cena jednostkowa</p>
-              <p className="num mt-1 text-2xl font-bold text-primary">{history[history.length - 1].toLocaleString("pl-PL")} KR / szt.</p>
-              <p className="mt-1 text-xs text-muted-foreground">Szacunkowa wartość {qty.toLocaleString("pl-PL")} szt. według ostatniej sprzedaży</p>
-              <p className="num mt-1 text-lg font-semibold">{last.toLocaleString("pl-PL")} KR</p>
-            </Panel>
-          </div>
-        );
-      })() : null}
-
-      <Dialog open={!!detailsOffer} onOpenChange={(open) => !open && setDetailsOffer(null)}>
-        <DialogContent className="admin-dialog">
-          <DialogHeader>
-            <DialogTitle>{detailsOffer?.title ?? "Szczegóły oferty"}</DialogTitle>
-            <DialogDescription>{detailsOffer ? `${detailsOffer.flag} ${detailsOffer.country} · ${detailsOffer.category}` : "Pełne informacje o ofercie."}</DialogDescription>
-          </DialogHeader>
-          {detailsOffer ? <div className="space-y-4">
-            <div className="rounded-lg bg-secondary/40 p-3">
-              <p className="text-xs text-muted-foreground">Cena za całość</p>
-              <p className="num text-2xl font-bold text-primary">{(detailsOffer.amount * detailsOffer.price).toLocaleString("pl-PL")} KR</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><p className="text-xs text-muted-foreground">Ilość</p><p className="num font-semibold">{detailsOffer.amount.toLocaleString("pl-PL")} {detailsOffer.unit}</p></div>
-              <div><p className="text-xs text-muted-foreground">Cena jednostkowa</p><p className="num font-semibold">{detailsOffer.price.toLocaleString("pl-PL")} KR / {detailsOffer.unit}</p></div>
-              <div><p className="text-xs text-muted-foreground">Kategoria</p><p className="font-semibold">{detailsOffer.category}</p></div>
-              <div><p className="text-xs text-muted-foreground">Państwo sprzedające</p><p className="font-semibold">{detailsOffer.flag} {detailsOffer.country}</p></div>
-              <div className="col-span-2"><p className="text-xs text-muted-foreground">Wystawiono</p><p className="font-semibold">{detailsOffer.days === 0 ? "Dzisiaj" : `${detailsOffer.days} dni temu`}</p></div>
-            </div>
-            <div><p className="mb-1 text-xs text-muted-foreground">Opis oferty</p><p className="text-sm leading-relaxed">{detailsOffer.description}</p></div>
-            <Button className="w-full" onClick={() => { const offer = detailsOffer; setDetailsOffer(null); openProposal(offer); }}><MessageCircle className="mr-2 size-4" /> Zaproponuj cenę</Button>
-          </div> : null}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={counterIndex !== null} onOpenChange={(open) => !open && setCounterIndex(null)}>
-        <DialogContent className="admin-dialog">
-          <DialogHeader><DialogTitle>Zaproponuj cenę kontrującą</DialogTitle><DialogDescription>Zmień kwotę i wyślij kontrpropozycję. Bez wiadomości tekstowych.</DialogDescription></DialogHeader>
-          <div className="space-y-3">
-            <label className="block text-xs text-muted-foreground">Nowa cena za sztukę (KR)</label>
-            <Input type="number" min="1" value={counterPrice} onChange={(event) => setCounterPrice(event.target.value)} />
-            {counterIndex !== null && proposals[counterIndex] ? <div className="rounded-lg bg-secondary/50 p-3"><p className="text-[10px] text-muted-foreground">Łączna wartość kontroferty</p><p className="num text-lg font-bold text-primary">{(proposals[counterIndex].quantity * Math.max(0, Number(counterPrice) || 0)).toLocaleString("pl-PL")} KR</p></div> : null}
-            <Button className="w-full" onClick={submitCounterProposal} disabled={!Number.isFinite(Number(counterPrice)) || Number(counterPrice) <= 0}>Wyślij kontrofertę</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="admin-dialog">
-          <DialogHeader><DialogTitle>Zaproponuj własną cenę</DialogTitle><DialogDescription>{selected ? `${selected.title} · oferta ${selected.flag} ${selected.country}` : "Ustal ilość i cenę."} Nie wysyłasz wiadomości tekstowej — tylko propozycję handlową.</DialogDescription></DialogHeader>
-          {selected ? <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="mb-1.5 block text-xs text-muted-foreground">Ilość (max. {selected.amount})</label><Input type="number" min="1" max={selected.amount} value={quantity} onChange={(event) => setQuantity(event.target.value)} /></div>
-              <div><label className="mb-1.5 block text-xs text-muted-foreground">Cena za sztukę (KR)</label><Input type="number" min="1" value={price} onChange={(event) => setPrice(event.target.value)} /></div>
-            </div>
-            <div className="rounded-lg bg-secondary/50 p-3 text-sm"><div className="flex justify-between text-muted-foreground"><span>Wartość propozycji</span><span className="num font-semibold text-foreground">{(Math.max(0, Number(quantity) || 0) * Math.max(0, Number(price) || 0)).toLocaleString("pl-PL")} KR</span></div><p className="mt-1 text-[11px] text-muted-foreground">Cena sprzedającego: {selected.price} KR / szt.</p></div>
-            <Button className="w-full" onClick={submitProposal} disabled={!Number.isInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > selected.amount || !Number.isFinite(Number(price)) || Number(price) <= 0}>Wyślij propozycję</Button>
-          </div> : null}
-        </DialogContent>
-      </Dialog>
-    </AppShell>
-  );
+    {selected&&<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center" onClick={()=>setSelected(null)}><div role="dialog" aria-modal="true" className="w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-5 shadow-xl" onClick={e=>e.stopPropagation()}><div className="flex items-start justify-between"><div><h2 className="text-lg font-semibold">{itemLabel(selected.resource)}</h2><p className="text-xs text-muted-foreground">{selected.seller?.flag} {selected.seller?.name}</p></div><button onClick={()=>setSelected(null)} aria-label="Zamknij">✕</button></div><p className="num text-2xl font-bold text-primary">{fmt(selected.unit_price)} KR / jednostkę</p><p className="text-xs text-muted-foreground">Dostępne: {fmt(selected.quantity_remaining)}</p><div className="space-y-2"><label className="block text-xs text-muted-foreground">Ilość do zakupu<Input inputMode="numeric" value={buyQuantity} onChange={e=>setBuyQuantity(e.target.value)}/></label><p className="font-semibold">Do zapłaty: {validInt(buyQuantity)?fmt(total(buyQuantity,selected.unit_price)):"—"} KR</p><Button className="w-full" disabled={mutation.isPending||!validInt(buyQuantity)||BigInt(validInt(buyQuantity)?buyQuantity:"0")>BigInt(selected.quantity_remaining)} onClick={buy}>Kup teraz</Button></div><div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">Zaproponuj cenę</h3><label className="block text-xs text-muted-foreground">Ilość<Input inputMode="numeric" value={proposalQuantity} onChange={e=>setProposalQuantity(e.target.value)}/></label><label className="block text-xs text-muted-foreground">Cena za jednostkę (KR)<Input inputMode="numeric" value={proposalPrice} onChange={e=>setProposalPrice(e.target.value)}/></label><Button className="w-full" variant="outline" disabled={mutation.isPending||!validInt(proposalQuantity)||!validInt(proposalPrice)||BigInt(validInt(proposalQuantity)?proposalQuantity:"0")>BigInt(selected.quantity_remaining)} onClick={propose}>Wyślij propozycję</Button></div></div></div>}
+  </AppShell>;
 }
