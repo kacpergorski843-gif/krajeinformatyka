@@ -125,7 +125,7 @@ returns void language plpgsql security definer set search_path=public as $$
 declare v_offer public.market_offers;
 begin
  select * into v_offer from public.market_offers where id=p_offer_id for update;
- if not found or v_offer.seller_country_id<>public.my_country_id() then raise exception 'Nie znaleziono oferty'; end if;
+ if not found or public.my_country_id() is null or v_offer.seller_country_id<>public.my_country_id() then raise exception 'Nie znaleziono oferty'; end if;
  if v_offer.status<>'ACTIVE' then raise exception 'Oferta nie jest aktywna'; end if;
  update public.countries set
   coal=coal+case when v_offer.resource='coal' then v_offer.quantity_remaining else 0 end,
