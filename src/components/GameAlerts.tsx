@@ -45,8 +45,6 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
   const strikes = useQuery({
     queryKey: ["incoming_strikes", countryId],
     enabled: !!countryId,
-    refetchInterval: 45_000,
-    refetchIntervalInBackground: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("missile_strikes")
