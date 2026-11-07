@@ -143,7 +143,7 @@ function MarketPage() {
                 </div>
                 <div className="mt-auto border-t border-border/70 pt-3">
                   <div className="flex items-end justify-between gap-2">
-                    <div><p className="text-[10px] text-muted-foreground">Cena za {offer.unit}</p><p className="num text-xl font-semibold text-primary">{offer.price.toLocaleString("pl-PL")} KR</p><p className="mt-1 text-xs text-muted-foreground">Cała oferta: <span className="num font-semibold text-foreground">{(offer.amount * offer.price).toLocaleString("pl-PL")} KR</span></p></div>
+                    <div><p className="text-[10px] text-muted-foreground">Cena za całość</p><p className="num text-xl font-semibold text-primary">{(offer.amount * offer.price).toLocaleString("pl-PL")} KR</p><p className="mt-1 text-xs text-muted-foreground">{offer.price.toLocaleString("pl-PL")} KR / {offer.unit}</p></div>
                     <p className="text-right text-xs text-muted-foreground">{offer.amount.toLocaleString("pl-PL")} {offer.unit}</p>
                   </div>
                   <Button className="mt-3 w-full" onClick={() => openProposal(offer)}><MessageCircle className="mr-2 size-4" /> Zaproponuj cenę</Button>
