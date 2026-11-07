@@ -132,7 +132,7 @@ function MarketPage() {
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((offer) => (
-              <Panel key={offer.id} role="button" tabIndex={0} onClick={() => setDetailsOffer(offer)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setDetailsOffer(offer); } }} className="flex min-w-0 cursor-pointer flex-col gap-3 border-border/80 p-4 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <button key={offer.id} type="button" onClick={() => setDetailsOffer(offer)} className="panel flex min-w-0 cursor-pointer flex-col gap-3 border-border/80 p-4 text-left transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 <div className="flex items-center justify-between gap-2">
                   <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{offer.category}</span>
                   <span className="text-xs text-muted-foreground">{offer.flag} {offer.country}</span>
@@ -145,7 +145,7 @@ function MarketPage() {
                   <div><p className="text-[10px] text-muted-foreground">Cena za całość</p><p className="num text-xl font-semibold text-primary">{(offer.amount * offer.price).toLocaleString("pl-PL")} KR</p></div>
                   <span className="text-xs font-medium text-primary">Szczegóły <span aria-hidden="true">→</span></span>
                 </div>
-              </Panel>
+              </button>
             ))}
           </div>
           {filtered.length === 0 ? <Panel className="p-8 text-center"><p className="font-semibold">Brak pasujących ofert</p><p className="mt-1 text-sm text-muted-foreground">Zmień wyszukiwanie lub kategorię.</p></Panel> : null}
