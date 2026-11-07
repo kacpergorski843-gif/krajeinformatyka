@@ -11,7 +11,7 @@ from collections import defaultdict
 from pathlib import Path
 
 MIGRATIONS = Path("supabase/migrations")
-NAME_PATTERN = re.compile(r"^(?P<version>\\d+)_(?P<name>[a-z0-9_]+)\\.sql$")
+NAME_PATTERN = re.compile(r"^(?P<version>\d+)_(?P<name>[a-z0-9_]+)\.sql$")
 
 def changed_migrations() -> list[Path]:
     event = os.getenv("EVENT_NAME", "")
