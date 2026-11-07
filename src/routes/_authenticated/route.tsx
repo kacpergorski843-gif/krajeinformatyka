@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect, useLocation, useRouter } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery } from "@/lib/api";
@@ -21,6 +22,7 @@ function AuthenticatedLayout() {
   const me = useQuery(meQuery);
   const location = useLocation();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const getMode = useServerFn(getMaintenanceMode);
   const mode = useQuery({
     queryKey: ["maintenance_mode"],
@@ -33,6 +35,29 @@ function AuthenticatedLayout() {
     enabled: !!me.data && !me.data.isMainAdmin,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (!me.data) return;
+
+    const channel = supabase
+      .channel("maintenance-mode-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "app_maintenance_mode" },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["maintenance_mode"] });
+        },
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          void queryClient.invalidateQueries({ queryKey: ["maintenance_mode"] });
+        }
+      });
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [me.data?.userId, queryClient]);
 
   const maintenancePath = location.pathname.startsWith("/swiat/")
     ? "/swiat/$id"
