@@ -3,18 +3,19 @@ import { QueryClient } from "@tanstack/react-query";
 /**
  * Shared React Query configuration.
  *
- * Queries should opt into polling only when they need live updates.
- * Keep the shared cache lifetime and retry behavior stable.
+ * Keep data synchronized across active sessions. This polling fallback also
+ * refreshes derived views (such as country_stats) that cannot emit their own
+ * Supabase Realtime change events.
  */
 export function createAppQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 30_000,
+        staleTime: 5_000,
         gcTime: 10 * 60_000,
-        refetchOnWindowFocus: false,
-        refetchInterval: 10_000,
-        refetchIntervalInBackground: false,
+        refetchOnWindowFocus: true,
+        refetchInterval: 5_000,
+        refetchIntervalInBackground: true,
         retry: 1,
       },
     },
