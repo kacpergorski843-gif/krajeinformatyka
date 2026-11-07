@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownUp, Clock3, Filter, Handshake, MessageCircle, Package, Search, Tag, X } from "lucide-react";
+import { ArrowDownUp, ChartNoAxesCombined, Filter, Handshake, MessageCircle, Package, Search, Tag, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,9 @@ function MarketPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Wszystkie");
   const [sort, setSort] = useState("price");
-  const [view, setView] = useState<"offers" | "proposals">("offers");
+  const [view, setView] = useState<"offers" | "proposals" | "prices">("offers");
+  const [priceItem, setPriceItem] = useState("Ropa naftowa");
+  const [priceQuantity, setPriceQuantity] = useState("100");
   const [selected, setSelected] = useState<Offer | null>(null);
   const [detailsOffer, setDetailsOffer] = useState<Offer | null>(null);
   const [quantity, setQuantity] = useState("100");
@@ -98,12 +100,15 @@ function MarketPage() {
         Widoczne oferty i negocjacje są przykładowe. Zmiany działają lokalnie w tym widoku — bez pobierania ani przekazywania zasobów.
       </div>
 
-      <div className="mb-5 grid grid-cols-2 gap-2">
-        <button type="button" onClick={() => setView("offers")} className={`rounded-lg border px-3 py-3 text-sm font-semibold transition-colors ${view === "offers" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
+      <div className="mb-5 grid grid-cols-3 gap-2">
+        <button type="button" onClick={() => setView("offers")} className={`rounded-lg border px-2 py-3 text-sm font-semibold transition-colors ${view === "offers" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
           <span className="flex items-center justify-center gap-2"><Package className="size-4" /> Oferty</span>
         </button>
-        <button type="button" onClick={() => setView("proposals")} className={`rounded-lg border px-3 py-3 text-sm font-semibold transition-colors ${view === "proposals" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
+        <button type="button" onClick={() => setView("proposals")} className={`rounded-lg border px-2 py-3 text-sm font-semibold transition-colors ${view === "proposals" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
           <span className="flex items-center justify-center gap-2"><Handshake className="size-4" /> Negocjacje <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px]">{proposals.length}</span></span>
+        </button>
+        <button type="button" onClick={() => setView("prices")} className={`rounded-lg border px-2 py-3 text-sm font-semibold transition-colors ${view === "prices" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
+          <span className="flex items-center justify-center gap-2"><ChartNoAxesCombined className="size-4" /> Ceny</span>
         </button>
       </div>
 
@@ -200,6 +205,76 @@ function MarketPage() {
         </div>
       )}
 
+
+      {view === "prices" ? (() => {
+        const histories: Record<string, number[]> = {
+          "Ropa naftowa": [39, 41, 40, 44, 42, 46, 45, 43, 47, 45, 48, 45],
+          "Węgiel": [15, 14, 13, 14, 12, 13, 11, 12, 12, 13, 11, 12],
+          "Miedź": [24, 25, 27, 26, 28, 27, 29, 30, 28, 31, 29, 28],
+          "Żelazo": [17, 18, 17, 19, 18, 20, 19, 18, 21, 20, 19, 19],
+          "Zestawy żołnierzy": [290, 300, 295, 310, 305, 315, 320, 310, 325, 318, 322, 320],
+          "Zestawy czołgów": [740, 755, 760, 750, 775, 780, 790, 785, 800, 795, 780, 790],
+        };
+        const history = histories[priceItem] ?? histories["Ropa naftowa"];
+        const qty = Math.max(1, Math.floor(Number(priceQuantity) || 1));
+        const totals = history.map((unitPrice) => unitPrice * qty);
+        const min = Math.min(...totals);
+        const max = Math.max(...totals);
+        const avg = Math.round(totals.reduce((sum, value) => sum + value, 0) / totals.length);
+        const last = totals[totals.length - 1];
+        const points = totals.map((value, index) => {
+          const x = 12 + (index * 276) / (totals.length - 1);
+          const y = 104 - ((value - min) / Math.max(1, max - min)) * 82;
+          return `${x},${y}`;
+        }).join(" ");
+        return (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-3 text-xs leading-relaxed text-muted-foreground">
+              <p className="font-semibold text-primary">Demo cen rynkowych</p>
+              Wykres wykorzystuje przykładową historię ostatnich 12 sprzedaży. Nie są to jeszcze rzeczywiste transakcje z gry.
+            </div>
+            <Panel className="space-y-3 p-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="market-price-item">Przedmiot</label>
+                <select id="market-price-item" value={priceItem} onChange={(event) => setPriceItem(event.target.value)} className="w-full rounded-md border border-border bg-card px-3 py-2.5 text-sm text-foreground">
+                  {Object.keys(histories).map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="market-price-quantity">Interesująca Cię ilość sztuk</label>
+                <Input id="market-price-quantity" type="number" min="1" step="1" value={priceQuantity} onChange={(event) => setPriceQuantity(event.target.value)} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Wszystkie kwoty na wykresie i w podsumowaniu są przeliczane dla podanej ilości: {qty.toLocaleString("pl-PL")} szt.</p>
+            </Panel>
+            <Panel className="space-y-3 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div><h3 className="font-semibold">Historia ceny — {priceItem}</h3><p className="text-xs text-muted-foreground">Ostatnie 12 przykładowych sprzedaży</p></div>
+                <span className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground">KR</span>
+              </div>
+              <div className="rounded-lg bg-secondary/20 p-2">
+                <svg viewBox="0 0 300 120" role="img" aria-label={`Wykres łącznej ceny dla ${qty} sztuk, od ${min} do ${max} KR`} className="h-44 w-full overflow-visible">
+                  {[22, 63, 104].map((y) => <line key={y} x1="10" x2="290" y1={y} y2={y} stroke="currentColor" opacity="0.12" strokeDasharray="3 4" />)}
+                  <polyline points={points} fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  {totals.map((value, index) => <circle key={index} cx={12 + (index * 276) / (totals.length - 1)} cy={104 - ((value - min) / Math.max(1, max - min)) * 82} r="2.8" fill="hsl(var(--primary))" />)}
+                </svg>
+                <div className="flex justify-between px-1 text-[10px] text-muted-foreground"><span>12 sprzedaży temu</span><span>Ostatnia sprzedaż</span></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
+                <div><p className="text-muted-foreground">Ostatnia cena</p><p className="num mt-1 font-semibold">{last.toLocaleString("pl-PL")} KR</p></div>
+                <div><p className="text-muted-foreground">Średnia</p><p className="num mt-1 font-semibold">{avg.toLocaleString("pl-PL")} KR</p></div>
+                <div><p className="text-muted-foreground">Najniższa</p><p className="num mt-1 font-semibold">{min.toLocaleString("pl-PL")} KR</p></div>
+                <div><p className="text-muted-foreground">Najwyższa</p><p className="num mt-1 font-semibold">{max.toLocaleString("pl-PL")} KR</p></div>
+              </div>
+            </Panel>
+            <Panel className="p-4">
+              <p className="text-xs text-muted-foreground">Ostatnia cena jednostkowa</p>
+              <p className="num mt-1 text-2xl font-bold text-primary">{history[history.length - 1].toLocaleString("pl-PL")} KR / szt.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Szacunkowa wartość {qty.toLocaleString("pl-PL")} szt. według ostatniej sprzedaży</p>
+              <p className="num mt-1 text-lg font-semibold">{last.toLocaleString("pl-PL")} KR</p>
+            </Panel>
+          </div>
+        );
+      })() : null}
 
       <Dialog open={!!detailsOffer} onOpenChange={(open) => !open && setDetailsOffer(null)}>
         <DialogContent className="admin-dialog">
