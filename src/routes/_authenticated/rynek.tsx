@@ -52,6 +52,7 @@ function MarketPage() {
   const [sort, setSort] = useState("price");
   const [view, setView] = useState<"offers" | "proposals">("offers");
   const [selected, setSelected] = useState<Offer | null>(null);
+  const [detailsOffer, setDetailsOffer] = useState<Offer | null>(null);
   const [quantity, setQuantity] = useState("100");
   const [price, setPrice] = useState("");
   const [counterIndex, setCounterIndex] = useState<number | null>(null);
@@ -131,22 +132,18 @@ function MarketPage() {
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((offer) => (
-              <Panel key={offer.id} className="flex min-w-0 flex-col gap-3 border-border/80 p-4 transition-colors hover:border-primary/40">
-                <div className="flex items-start justify-between gap-2">
+              <Panel key={offer.id} role="button" tabIndex={0} onClick={() => setDetailsOffer(offer)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setDetailsOffer(offer); } }} className="flex min-w-0 cursor-pointer flex-col gap-3 border-border/80 p-4 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                <div className="flex items-center justify-between gap-2">
                   <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{offer.category}</span>
-                  <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><Clock3 className="size-3" /> {offer.days === 0 ? "Dzisiaj" : `${offer.days} dni temu`}</span>
+                  <span className="text-xs text-muted-foreground">{offer.flag} {offer.country}</span>
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-base font-semibold">{offer.title}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">{offer.flag} {offer.country}</p>
-                  <p className="mt-2 line-clamp-2 min-h-8 text-xs leading-relaxed text-muted-foreground">{offer.description}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Ilość: {offer.amount.toLocaleString("pl-PL")} {offer.unit}</p>
                 </div>
-                <div className="mt-auto border-t border-border/70 pt-3">
-                  <div className="flex items-end justify-between gap-2">
-                    <div><p className="text-[10px] text-muted-foreground">Cena za całość</p><p className="num text-xl font-semibold text-primary">{(offer.amount * offer.price).toLocaleString("pl-PL")} KR</p><p className="mt-1 text-xs text-muted-foreground">{offer.price.toLocaleString("pl-PL")} KR / {offer.unit}</p></div>
-                    <p className="text-right text-xs text-muted-foreground">{offer.amount.toLocaleString("pl-PL")} {offer.unit}</p>
-                  </div>
-                  <Button className="mt-3 w-full" onClick={() => openProposal(offer)}><MessageCircle className="mr-2 size-4" /> Zaproponuj cenę</Button>
+                <div className="mt-auto flex items-end justify-between gap-2 border-t border-border/70 pt-3">
+                  <div><p className="text-[10px] text-muted-foreground">Cena za całość</p><p className="num text-xl font-semibold text-primary">{(offer.amount * offer.price).toLocaleString("pl-PL")} KR</p></div>
+                  <span className="text-xs font-medium text-primary">Szczegóły <span aria-hidden="true">→</span></span>
                 </div>
               </Panel>
             ))}
@@ -180,6 +177,30 @@ function MarketPage() {
         </div>
       )}
 
+
+      <Dialog open={!!detailsOffer} onOpenChange={(open) => !open && setDetailsOffer(null)}>
+        <DialogContent className="admin-dialog">
+          <DialogHeader>
+            <DialogTitle>{detailsOffer?.title ?? "Szczegóły oferty"}</DialogTitle>
+            <DialogDescription>{detailsOffer ? `${detailsOffer.flag} ${detailsOffer.country} · ${detailsOffer.category}` : "Pełne informacje o ofercie."}</DialogDescription>
+          </DialogHeader>
+          {detailsOffer ? <div className="space-y-4">
+            <div className="rounded-lg bg-secondary/40 p-3">
+              <p className="text-xs text-muted-foreground">Cena za całość</p>
+              <p className="num text-2xl font-bold text-primary">{(detailsOffer.amount * detailsOffer.price).toLocaleString("pl-PL")} KR</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><p className="text-xs text-muted-foreground">Ilość</p><p className="num font-semibold">{detailsOffer.amount.toLocaleString("pl-PL")} {detailsOffer.unit}</p></div>
+              <div><p className="text-xs text-muted-foreground">Cena jednostkowa</p><p className="num font-semibold">{detailsOffer.price.toLocaleString("pl-PL")} KR / {detailsOffer.unit}</p></div>
+              <div><p className="text-xs text-muted-foreground">Kategoria</p><p className="font-semibold">{detailsOffer.category}</p></div>
+              <div><p className="text-xs text-muted-foreground">Państwo sprzedające</p><p className="font-semibold">{detailsOffer.flag} {detailsOffer.country}</p></div>
+              <div className="col-span-2"><p className="text-xs text-muted-foreground">Wystawiono</p><p className="font-semibold">{detailsOffer.days === 0 ? "Dzisiaj" : `${detailsOffer.days} dni temu`}</p></div>
+            </div>
+            <div><p className="mb-1 text-xs text-muted-foreground">Opis oferty</p><p className="text-sm leading-relaxed">{detailsOffer.description}</p></div>
+            <Button className="w-full" onClick={() => { const offer = detailsOffer; setDetailsOffer(null); openProposal(offer); }}><MessageCircle className="mr-2 size-4" /> Zaproponuj cenę</Button>
+          </div> : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={counterIndex !== null} onOpenChange={(open) => !open && setCounterIndex(null)}>
         <DialogContent className="admin-dialog">
