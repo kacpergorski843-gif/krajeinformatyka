@@ -42,7 +42,7 @@ const INITIAL_OFFERS: Offer[] = [
   { id: 6, title: "Żelazo", category: "Surowce", country: "Czechy", flag: "🇨🇿", amount: 2400, price: 19, unit: "szt.", description: "Oferta hurtowa.", days: 5 },
 ];
 
-type Proposal = { offerId: number; offerTitle: string; country: string; quantity: number; price: number; status: "Oczekuje" | "Kontroferta" | "Zaakceptowana" | "Odrzucona" };
+type Proposal = { offerId: number; offerTitle: string; country: string; quantity: number; price: number; status: "Oczekuje" | "Kontroferta" | "Zaakceptowana" | "Odrzucona"; lastOfferBy: "Ty" | "Sprzedający" };
 
 function MarketPage() {
   const { data: me } = useQuery(meQuery);
@@ -57,8 +57,8 @@ function MarketPage() {
   const [counterIndex, setCounterIndex] = useState<number | null>(null);
   const [counterPrice, setCounterPrice] = useState("");
   const [proposals, setProposals] = useState<Proposal[]>([
-    { offerId: 1, offerTitle: "Ropa naftowa", country: "Polska", quantity: 100, price: 40, status: "Kontroferta" },
-    { offerId: 3, offerTitle: "Zestawy żołnierzy", country: "Francja", quantity: 10, price: 300, status: "Oczekuje" },
+    { offerId: 1, offerTitle: "Ropa naftowa", country: "Polska", quantity: 100, price: 40, status: "Kontroferta", lastOfferBy: "Sprzedający" },
+    { offerId: 3, offerTitle: "Zestawy żołnierzy", country: "Francja", quantity: 10, price: 300, status: "Oczekuje", lastOfferBy: "Ty" },
   ]);
 
   const filtered = useMemo(() => offers
@@ -77,7 +77,7 @@ function MarketPage() {
     const qty = Math.floor(Number(quantity));
     const amount = Number(price);
     if (!Number.isFinite(qty) || qty < 1 || qty > selected.amount || !Number.isFinite(amount) || amount <= 0) return;
-    setProposals((current) => [{ offerId: selected.id, offerTitle: selected.title, country: selected.country, quantity: qty, price: amount, status: "Oczekuje" }, ...current]);
+    setProposals((current) => [{ offerId: selected.id, offerTitle: selected.title, country: selected.country, quantity: qty, price: amount, status: "Oczekuje", lastOfferBy: "Ty" }, ...current]);
     setSelected(null);
     setView("proposals");
   }
@@ -86,7 +86,7 @@ function MarketPage() {
     if (counterIndex === null) return;
     const nextPrice = Number(counterPrice);
     if (!Number.isFinite(nextPrice) || nextPrice <= 0) return;
-    setProposals((current) => current.map((p, i) => i === counterIndex ? { ...p, price: nextPrice, status: "Kontroferta" } : p));
+    setProposals((current) => current.map((p, i) => i === counterIndex ? { ...p, price: nextPrice, status: "Kontroferta", lastOfferBy: "Sprzedający" } : p));
     setCounterIndex(null);
   }
 
@@ -143,7 +143,7 @@ function MarketPage() {
                 </div>
                 <div className="mt-auto border-t border-border/70 pt-3">
                   <div className="flex items-end justify-between gap-2">
-                    <div><p className="text-[10px] text-muted-foreground">Cena za {offer.unit}</p><p className="num text-xl font-semibold text-primary">{offer.price.toLocaleString("pl-PL")} KR</p></div>
+                    <div><p className="text-[10px] text-muted-foreground">Cena za {offer.unit}</p><p className="num text-xl font-semibold text-primary">{offer.price.toLocaleString("pl-PL")} KR</p><p className="mt-1 text-xs text-muted-foreground">Cała oferta: <span className="num font-semibold text-foreground">{(offer.amount * offer.price).toLocaleString("pl-PL")} KR</span></p></div>
                     <p className="text-right text-xs text-muted-foreground">{offer.amount.toLocaleString("pl-PL")} {offer.unit}</p>
                   </div>
                   <Button className="mt-3 w-full" onClick={() => openProposal(offer)}><MessageCircle className="mr-2 size-4" /> Zaproponuj cenę</Button>
@@ -159,12 +159,13 @@ function MarketPage() {
           {proposals.map((proposal, index) => (
             <Panel key={`${proposal.offerId}-${index}`} className="space-y-3 p-4">
               <div className="flex items-start justify-between gap-2">
-                <div><h3 className="font-semibold">{proposal.offerTitle}</h3><p className="mt-1 text-xs text-muted-foreground">Sprzedający: {proposal.country}</p></div>
+                <div><h3 className="font-semibold">{proposal.offerTitle}</h3><p className="mt-1 text-xs text-muted-foreground">{proposal.lastOfferBy === "Ty" ? `Ty → ${proposal.country} (sprzedający)` : `${proposal.country} (sprzedający) → Ty`}</p><p className="mt-1 text-[11px] text-muted-foreground">{proposal.lastOfferBy === "Ty" ? "Ostatnią propozycję wysłano do sprzedającego" : "Sprzedający odpowiedział kontrofertą"}</p></div>
                 <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${proposal.status === "Kontroferta" ? "bg-amber-500/10 text-amber-600" : proposal.status === "Zaakceptowana" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>{proposal.status}</span>
               </div>
               <div className="grid grid-cols-2 gap-3 rounded-lg bg-secondary/40 p-3">
                 <div><p className="text-[10px] text-muted-foreground">Ilość</p><p className="num font-semibold">{proposal.quantity.toLocaleString("pl-PL")}</p></div>
-                <div><p className="text-[10px] text-muted-foreground">Twoja cena / szt.</p><p className="num font-semibold">{proposal.price.toLocaleString("pl-PL")} KR</p></div>
+                <div><p className="text-[10px] text-muted-foreground">Cena za sztukę</p><p className="num font-semibold">{proposal.price.toLocaleString("pl-PL")} KR</p></div>
+                <div className="col-span-2 border-t border-border/60 pt-2"><p className="text-[10px] text-muted-foreground">Łączna wartość propozycji</p><p className="num text-lg font-bold text-primary">{(proposal.quantity * proposal.price).toLocaleString("pl-PL")} KR</p></div>
               </div>
               {proposal.status !== "Zaakceptowana" && proposal.status !== "Odrzucona" ? (
                 <div className="flex flex-wrap gap-2">
@@ -186,11 +187,13 @@ function MarketPage() {
           <div className="space-y-3">
             <label className="block text-xs text-muted-foreground">Nowa cena za sztukę (KR)</label>
             <Input type="number" min="1" value={counterPrice} onChange={(event) => setCounterPrice(event.target.value)} />
+            {counterIndex !== null && proposals[counterIndex] ? <div className="rounded-lg bg-secondary/50 p-3"><p className="text-[10px] text-muted-foreground">Łączna wartość kontroferty</p><p className="num text-lg font-bold text-primary">{(proposals[counterIndex].quantity * Math.max(0, Number(counterPrice) || 0)).toLocaleString("pl-PL")} KR</p></div> : null}
             <Button className="w-full" onClick={submitCounterProposal} disabled={!Number.isFinite(Number(counterPrice)) || Number(counterPrice) <= 0}>Wyślij kontrofertę</Button>
           </div>
         </DialogContent>
       </Dialog>
-\n      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="admin-dialog">
           <DialogHeader><DialogTitle>Zaproponuj własną cenę</DialogTitle><DialogDescription>{selected ? `${selected.title} · oferta ${selected.flag} ${selected.country}` : "Ustal ilość i cenę."} Nie wysyłasz wiadomości tekstowej — tylko propozycję handlową.</DialogDescription></DialogHeader>
           {selected ? <div className="space-y-4">
