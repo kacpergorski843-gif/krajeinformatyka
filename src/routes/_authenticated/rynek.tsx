@@ -204,8 +204,7 @@ function MarketPage() {
           })}
           {proposals.length === 0 ? <Panel className="p-8 text-center text-sm text-muted-foreground">Nie masz jeszcze żadnych propozycji.</Panel> : null}
         </div>
-      )}
-
+      ) : null}
 
       {view === "prices" ? (() => {
         const histories: Record<string, number[]> = {
@@ -255,7 +254,7 @@ function MarketPage() {
                 <span className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground">KR</span>
               </div>
               <div className="rounded-lg bg-secondary/20 p-2">
-                <svg viewBox="0 0 300 120" role="img" aria-label={`Interaktywny wykres cen. Wybierz punkt, aby zobaczyć datę i cenę dla ${qty} sztuk.`} className="h-44 w-full touch-pan-y overflow-visible" onPointerMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const localX = ((event.clientX - rect.left) / rect.width) * 300; const index = Math.max(0, Math.min(totals.length - 1, Math.round(((localX - 12) / 276) * (totals.length - 1)))); setActivePricePoint(index); }} onPointerLeave={() => setActivePricePoint(null)} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const localX = ((event.clientX - rect.left) / rect.width) * 300; setActivePricePoint(Math.max(0, Math.min(totals.length - 1, Math.round(((localX - 12) / 276) * (totals.length - 1))))); }}>
+                <svg viewBox="0 0 300 120" role="img" aria-label={`Interaktywny wykres cen. Wybierz punkt, aby zobaczyć datę i cenę dla ${qty} sztuk.`} className="h-44 w-full touch-pan-y overflow-visible" preserveAspectRatio="none" tabIndex={0} onKeyDown={(event) => { if (event.key === "ArrowLeft") setActivePricePoint((current) => Math.max(0, (current ?? totals.length - 1) - 1)); if (event.key === "ArrowRight") setActivePricePoint((current) => Math.min(totals.length - 1, (current ?? totals.length - 1) + 1)); }} onPointerMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const localX = ((event.clientX - rect.left) / rect.width) * 300; const index = Math.max(0, Math.min(totals.length - 1, Math.round(((localX - 12) / 276) * (totals.length - 1)))); setActivePricePoint(index); }} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const localX = ((event.clientX - rect.left) / rect.width) * 300; setActivePricePoint(Math.max(0, Math.min(totals.length - 1, Math.round(((localX - 12) / 276) * (totals.length - 1))))); }}>
                   {[22, 63, 104].map((y) => <line key={y} x1="10" x2="290" y1={y} y2={y} stroke="currentColor" opacity="0.12" strokeDasharray="3 4" />)}
                   <polyline points={points} fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   {totals.map((value, index) => <circle key={index} cx={12 + (index * 276) / (totals.length - 1)} cy={104 - ((value - min) / Math.max(1, max - min)) * 82} r={selectedPoint === index ? 5 : 2.8} fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth={selectedPoint === index ? 2 : 0} />)}
