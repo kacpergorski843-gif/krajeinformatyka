@@ -90,7 +90,7 @@ function MarketPage() {
     if (counterIndex === null) return;
     const nextPrice = Number(counterPrice);
     if (!Number.isFinite(nextPrice) || nextPrice <= 0) return;
-    setProposals((current) => current.map((p, i) => i === counterIndex ? { ...p, price: nextPrice, status: "Kontroferta", lastOfferBy: "Sprzedający" } : p));
+    setProposals((current) => current.map((p, i) => i === counterIndex ? { ...p, price: nextPrice, status: "Oczekuje", lastOfferBy: "Ty" } : p));
     setCounterIndex(null);
   }
 
