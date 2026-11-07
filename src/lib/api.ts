@@ -920,7 +920,7 @@ export const marketMyOffersQuery = (countryId: string | null | undefined) => que
 });
 export const marketNegotiationsQuery = queryOptions({
   queryKey: ["market","negotiations"],
-  queryFn: async (): Promise<MarketNegotiation[]> => (await unwrap((supabase as any).from("market_negotiations").select("*").eq("status","PENDING").order("updated_at",{ascending:false}))) as unknown as MarketNegotiation[],
+  queryFn: async (): Promise<MarketNegotiation[]> => (await unwrap((supabase as any).from("market_negotiations").select("*").eq("status","PENDING").gt("expires_at",new Date().toISOString()).order("updated_at",{ascending:false}))) as unknown as MarketNegotiation[],
 });
 export const marketSalesQuery = queryOptions({
   queryKey: ["market","sales"],
