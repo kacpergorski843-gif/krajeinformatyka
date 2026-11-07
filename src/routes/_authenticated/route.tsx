@@ -28,7 +28,7 @@ function AuthenticatedLayout() {
     queryKey: ["maintenance_mode"],
     queryFn: () => getMode(),
     // Poll the global setting so an active session is gated without a page reload.
-    refetchInterval: 3000,
+    refetchInterval: 60_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     // Only the main administrator is exempt from maintenance mode.
