@@ -25,7 +25,8 @@ function AuthenticatedLayout() {
   const mode = useQuery({
     queryKey: ["maintenance_mode"],
     queryFn: () => getMode(),
-    enabled: !!me.data && !me.data.isAdmin,
+    // Only the main administrator is exempt from maintenance mode.
+    enabled: !!me.data && !me.data.isMainAdmin,
     retry: 1,
   });
 
@@ -33,7 +34,7 @@ function AuthenticatedLayout() {
     ? "/swiat/$id"
     : location.pathname;
   const pageDisabled = mode.data?.pages.includes(maintenancePath) === true;
-  if (me.data?.isAdmin || (mode.data?.enabled !== true && !pageDisabled)) return <Outlet />;
+  if (me.data?.isMainAdmin || (mode.data?.enabled !== true && !pageDisabled)) return <Outlet />;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-5 py-10">
