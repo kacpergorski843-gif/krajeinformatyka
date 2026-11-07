@@ -28,6 +28,12 @@ create table if not exists public.market_sales (
 create index if not exists market_sales_resource_date_idx on public.market_sales(resource, created_at desc);
 create index if not exists market_sales_country_date_idx on public.market_sales(buyer_country_id, created_at desc);
 
+-- Public price history intentionally exposes no country identifiers.
+create or replace view public.market_price_history as
+select resource, created_at, unit_price, quantity
+from public.market_sales;
+grant select on public.market_price_history to authenticated;
+
 create table if not exists public.market_negotiations (
   id uuid primary key default gen_random_uuid(),
   offer_id uuid not null references public.market_offers(id),
