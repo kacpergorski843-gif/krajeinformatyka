@@ -1,6 +1,12 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 
+const appBuildId =
+  process.env.CF_PAGES_COMMIT_SHA ??
+  process.env.GITHUB_SHA ??
+  process.env.COMMIT_REF ??
+  Date.now().toString(36);
+
 const supabaseUrl =
   process.env.VITE_SUPABASE_URL ??
   process.env.SUPABASE_URL ??
@@ -15,6 +21,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: { plugins: [mcpPlugin()], define: {
+    "__APP_BUILD_ID__": JSON.stringify(appBuildId),
     "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
       process.env.VITE_SUPABASE_URL ?? supabaseUrl ?? "",
     ),
