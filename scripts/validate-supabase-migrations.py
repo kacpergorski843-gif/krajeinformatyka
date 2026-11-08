@@ -21,13 +21,19 @@ def changed_migrations() -> list[Path]:
         return []
     revision = f"{base}...{head}" if event == "pull_request" else f"{base} {head}"
     result = subprocess.run(
-        ["git", "diff", "--name-only", *revision.split()],
+        ["git", "diff", "--name-status", *revision.split()],
         check=True, capture_output=True, text=True,
     )
-    return [
-        Path(line) for line in result.stdout.splitlines()
-        if line.startswith(f"{MIGRATIONS.as_posix()}/") and line.endswith(".sql")
-    ]
+    changed: list[Path] = []
+    for line in result.stdout.splitlines():
+        fields = line.split("\t")
+        status = fields[0]
+        if status.startswith("D"):
+            continue
+        path = fields[-1]
+        if path.startswith(f"{MIGRATIONS.as_posix()}/") and path.endswith(".sql"):
+            changed.append(Path(path))
+    return changed
 
 def main() -> int:
     if not MIGRATIONS.is_dir():
@@ -47,7 +53,7 @@ def main() -> int:
     duplicates = {version: paths for version, paths in versions.items() if len(paths) > 1}
     for version, paths in sorted(duplicates.items()):
         joined = ", ".join(map(str, paths))
-        print(f"::warning::Existing duplicate migration version {version}: {joined}")
+        errors.append(f"Duplicate migration version {version}: {joined}")
     changed = changed_migrations()
     for path in changed:
         if not path.is_file():
@@ -61,8 +67,6 @@ def main() -> int:
             print(f"::error::{error}")
         return 1
     print(f"Validated {len(all_files)} migration file(s); no database credentials were used.")
-    if duplicates:
-        print("Legacy duplicate versions remain; do not run supabase db push until production history is reconciled.")
     if not changed:
         print("No changed migration files detected (manual validation run).")
     return 0
