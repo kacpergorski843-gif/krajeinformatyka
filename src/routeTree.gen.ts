@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as ApiAppVersionRouteImport } from './routes/api.app-version'
 import { Route as RankingPublicznyRouteImport } from './routes/ranking-publiczny'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -46,6 +47,11 @@ const AuthRoute = AuthRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAppVersionRoute = ApiAppVersionRouteImport.update({
+  id: '/api/app-version',
+  path: '/api/app-version',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RankingPublicznyRoute = RankingPublicznyRouteImport.update({
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
+  '/api/app-version': typeof ApiAppVersionRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
+  '/api/app-version': typeof ApiAppVersionRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
+  '/api/app-version': typeof ApiAppVersionRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/mcp'
+    | '/api/app-version'
     | '/ranking-publiczny'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
@@ -256,6 +266,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   McpRoute: typeof McpRoute
+  ApiAppVersionRoute: typeof ApiAppVersionRoute
   RankingPublicznyRoute: typeof RankingPublicznyRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -282,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/app-version': {
+      id: '/api/app-version'
+      path: '/api/app-version'
+      fullPath: '/api/app-version'
+      preLoaderRoute: typeof ApiAppVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -432,6 +450,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   McpRoute: McpRoute,
+  ApiAppVersionRoute: ApiAppVersionRoute,
   RankingPublicznyRoute: RankingPublicznyRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
