@@ -1,4 +1,4 @@
--- 0057: use shop_items as the single source of truth for building economics.
+-- 00741: use shop_items as the single source of truth for building economics.
 -- Existing buildings automatically inherit current product settings; no rebuild
 -- or per-slot data migration is required.
 

@@ -1,4 +1,4 @@
--- 0058: transactional player market with escrow, partial fills and price negotiations.
+-- 00742: transactional player market with escrow, partial fills and price negotiations.
 create table if not exists public.market_offers (
   id uuid primary key default gen_random_uuid(),
   seller_country_id uuid not null references public.countries(id) on delete cascade,

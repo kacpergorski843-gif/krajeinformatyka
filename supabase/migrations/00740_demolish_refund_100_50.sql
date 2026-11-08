@@ -1,4 +1,4 @@
--- 0052: set demolition refund to 100% before first income and 50% after income.
+-- 00740: set demolition refund to 100% before first income and 50% after income.
 -- Refund percentage depends on whether an economy cycle ran after build/upgrade,
 -- not on the age of the building.
 
