@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { APP_BUILD_ID } from "@/lib/app-version";
 
 function NotFoundComponent() {
   return (
@@ -92,6 +93,53 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function AppVersionSync() {
+  useEffect(() => {
+    let disposed = false;
+
+    const checkForUpdate = async () => {
+      if (disposed || document.visibilityState !== "visible") return;
+
+      try {
+        const response = await fetch("/api/app-version", {
+          cache: "no-store",
+          headers: { "cache-control": "no-cache" },
+        });
+        if (!response.ok) return;
+
+        const payload: { version?: string } = await response.json();
+        const latestVersion = payload.version;
+        if (!latestVersion || latestVersion === APP_BUILD_ID) {
+          if (latestVersion === APP_BUILD_ID) {
+            sessionStorage.removeItem("app-version-reload-target");
+          }
+          return;
+        }
+
+        const reloadTarget = `${APP_BUILD_ID}:${latestVersion}`;
+        if (sessionStorage.getItem("app-version-reload-target") === reloadTarget) return;
+
+        sessionStorage.setItem("app-version-reload-target", reloadTarget);
+        window.location.reload();
+      } catch {
+        // A temporary network failure must not interrupt the current session.
+      }
+    };
+
+    void checkForUpdate();
+    const intervalId = window.setInterval(() => void checkForUpdate(), 60_000);
+    document.addEventListener("visibilitychange", checkForUpdate);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", checkForUpdate);
+    };
+  }, []);
+
+  return null;
+}
+
 function AuthSync() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -113,6 +161,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <AppVersionSync />
       <Outlet />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
