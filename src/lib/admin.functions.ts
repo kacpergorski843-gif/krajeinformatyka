@@ -15,6 +15,21 @@ export const deletePlayerAccount = createServerFn({ method: "POST" })
     });
     if (roleError) throw new Error(roleError.message);
     if (isAdmin !== true) throw new Error("Brak uprawnień administratora");
+    const [
+      { data: targetIsAdmin, error: targetAdminError },
+      { data: targetIsMainAdmin, error: targetMainAdminError },
+      { data: isMainAdmin, error: mainAdminError },
+    ] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: data.userId, _role: "ADMIN" }),
+      context.supabase.rpc("has_role", { _user_id: data.userId, _role: "MAIN_ADMIN" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "MAIN_ADMIN" }),
+    ]);
+    if (targetAdminError) throw new Error(targetAdminError.message);
+    if (targetMainAdminError) throw new Error(targetMainAdminError.message);
+    if (mainAdminError) throw new Error(mainAdminError.message);
+    if ((targetIsAdmin === true || targetIsMainAdmin === true) && isMainAdmin !== true) {
+      throw new Error("Tylko główny administrator może zarządzać kontami administratorów");
+    }
     if (data.userId === context.userId) throw new Error("Nie można usunąć własnego konta");
 
     const [targetAdmin, targetMainAdmin, actorMainAdmin] = await Promise.all([
