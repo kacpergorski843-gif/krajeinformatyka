@@ -19,6 +19,23 @@ function notifyBrowser(title: string, body: string) {
 export function GameAlerts({ countryId }: { countryId: string | null }) {
   const queryClient = useQueryClient();
   const shown = useRef<Set<string>>(new Set());
+  const todayWarsaw = warsawHM().day;
+  const payoutRun = useQuery({
+    queryKey: ["economy_run_today", todayWarsaw],
+    enabled: !!countryId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("economy_runs")
+        .select("id,run_date")
+        .eq("run_date", todayWarsaw)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    // The database is authoritative; poll for the actual settlement record.
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  });
 
   // Daily payout at 20:05 Europe/Warsaw
   useEffect(() => {
@@ -30,7 +47,7 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
         shown.current.add(k); localStorage.setItem(k, "1"); fn();
       };
       if (h === 19 && m >= 55) once("payout-soon", () => toast.info("Wypłata dzienna za 10 minut (20:05)."));
-      if (h === 20 && m >= 15) once("payout-done", () => {
+      if (h === 20 && m >= 15 && payoutRun.data?.run_date === day) once("payout-done", () => {
         void queryClient.invalidateQueries();
         toast.success("Wypłata dzienna została rozliczona. Sprawdź skarbiec.");
         notifyBrowser("Wypłata dzienna", "Twoje państwo otrzymało dzisiejszy dochód.");
@@ -39,7 +56,7 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
     tick();
     const t = window.setInterval(tick, 30_000);
     return () => window.clearInterval(t);
-  }, [queryClient]);
+  }, [queryClient, countryId, payoutRun.data?.run_date]);
 
   // Missile strikes targeting my country
   const strikes = useQuery({
