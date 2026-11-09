@@ -19,15 +19,15 @@ function notifyBrowser(title: string, body: string) {
 export function GameAlerts({ countryId }: { countryId: string | null }) {
   const queryClient = useQueryClient();
   const shown = useRef<Set<string>>(new Set());
-  const todayWarsaw = warsawHM().day;
   const payoutRun = useQuery({
-    queryKey: ["economy_run_today", todayWarsaw],
+    queryKey: ["economy_run_latest"],
     enabled: !!countryId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("economy_runs")
         .select("id,run_date")
-        .eq("run_date", todayWarsaw)
+        .order("run_date", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;
