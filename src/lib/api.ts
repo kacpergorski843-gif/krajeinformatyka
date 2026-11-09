@@ -862,8 +862,15 @@ export const marketOffersQuery = queryOptions({
     const offers = (rows ?? []) as unknown as MarketOffer[];
     if (!offers.length) return [];
     const ids = [...new Set(offers.map(o => o.seller_country_id))];
-    const countries = await unwrap((supabase as any).from("countries").select("id,name,flag").in("id",ids));
-    const byId = new Map((countries ?? []).map(c => [c.id,{name:c.name,flag:c.flag}]));
+    const countries = (await unwrap(
+      (supabase as any).from("countries").select("id,name,flag").in("id", ids),
+    )) as Array<{ id: string; name: string; flag: string | null }>;
+    const byId = new Map<string, { name: string; flag: string | null }>(
+      countries.map((country) => [
+        country.id,
+        { name: country.name, flag: country.flag },
+      ]),
+    );
     return offers.map(o => ({...o,seller:byId.get(o.seller_country_id)}));
   },
 });
