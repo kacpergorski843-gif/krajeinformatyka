@@ -29,16 +29,50 @@ export const deletePlayerAccount = createServerFn({ method: "POST" })
       throw new Error("Tylko główny administrator może usunąć konto administratora");
     }
 
-    const { error: purgeError } = await context.supabase.rpc("admin_purge_player", {
-      p_user_id: data.userId,
-    });
-    if (purgeError) throw new Error(purgeError.message);
-
+    // The game profile is purged first. If Auth deletion fails afterwards, a retry
+    // can safely continue because a missing profile means the purge already completed.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    const { data: targetProfile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (profileError) throw new Error(profileError.message);
+
+    if (targetProfile) {
+      const { error: purgeError } = await context.supabase.rpc("admin_purge_player", {
+        p_user_id: data.userId,
+      });
+      if (purgeError) throw new Error(purgeError.message);
+    }
+
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    // Treat an already-removed Auth user as success so interrupted deletions are idempotent.
+    if (deleteError && deleteError.code !== "user_not_found" && deleteError.status !== 404) {
+      throw new Error(deleteError.message);
+    }
     return { ok: true };
   });
+
+function detectImageContentType(bytes: Uint8Array): string | null {
+  const startsWith = (...signature: number[]) =>
+    signature.every((value, index) => bytes[index] === value);
+
+  if (bytes.length >= 8 && startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) {
+    return "image/png";
+  }
+  if (bytes.length >= 3 && startsWith(0xff, 0xd8, 0xff)) return "image/jpeg";
+  if (
+    bytes.length >= 12 &&
+    String.fromCharCode(...bytes.subarray(0, 4)) === "RIFF" &&
+    String.fromCharCode(...bytes.subarray(8, 12)) === "WEBP"
+  ) return "image/webp";
+  if (
+    bytes.length >= 6 &&
+    ["GIF87a", "GIF89a"].includes(String.fromCharCode(...bytes.subarray(0, 6)))
+  ) return "image/gif";
+  return null;
+}
 
 /**
  * Zmiana flagi własnego państwa. Plik jest przesyłany na serwer i zapisywany
@@ -67,6 +101,16 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
     const bytes = Buffer.from(data.fileBase64, "base64");
     if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) {
       throw new Error("Flaga może mieć maksymalnie 5 MB.");
+    }
+
+    const detectedContentType = detectImageContentType(bytes);
+    const extensionMatchesType =
+      (detectedContentType === "image/jpeg" && ["jpg", "jpeg"].includes(data.extension)) ||
+      (detectedContentType === "image/png" && data.extension === "png") ||
+      (detectedContentType === "image/webp" && data.extension === "webp") ||
+      (detectedContentType === "image/gif" && data.extension === "gif");
+    if (!detectedContentType || detectedContentType !== data.contentType || !extensionMatchesType) {
+      throw new Error("Zawartość pliku nie odpowiada deklarowanemu formatowi flagi.");
     }
 
     const path = data.countryId + "/flag-" + Date.now() + "." + data.extension;

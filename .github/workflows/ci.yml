@@ -13,7 +13,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - run: bun install --frozen-lockfile
-      - run: bun run lint
-      - run: bun run typecheck
-      - run: bun run build
+      - name: Install dependencies
+        id: install
+        run: bun install --frozen-lockfile
+      - name: Lint
+        run: bun run lint
+      - name: Typecheck
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: bun run typecheck
+      - name: Build
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: bun run build

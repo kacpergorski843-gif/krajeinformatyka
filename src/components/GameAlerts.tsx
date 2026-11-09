@@ -19,6 +19,23 @@ function notifyBrowser(title: string, body: string) {
 export function GameAlerts({ countryId }: { countryId: string | null }) {
   const queryClient = useQueryClient();
   const shown = useRef<Set<string>>(new Set());
+  const payoutRun = useQuery({
+    queryKey: ["economy_run_latest"],
+    enabled: !!countryId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("economy_runs")
+        .select("id,run_date")
+        .order("run_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    // The database is authoritative; poll for the actual settlement record.
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  });
 
   // Daily payout at 20:05 Europe/Warsaw
   useEffect(() => {
@@ -30,8 +47,16 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
         shown.current.add(k); localStorage.setItem(k, "1"); fn();
       };
       if (h === 19 && m >= 55) once("payout-soon", () => toast.info("Wypłata dzienna za 10 minut (20:05)."));
-      if (h === 20 && m >= 15) once("payout-done", () => {
-        void queryClient.invalidateQueries();
+      if (h === 20 && m >= 15 && payoutRun.data?.run_date === day) once("payout-done", () => {
+        for (const queryKey of [
+          ["country_stats"],
+          ["public_countries"],
+          ["public_country"],
+          ["economy_runs"],
+          ["transactions"],
+        ]) {
+          void queryClient.invalidateQueries({ queryKey });
+        }
         toast.success("Wypłata dzienna została rozliczona. Sprawdź skarbiec.");
         notifyBrowser("Wypłata dzienna", "Twoje państwo otrzymało dzisiejszy dochód.");
       });
@@ -39,7 +64,7 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
     tick();
     const t = window.setInterval(tick, 30_000);
     return () => window.clearInterval(t);
-  }, [queryClient]);
+  }, [queryClient, countryId, payoutRun.data?.run_date]);
 
   // Missile strikes targeting my country
   const strikes = useQuery({
@@ -67,7 +92,11 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
     for (const s of fresh.reverse()) {
       const hit = s.result !== "PRZECHWYCONA";
       const msg = hit ? `Atak rakietowy na region ${s.region_name} — cel zniszczony.` : `Atak rakietowy na region ${s.region_name} przechwycony przez OPL.`;
-      hit ? toast.error(msg, { duration: 10_000 }) : toast.warning(msg, { duration: 8_000 });
+      if (hit) {
+        toast.error(msg, { duration: 10_000 });
+      } else {
+        toast.warning(msg, { duration: 8_000 });
+      }
       notifyBrowser("Atak rakietowy", msg);
     }
     void queryClient.invalidateQueries({ queryKey: ["country_stats"] });

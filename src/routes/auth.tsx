@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { claimCurrentDevice } from "@/lib/deviceBinding";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { mode?: "signup" | "login" } => ({
@@ -51,13 +52,13 @@ function AuthPage() {
     }
     router.navigate({ to: "/panstwo" });
   }
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); const formData = new FormData(e.currentTarget); const enteredUsername = String(formData.get("username") ?? username); const enteredPassword = String(formData.get("password") ?? password); setUsername(enteredUsername); setPassword(enteredPassword); const clean = normalizeUsername(enteredUsername); if (clean.length < 3) { toast.error("Nazwa użytkownika musi mieć co najmniej 3 znaki (litery, cyfry, . _ -)"); usernameRef.current?.focus(); return; }
     const email = `${clean}@${EMAIL_DOMAIN}`; const legacyEmail = `${clean}@${LEGACY_EMAIL_DOMAIN}`; setBusy(true);
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      if (mode === "login") { let { error } = await supabase.auth.signInWithPassword({ email, password: enteredPassword }); if (error) { const legacy = await supabase.auth.signInWithPassword({ email: legacyEmail, password: enteredPassword }); error = legacy.error; } if (error) throw new Error(error.message.toLowerCase().includes("invalid login") ? "Nieprawidłowa nazwa użytkownika lub hasło" : error.message); toast.success("Zalogowano"); goNext(); }
-      else { const { data: taken } = await supabase.rpc("username_taken", { p_username: clean }); if (taken) throw new Error("Ta nazwa użytkownika jest już zajęta"); const { error } = await supabase.auth.signUp({ email, password: enteredPassword, options: { data: { username: clean, display_name: enteredUsername.trim() || clean } } }); if (error) { const msg = error.message.toLowerCase(); throw new Error(msg.includes("already registered") || msg.includes("already been registered") ? "Ta nazwa użytkownika jest już zajęta" : error.message); } const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: enteredPassword }); if (signInError) throw signInError; toast.success("Konto utworzone"); goNext(); }
+      if (mode === "login") { let { error } = await supabase.auth.signInWithPassword({ email, password: enteredPassword }); if (error) { const legacy = await supabase.auth.signInWithPassword({ email: legacyEmail, password: enteredPassword }); error = legacy.error; } if (error) throw new Error(error.message.toLowerCase().includes("invalid login") ? "Nieprawidłowa nazwa użytkownika lub hasło" : error.message); await claimCurrentDevice(supabase); toast.success("Zalogowano"); goNext(); }
+      else { const { data: taken } = await supabase.rpc("username_taken", { p_username: clean }); if (taken) throw new Error("Ta nazwa użytkownika jest już zajęta"); const { error } = await supabase.auth.signUp({ email, password: enteredPassword, options: { data: { username: clean, display_name: enteredUsername.trim() || clean } } }); if (error) { const msg = error.message.toLowerCase(); throw new Error(msg.includes("already registered") || msg.includes("already been registered") ? "Ta nazwa użytkownika jest już zajęta" : error.message); } const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: enteredPassword }); if (signInError) throw signInError; await claimCurrentDevice(supabase); toast.success("Konto utworzone"); goNext(); }
     } catch (err) { toast.error(err instanceof Error ? err.message : "Nie udało się wykonać operacji"); } finally { setBusy(false); }
   }
   const isLogin = mode === "login";

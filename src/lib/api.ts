@@ -751,59 +751,12 @@ async function readCountryStatsById(view: "world_country_stats" | "country_stats
   return (data ?? null) as unknown as CountryStats | null;
 }
 
-async function readPublicCountryFallback(countryId?: string) {
-  const query = supabase
-    .from("countries")
-    .select("id,name,flag,balance,coal,oil,copper,iron,uranium,aa_defense,missile_1,missile_2,missile_3,soldier_packs,tank_packs");
-  const { data, error } = countryId
-    ? await query.eq("id", countryId).maybeSingle()
-    : await query.order("name");
-  if (error) throw error;
-
-  const rows = Array.isArray(data) ? data : data ? [data] : [];
-  const ids = rows.map((row) => row.id);
-  const regionCounts = new Map<string, number>();
-
-  if (ids.length) {
-    const { data: regions, error: regionsError } = await supabase.from("regions").select("country_id").in("country_id", ids);
-    if (regionsError) throw regionsError;
-    for (const region of regions ?? []) {
-      regionCounts.set(region.country_id, (regionCounts.get(region.country_id) ?? 0) + 1);
-    }
-  }
-
-  return (rows.map((row) => ({
-    country_id: row.id,
-    name: row.name,
-    flag: row.flag,
-    balance: row.balance,
-    coal: row.coal,
-    oil: row.oil,
-    copper: row.copper,
-    iron: row.iron,
-    uranium: row.uranium,
-    aa_defense: row.aa_defense ?? 0,
-    missile_1: row.missile_1 ?? 0,
-    missile_2: row.missile_2 ?? 0,
-    missile_3: row.missile_3 ?? 0,
-    soldier_packs: row.soldier_packs ?? 0,
-    tank_packs: row.tank_packs ?? 0,
-    war_votes: 0,
-    fort_votes: 0,
-    total_votes: 0,
-    regions_count: regionCounts.get(row.id) ?? 0,
-    gross_income: "0",
-    coal_upkeep: "0",
-    coal_prod: "0",
-    oil_prod: "0",
-    copper_prod: "0",
-    iron_prod: "0",
-    uranium_prod: "0",
-    forts: 0,
-    military_value: "0",
-    vote_potential: 0,
-    region_aa_total: 0,
-  }))) as unknown as CountryStats[];
+async function readPublicCountryFallback(_countryId?: string): Promise<CountryStats[]> {
+  // Never fabricate zero production/economy values when the authoritative
+  // statistics views are missing. Surface the schema problem to the caller.
+  throw new Error(
+    "Nie można odczytać statystyk państw: brakuje widoków world_country_stats i country_stats. Sprawdź wdrożenie migracji Supabase.",
+  );
 }
 
 function isMissingRelationError(error: unknown): boolean {
@@ -909,8 +862,15 @@ export const marketOffersQuery = queryOptions({
     const offers = (rows ?? []) as unknown as MarketOffer[];
     if (!offers.length) return [];
     const ids = [...new Set(offers.map(o => o.seller_country_id))];
-    const countries = await unwrap((supabase as any).from("countries").select("id,name,flag").in("id",ids));
-    const byId = new Map((countries ?? []).map(c => [c.id,{name:c.name,flag:c.flag}]));
+    const countries = (await unwrap(
+      (supabase as any).from("countries").select("id,name,flag").in("id", ids),
+    )) as Array<{ id: string; name: string; flag: string | null }>;
+    const byId = new Map<string, { name: string; flag: string | null }>(
+      countries.map((country) => [
+        country.id,
+        { name: country.name, flag: country.flag },
+      ]),
+    );
     return offers.map(o => ({...o,seller:byId.get(o.seller_country_id)}));
   },
 });

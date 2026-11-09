@@ -1533,3 +1533,109 @@
 .premium-toaster [data-sonner-toast] [data-close-button] {
   display: none !important;
 }
+
+
+/* Missile command / tactile launch experience */
+.arsenal-heading { display:flex; align-items:end; justify-content:space-between; gap:1rem; margin-top:2rem; margin-bottom:1rem; }
+.arsenal-heading .page-section-title { margin-bottom:0; }
+.arsenal-live,.launch-ready,.launch-flight-live { display:inline-flex; align-items:center; gap:.5rem; white-space:nowrap; color:var(--color-success); font-size:.62rem; font-weight:800; letter-spacing:.14em; }
+.arsenal-live span,.launch-ready span,.launch-flight-live span { width:7px; height:7px; border-radius:50%; background:var(--color-success); box-shadow:0 0 12px var(--color-success); animation:arsenal-pulse 1.6s ease-in-out infinite; }
+.arsenal-wizard { overflow:hidden; }
+.arsenal-wizard-heavy { border-color:color-mix(in oklab,var(--color-destructive) 45%,var(--color-border)); box-shadow:0 18px 55px color-mix(in oklab,var(--color-destructive) 9%,transparent); }
+.missile-select-card { min-height:220px; overflow:hidden; transition:transform .22s,border-color .22s,box-shadow .22s; }
+.missile-select-card:hover { transform:translateY(-3px); border-color:color-mix(in oklab,var(--color-primary) 60%,var(--color-border)); }
+.missile-select-active { border-color:var(--color-primary)!important; box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--color-primary) 28%,transparent),0 0 28px color-mix(in oklab,var(--color-primary) 12%,transparent); }
+.missile-select-missile_3 { min-height:250px; background:radial-gradient(ellipse at 50% 45%,color-mix(in oklab,var(--color-destructive) 13%,var(--color-card)),transparent 72%),linear-gradient(155deg,var(--color-card),color-mix(in oklab,var(--color-destructive) 6%,var(--color-background))); border-color:color-mix(in oklab,var(--color-destructive) 30%,var(--color-border)); }
+.missile-select-missile_3.missile-select-active { border-color:var(--color-destructive)!important; box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--color-destructive) 30%,transparent),0 0 34px color-mix(in oklab,var(--color-destructive) 16%,transparent); }
+.missile-card-top { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
+.missile-card-status { color:var(--color-inactive); font-size:.55rem; font-weight:800; letter-spacing:.13em; }
+.missile-select-active .missile-card-status { color:var(--color-success); }
+.missile-card-art { position:relative; display:grid; place-items:center; height:100px; margin:.35rem 0; overflow:hidden; }
+.missile-card-icon { width:55px; height:55px; color:var(--color-primary); filter:drop-shadow(0 0 12px color-mix(in oklab,var(--color-primary) 45%,transparent)); transform:rotate(-45deg); }
+.missile-select-missile_3 .missile-card-icon { width:78px; height:78px; color:var(--color-destructive); filter:drop-shadow(0 0 17px color-mix(in oklab,var(--color-destructive) 65%,transparent)); animation:missile-idle 3.2s ease-in-out infinite; }
+.missile-card-orbit { position:absolute; width:100px; height:100px; border:1px solid color-mix(in oklab,var(--color-destructive) 45%,transparent); border-radius:50%; box-shadow:0 0 30px color-mix(in oklab,var(--color-destructive) 12%,transparent),inset 0 0 20px color-mix(in oklab,var(--color-destructive) 12%,transparent); animation:orbit-spin 8s linear infinite; }
+.missile-level { padding:.25rem .4rem; border:1px solid var(--color-border); color:var(--color-muted-foreground); font-size:.58rem; font-weight:800; letter-spacing:.12em; }
+.missile-select-missile_3 .missile-level { border-color:color-mix(in oklab,var(--color-destructive) 50%,var(--color-border)); color:var(--color-destructive); }
+.launch-console { padding:1rem; border:1px solid color-mix(in oklab,var(--color-destructive) 38%,var(--color-border)); border-radius:.75rem; background:radial-gradient(ellipse at 50% 0%,color-mix(in oklab,var(--color-destructive) 11%,transparent),transparent 65%),linear-gradient(155deg,color-mix(in oklab,var(--color-card) 96%,transparent),color-mix(in oklab,var(--color-background) 96%,transparent)); box-shadow:inset 0 1px 0 color-mix(in oklab,white 4%,transparent),0 18px 50px color-mix(in oklab,var(--color-background) 55%,transparent); }
+.launch-console-heavy { border-color:color-mix(in oklab,var(--color-destructive) 70%,var(--color-border)); box-shadow:inset 0 0 50px color-mix(in oklab,var(--color-destructive) 8%,transparent),0 0 55px color-mix(in oklab,var(--color-destructive) 10%,transparent); }
+.launch-console-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.launch-console-title { margin-top:.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:800; letter-spacing:.025em; }
+.launch-console-body { display:grid; grid-template-columns:minmax(150px,.8fr) minmax(0,1.2fr); gap:1.25rem; align-items:center; margin:1.1rem 0; }
+.launch-schematic-wrap { position:relative; display:grid; place-items:center; min-height:190px; overflow:hidden; border:1px solid color-mix(in oklab,var(--color-destructive) 20%,var(--color-border)); border-radius:.55rem; background:radial-gradient(circle at center,color-mix(in oklab,var(--color-destructive) 15%,var(--color-card)),var(--color-background) 72%); }
+.launch-schematic-grid { position:absolute; inset:0; opacity:.3; background-image:linear-gradient(color-mix(in oklab,var(--color-destructive) 18%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in oklab,var(--color-destructive) 18%,transparent) 1px,transparent 1px); background-size:20px 20px; mask-image:radial-gradient(ellipse,black,transparent 80%); }
+.launch-schematic-rocket { position:relative; z-index:2; display:grid; place-items:center; width:76px; height:76px; color:var(--color-destructive); filter:drop-shadow(0 0 16px color-mix(in oklab,var(--color-destructive) 65%,transparent)); transform:rotate(-45deg); }
+.launch-schematic-rocket svg { width:64px; height:64px; }
+.launch-schematic-rocket span { position:absolute; bottom:-14px; left:50%; width:8px; height:25px; border-radius:50%; background:linear-gradient(var(--color-primary),transparent); filter:blur(5px); transform:translateX(-50%); }
+.launch-schematic-missile_3 { width:96px; height:96px; animation:missile-idle 2.6s ease-in-out infinite; }
+.launch-schematic-missile_3 svg { width:82px; height:82px; }
+.launch-schematic-crosshair { position:absolute; right:12%; top:14%; color:color-mix(in oklab,var(--color-destructive) 55%,transparent); }
+.launch-schematic-crosshair svg { width:23px; height:23px; }
+.launch-schematic-orbit { position:absolute; border:1px solid color-mix(in oklab,var(--color-destructive) 28%,transparent); border-radius:50%; }
+.launch-orbit-one { width:130px; height:130px; animation:orbit-spin 9s linear infinite; }
+.launch-orbit-two { width:160px; height:90px; transform:rotate(-35deg); border-style:dashed; }
+.launch-command-name { margin:.3rem 0 .8rem; font-family:var(--font-display); font-size:1.15rem; font-weight:800; }
+.launch-command-lines { display:grid; gap:.55rem; font-size:.72rem; }
+.launch-warning { display:flex; align-items:center; gap:.6rem; padding:.7rem .8rem; border:1px solid color-mix(in oklab,var(--color-destructive) 35%,var(--color-border)); background:color-mix(in oklab,var(--color-destructive) 8%,transparent); color:color-mix(in oklab,var(--color-destructive) 85%,var(--color-foreground)); font-size:.6rem; font-weight:800; letter-spacing:.08em; line-height:1.5; }
+.launch-warning-light { flex:0 0 8px; width:8px; height:8px; border-radius:50%; background:var(--color-destructive); box-shadow:0 0 12px var(--color-destructive); animation:arsenal-pulse .8s ease-in-out infinite; }
+.launch-red-button { position:relative; display:block; width:100%; margin-top:1rem; padding:7px; border:1px solid color-mix(in oklab,#ffb0a7 55%,#780e18); border-radius:.8rem; background:linear-gradient(180deg,#a91e2b,#650d18); box-shadow:0 8px 0 #390912,0 12px 26px #0008,inset 0 1px 0 #ffffff55; color:#fff; cursor:pointer; transition:transform .12s,filter .12s,box-shadow .12s; }
+.launch-red-button:hover { filter:brightness(1.16); box-shadow:0 8px 0 #390912,0 16px 35px #a91e2b55,inset 0 1px 0 #ffffff66; }
+.launch-red-button:active { transform:translateY(6px) scale(.995); box-shadow:0 2px 0 #390912,0 5px 12px #0008,inset 0 3px 8px #30070d; }
+.launch-red-button:disabled { cursor:wait; filter:grayscale(.5); opacity:.75; }
+.launch-red-button-inner { display:flex; align-items:center; justify-content:center; gap:.8rem; min-height:66px; padding:.65rem; border:1px solid #ffffff30; border-radius:.48rem; background:linear-gradient(180deg,#ed3541 0%,#b91526 55%,#94101f 100%); box-shadow:inset 0 2px 0 #ffffff55,inset 0 -5px 10px #4b0712aa; font-size:clamp(.72rem,2vw,.9rem); font-weight:900; letter-spacing:.12em; text-shadow:0 1px 3px #470711; }
+.launch-red-button-key { padding:.35rem .45rem; border:1px solid #ffffff65; border-radius:.25rem; font-size:.55rem; letter-spacing:.1em; }
+.launch-red-button-light { width:9px; height:9px; border-radius:50%; background:#fff; box-shadow:0 0 12px #fff,0 0 22px #ffd0c8; animation:arsenal-pulse .9s ease-in-out infinite; }
+.launch-footnote { margin-top:.8rem; color:var(--color-muted-foreground); text-align:center; font-size:.65rem; }
+.launch-flight-stage { padding:.25rem; }
+.launch-flight-topline { display:flex; align-items:center; justify-content:space-between; gap:.7rem; }
+.launch-flight-heading { margin:1rem 0; }
+.launch-flight-heading h2 { font-size:clamp(1rem,3vw,1.3rem); }
+.launch-flight-visual { position:relative; height:230px; overflow:hidden; border:1px solid color-mix(in oklab,var(--color-destructive) 35%,var(--color-border)); border-radius:.65rem; background:radial-gradient(ellipse at 15% 90%,#8a291e55,transparent 38%),radial-gradient(ellipse at 85% 15%,#a52b3b44,transparent 42%),linear-gradient(145deg,#101725,#090d18 70%); isolation:isolate; }
+.launch-flight-visual-missile_3 { height:290px; background:radial-gradient(ellipse at 12% 95%,#d94c1f66,transparent 38%),radial-gradient(ellipse at 70% 10%,#b52b4655,transparent 45%),linear-gradient(145deg,#171322,#080b14 72%); }
+.launch-flight-stars { position:absolute; inset:0; opacity:.55; background-image:radial-gradient(1px 1px at 12% 20%,#fff 99%,transparent),radial-gradient(1px 1px at 25% 72%,#fff 99%,transparent),radial-gradient(1.5px 1.5px at 65% 18%,#fff 99%,transparent),radial-gradient(1px 1px at 80% 68%,#fff 99%,transparent),radial-gradient(1px 1px at 48% 42%,#fff 99%,transparent),radial-gradient(1px 1px at 91% 34%,#fff 99%,transparent); }
+.launch-flight-radar { position:absolute; right:8%; top:50%; width:150px; height:150px; border:1px solid #e45a6844; border-radius:50%; transform:translateY(-50%); box-shadow:0 0 0 22px #e45a6810,0 0 0 44px #e45a6809; }
+.launch-radar-b { width:92px; height:92px; right:calc(8% + 29px); border-style:dashed; animation:orbit-spin 14s linear infinite; }
+.launch-flight-horizon { position:absolute; left:-5%; right:-5%; bottom:15%; height:1px; background:linear-gradient(90deg,transparent,#ff806655,#ffb17a88,transparent); box-shadow:0 0 25px #fa4b3577; transform:rotate(-12deg); }
+.launch-flight-target { position:absolute; z-index:2; right:calc(8% + 48px); top:50%; color:#ff5a67; filter:drop-shadow(0 0 9px #ff344d); transform:translateY(-50%); }
+.launch-flight-target svg { width:36px; height:36px; stroke-width:1; }
+.launch-flight-trail { position:absolute; z-index:2; left:4%; bottom:24%; width:0; height:3px; border-radius:50%; background:linear-gradient(90deg,transparent,#ff6b3d,#fff3c4); box-shadow:0 0 16px #ff653f; transform:rotate(-24deg); animation:flight-trail 3.6s ease-out forwards; }
+.launch-flight-rocket { position:absolute; z-index:3; left:5%; bottom:20%; display:grid; place-items:center; width:46px; height:46px; color:#ffe1bd; filter:drop-shadow(0 0 12px #ff6b3d); transform:rotate(42deg); animation:flight-rocket 3.6s cubic-bezier(.16,.72,.22,1) forwards; }
+.launch-flight-rocket svg { width:37px; height:37px; }
+.launch-flight-flame { position:absolute; bottom:-12px; left:50%; width:10px; height:30px; border-radius:50%; background:linear-gradient(#fff7c9,#ff8a3d 35%,#e32c25 72%,transparent); filter:blur(4px); transform:translateX(-50%); animation:flame-flicker .12s ease-in-out infinite alternate; }
+.launch-flight-heavy .launch-flight-rocket { width:64px; height:64px; color:#fff1da; filter:drop-shadow(0 0 18px #ff553e) drop-shadow(0 0 35px #e9273f); animation:flight-rocket-heavy 5.2s cubic-bezier(.12,.66,.16,1) forwards; }
+.launch-flight-heavy .launch-flight-rocket svg { width:56px; height:56px; }
+.launch-flight-heavy .launch-flight-flame { width:18px; height:54px; filter:blur(6px); }
+.launch-flight-afterburner { position:absolute; z-index:1; left:0; bottom:12%; width:48%; height:65px; background:radial-gradient(ellipse at left, #ffb34c88, #f33a2c44 35%,transparent 75%); filter:blur(14px); animation:afterburner 5.2s ease-out forwards; }
+.launch-flight-telemetry { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.5rem; margin-top:.8rem; }
+.launch-flight-telemetry div { min-width:0; padding:.55rem; border:1px solid var(--color-border); border-radius:.35rem; background:var(--color-background); }
+.launch-flight-telemetry span,.launch-flight-telemetry strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.launch-flight-telemetry span { color:var(--color-muted-foreground); font-size:.52rem; letter-spacing:.13em; }
+.launch-flight-telemetry strong { margin-top:.25rem; font-family:var(--font-display); font-size:.68rem; }
+.launch-flight-status { display:flex; align-items:center; gap:.55rem; margin-top:.9rem; color:var(--color-destructive); font-size:.65rem; font-weight:900; letter-spacing:.12em; }
+.launch-flight-status-dots { margin-left:auto; animation:arsenal-pulse .8s infinite; }
+.launch-result-banner { display:flex; align-items:center; gap:.8rem; padding:1rem; border:1px solid var(--color-border); border-radius:.55rem; }
+.launch-result-banner svg { width:30px; height:30px; }
+.launch-result-banner strong { display:block; margin-top:.2rem; font-family:var(--font-display); font-size:1rem; letter-spacing:.08em; }
+.launch-result-hit { border-color:color-mix(in oklab,var(--color-destructive) 45%,var(--color-border)); background:color-mix(in oklab,var(--color-destructive) 10%,transparent); color:var(--color-destructive); }
+.launch-result-blocked { border-color:color-mix(in oklab,var(--color-info) 45%,var(--color-border)); background:color-mix(in oklab,var(--color-info) 9%,transparent); color:var(--color-info); }
+@keyframes arsenal-pulse { 50% { opacity:.35; transform:scale(.82); } }
+@keyframes missile-idle { 0%,100% { transform:rotate(-45deg) translateY(0); } 50% { transform:rotate(-45deg) translateY(-7px); } }
+@keyframes orbit-spin { to { transform:rotate(360deg); } }
+@keyframes flight-rocket { 0% { left:5%; bottom:20%; opacity:0; } 8% { opacity:1; } 100% { left:76%; bottom:68%; opacity:1; } }
+@keyframes flight-rocket-heavy { 0% { left:3%; bottom:12%; opacity:0; } 7% { opacity:1; } 78% { left:72%; bottom:68%; opacity:1; } 100% { left:82%; bottom:72%; opacity:0; } }
+@keyframes flight-trail { 0% { width:0; opacity:0; } 12% { opacity:1; } 100% { width:76%; opacity:.15; } }
+@keyframes flame-flicker { to { height:42px; opacity:.7; } }
+@keyframes afterburner { 0% { opacity:0; transform:scaleX(.2); } 18% { opacity:1; transform:scaleX(1); } 100% { opacity:.12; transform:scaleX(1.8); } }
+@media (max-width:640px) {
+  .arsenal-heading { align-items:flex-start; flex-direction:column; }
+  .launch-console { padding:.75rem; }
+  .launch-console-body { grid-template-columns:1fr; gap:.8rem; }
+  .launch-schematic-wrap { min-height:145px; }
+  .launch-red-button-inner { min-height:72px; gap:.5rem; letter-spacing:.07em; }
+  .launch-red-button-key { display:none; }
+  .launch-flight-visual { height:205px; }
+  .launch-flight-visual-missile_3 { height:245px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .missile-card-orbit,.missile-select-missile_3 .missile-card-icon,.launch-schematic-missile_3,.launch-flight-radar,.launch-flight-trail,.launch-flight-rocket,.launch-flight-afterburner,.launch-flight-flame,.launch-flight-live span,.launch-ready span,.arsenal-live span,.launch-warning-light { animation:none!important; }
+  .launch-flight-rocket { left:78%; bottom:68%; opacity:1; }
+}
