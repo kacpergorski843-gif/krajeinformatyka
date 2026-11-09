@@ -330,6 +330,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/masterki': {
+      id: '/_authenticated/masterki'
+      path: '/masterki'
+      fullPath: '/masterki'
+      preLoaderRoute: typeof AuthenticatedMasterkiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rynek': {
+      id: '/_authenticated/rynek'
+      path: '/rynek'
+      fullPath: '/rynek'
+      preLoaderRoute: typeof AuthenticatedRynekRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/arsenal': {
       id: '/_authenticated/arsenal'
       path: '/arsenal'
