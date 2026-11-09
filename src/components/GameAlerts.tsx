@@ -92,7 +92,11 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
     for (const s of fresh.reverse()) {
       const hit = s.result !== "PRZECHWYCONA";
       const msg = hit ? `Atak rakietowy na region ${s.region_name} — cel zniszczony.` : `Atak rakietowy na region ${s.region_name} przechwycony przez OPL.`;
-      hit ? toast.error(msg, { duration: 10_000 }) : toast.warning(msg, { duration: 8_000 });
+      if (hit) {
+        toast.error(msg, { duration: 10_000 });
+      } else {
+        toast.warning(msg, { duration: 8_000 });
+      }
       notifyBrowser("Atak rakietowy", msg);
     }
     void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
