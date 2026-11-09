@@ -19,8 +19,8 @@ jobs:
       - name: Lint
         run: bun run lint
       - name: Typecheck
-        if: ${{ steps.install.outcome == 'success' }}
+        if: ${{ always() && steps.install.outcome == 'success' }}
         run: bun run typecheck
       - name: Build
-        if: ${{ steps.install.outcome == 'success' }}
+        if: ${{ always() && steps.install.outcome == 'success' }}
         run: bun run build
