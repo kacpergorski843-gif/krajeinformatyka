@@ -420,19 +420,57 @@ function Arsenal() {
           ) : null}
 
           {step === 6 ? (
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Atak na region {region?.name} ({targetCountryName}). Operacja jest nieodwracalna —
-                rakiety zużywają się niezależnie od wyniku.
-              </p>
-              <Button
-                className="h-14 w-full text-sm tracking-[0.16em] uppercase"
+            <div className={\`launch-console \${missile === "missile_3" ? "launch-console-heavy" : ""}\`}>
+              <div className="launch-console-header">
+                <div>
+                  <p className="label-hud">Final authorization / step 06</p>
+                  <p className="launch-console-title">Stanowisko odpalania</p>
+                </div>
+                <span className="launch-ready"><span /> GOTOWOŚĆ BOJOWA</span>
+              </div>
+              <div className="launch-console-body">
+                <div className="launch-schematic-wrap">
+                  <div className="launch-schematic-grid" />
+                  <div className={\`launch-schematic-rocket launch-schematic-\${missile ?? "missile_1"}\`}>
+                    <Rocket strokeWidth={1.15} />
+                    <span />
+                  </div>
+                  <span className="launch-schematic-crosshair"><Target /></span>
+                  {missile === "missile_3" ? <span className="launch-schematic-orbit launch-orbit-one" /> : null}
+                  {missile === "missile_3" ? <span className="launch-schematic-orbit launch-orbit-two" /> : null}
+                </div>
+                <div className="launch-command-details">
+                  <p className="label-hud">Potwierdź rozkaz</p>
+                  <p className="launch-command-name">{missile ? MISSILE_LABELS[missile] : "Brak uzbrojenia"}</p>
+                  <div className="launch-command-lines">
+                    <Row k="Cel" v={\`\${targetCountryName} / \${region?.name ?? "—"}\`} />
+                    <Row k="Liczba" v={\`\${units(count)} szt.\`} />
+                    <Row k="Obiekty" v={targetsLabel || "—"} />
+                    <Row k="Obrona OPL" v={\`\${units(region?.aa_defense ?? 0)} pkt\`} />
+                  </div>
+                </div>
+              </div>
+              <div className="launch-warning">
+                <span className="launch-warning-light" />
+                <span>ROZKAZ NIEODWRACALNY — AMUNICJA ZOSTANIE ZUŻYTA PO ZATWIERDZENIU</span>
+              </div>
+              <button
+                type="button"
+                className="launch-red-button"
                 disabled={launch.isPending}
-                onClick={() => launch.mutate()}
+                onClick={() => {
+                  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(45);
+                  launch.mutate();
+                }}
               >
-                <Target className="mr-2 size-5" strokeWidth={1.5} />
-                {launch.isPending ? "Odpalam…" : "Wystrzel rakietę"}
-              </Button>
+                <span className="launch-red-button-inner">
+                  <span className="launch-red-button-light" />
+                  <Target className="size-5" />
+                  <span>{launch.isPending ? "PRZEKAZYWANIE ROZKAZU…" : "URUCHOM PROCEDURĘ STARTU"}</span>
+                  <span className="launch-red-button-key">EXECUTE</span>
+                </span>
+              </button>
+              <p className="launch-footnote">Naciśnięcie przycisku natychmiast przekazuje rozkaz do centrum dowodzenia.</p>
             </div>
           ) : null}
 
