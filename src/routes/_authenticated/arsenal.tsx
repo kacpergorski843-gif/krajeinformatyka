@@ -585,20 +585,22 @@ function Arsenal() {
                   {region?.name} — {targetCountryName}
                 </DialogDescription>
               </DialogHeader>
-              <div className="panel space-y-2 p-4 text-sm">
-                <Row
-                  k="Użyta rakieta"
-                  v={`${missile ? (MISSILE_LABELS[missile] ?? missile) : ""} x${units(
-                    result.launched ?? count,
-                  )}`}
-                />
-                {(result.impacts ?? 0) > 0 ? (
-                  <Row k="Zniszczone budynki" v={units(result.destroyed ?? 0)} />
-                ) : (
-                  <Row k="Obrona" v="OPL regionu" />
-                )}
+              <div className={\`launch-result-banner \${(result.impacts ?? 0) > 0 ? "launch-result-hit" : "launch-result-blocked"}\`}>
+                {(result.impacts ?? 0) > 0 ? <CheckCircle2 /> : <XCircle />}
+                <div>
+                  <p className="label-hud">RAPORT SYSTEMU</p>
+                  <strong>{(result.impacts ?? 0) > 0 ? "CEL TRAFIONY" : "RAKIETA PRZECHWYCONA"}</strong>
+                </div>
               </div>
-              <Button onClick={reset}>Zamknij</Button>
+              <div className="panel space-y-2 p-4 text-sm">
+                <Row k="Użyta rakieta" v={\`\${missile ? (MISSILE_LABELS[missile] ?? missile) : ""} x\${units(result.launched ?? count)}\`} />
+                <Row k="Wystrzelono" v={units(result.launched ?? count)} />
+                <Row k="Przechwycono" v={units(result.intercepted ?? 0)} />
+                <Row k="Uderzenia" v={units(result.impacts ?? 0)} />
+                <Row k="Zniszczone budynki" v={units(result.destroyed ?? 0)} />
+                {result.stopped_reason ? <Row k="Powód zatrzymania" v={result.stopped_reason} /> : null}
+              </div>
+              <Button onClick={reset} className="w-full">ZAMKNIJ RAPORT OPERACJI</Button>
             </>
           ) : null}
         </DialogContent>
