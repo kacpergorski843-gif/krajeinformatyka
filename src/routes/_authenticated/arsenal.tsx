@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Rocket, ShieldCheck, Crosshair, Target, ChevronLeft } from "lucide-react";
+import { Rocket, ShieldCheck, Crosshair, Target, ChevronLeft, Activity, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
@@ -138,7 +138,7 @@ function Arsenal() {
     onSuccess: (data) => {
       setResult(data);
       setPhase("processing");
-      window.setTimeout(() => setPhase("result"), 3000);
+      window.setTimeout(() => setPhase("result"), missile === "missile_3" ? 5600 : 4200);
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
       void queryClient.invalidateQueries({ queryKey: ["regions"] });
       void queryClient.invalidateQueries({ queryKey: ["strikes"] });
@@ -189,8 +189,8 @@ function Arsenal() {
         <Stat label="Rakiety III" value={units(country?.missile_3 ?? 0)} tone="primary" />
       </div>
 
-      <SectionTitle>Wystrzel rakietę</SectionTitle>
-      <Panel className="hud-frame p-5">
+      <div className="arsenal-heading"><div><p className="label-hud">Strategic weapons command</p><SectionTitle>Procedura odpalenia</SectionTitle><p className="text-muted-foreground -mt-2 text-xs">Wybierz uzbrojenie, wyznacz cel i zatwierdź rozkaz startu.</p></div><div className="arsenal-live"><span /> SYSTEM GOTOWY</div></div>
+      <Panel className={"hud-frame arsenal-wizard p-5 " + (missile === "missile_3" ? "arsenal-wizard-heavy" : "")}>
         <div className="flex items-center justify-between gap-3">
           <p className="label-hud">
             Krok {step}/6 — {STEP_TITLES[step - 1]}
@@ -224,20 +224,20 @@ function Arsenal() {
                       setMissile(m.code);
                       setSlotIds([]);
                     }}
-                    className={`panel p-4 text-left ${
-                      missile === m.code ? "border-primary/70" : ""
-                    }`}
+                    className={\`panel missile-select-card missile-select-\${m.code} p-4 text-left \${missile === m.code ? "missile-select-active" : ""}\`}
                   >
+                    <div className="missile-card-top">
+                      <span className="label-hud">WEAPON / {m.code.slice(-1)}</span>
+                      <span className="missile-card-status">{missile === m.code ? "WYBRANA" : "GOTOWA"}</span>
+                    </div>
+                    <div className="missile-card-art">
+                      <Rocket className="missile-card-icon" strokeWidth={1.25} />
+                      {m.code === "missile_3" ? <span className="missile-card-orbit" /> : null}
+                    </div>
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <p className="truncate text-sm font-semibold">{MISSILE_LABELS[m.code]}</p>
-                      <Rocket
-                        className={`size-4 shrink-0 ${
-                          missile === m.code ? "text-primary" : "text-inactive"
-                        }`}
-                        strokeWidth={1.5}
-                      />
-                    </div>
-                    <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                      <span className="missile-level">LVL {m.code.slice(-1)}</span>
+                    </div>                    <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
                       {m.effect}
                     </p>
                     <p className="text-info mt-2 text-xs">Przechwycenie od {m.requiredAa} OPL</p>
