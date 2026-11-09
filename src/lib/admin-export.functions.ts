@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
 
 const EXPORT_TABLES = [
   "profiles",
@@ -21,15 +22,15 @@ type ExportTable = (typeof EXPORT_TABLES)[number];
 
 type ExportResult = {
   generated_at: string;
-  tables: Record<string, unknown[]>;
+  tables: Record<string, Json[]>;
   errors: { table: string; message: string }[];
-  auth_users: unknown[];
+  auth_users: Json[];
 };
 
-async function readAllRows(table: ExportTable): Promise<{ rows: unknown[]; error?: string }> {
+async function readAllRows(table: ExportTable): Promise<{ rows: Json[]; error?: string }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const db = supabaseAdmin as any;
-  const rows: unknown[] = [];
+  const rows: Json[] = [];
   const pageSize = 1000;
 
   for (let offset = 0; ; offset += pageSize) {
@@ -39,7 +40,7 @@ async function readAllRows(table: ExportTable): Promise<{ rows: unknown[]; error
       .range(offset, offset + pageSize - 1);
 
     if (error) return { rows, error: error.message };
-    const page = Array.isArray(data) ? data : [];
+    const page = Array.isArray(data) ? (data as Json[]) : [];
     rows.push(...page);
     if (page.length < pageSize) break;
   }
@@ -49,14 +50,14 @@ async function readAllRows(table: ExportTable): Promise<{ rows: unknown[]; error
 
 async function readAllAuthUsers() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const users: unknown[] = [];
+  const users: Json[] = [];
   const perPage = 1000;
 
   for (let page = 1; ; page += 1) {
     const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
     if (error) throw new Error(error.message);
 
-    const pageUsers = data.users.map((user) => ({
+    const pageUsers: Json[] = data.users.map((user) => ({
       id: user.id,
       email: user.email ?? null,
       phone: user.phone ?? null,
@@ -94,7 +95,7 @@ export const exportApplicationData = createServerFn({ method: "POST" })
       throw new Error("Pełny eksport danych jest dostępny wyłącznie dla głównego administratora");
     }
 
-    const tables: Record<string, unknown[]> = {};
+    const tables: Record<string, Json[]> = {};
     const errors: { table: string; message: string }[] = [];
 
     for (const table of EXPORT_TABLES) {
@@ -103,7 +104,7 @@ export const exportApplicationData = createServerFn({ method: "POST" })
       if (result.error) errors.push({ table, message: result.error });
     }
 
-    let auth_users: unknown[] = [];
+    let auth_users: Json[] = [];
     try {
       auth_users = await readAllAuthUsers();
     } catch (error) {
