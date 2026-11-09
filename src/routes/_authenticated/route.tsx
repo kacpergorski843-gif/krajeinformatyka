@@ -110,6 +110,35 @@ function AuthenticatedLayout() {
     };
   }, [me.data?.userId, queryClient]);
 
+  const maintenanceSignature = mode.data
+    ? JSON.stringify({
+        enabled: mode.data.enabled,
+        pages: mode.data.pages,
+        messageTitle: mode.data.messageTitle,
+        messageBody: mode.data.messageBody,
+      })
+    : null;
+
+  useEffect(() => {
+    if (!maintenanceSignature) return;
+
+    const storageKey = "maintenance-reload-state";
+    const syncMaintenanceState = () => {
+      if (document.visibilityState !== "visible") return;
+
+      const previousSignature = sessionStorage.getItem(storageKey);
+      sessionStorage.setItem(storageKey, maintenanceSignature);
+
+      if (previousSignature && previousSignature !== maintenanceSignature) {
+        window.location.reload();
+      }
+    };
+
+    syncMaintenanceState();
+    document.addEventListener("visibilitychange", syncMaintenanceState);
+    return () => document.removeEventListener("visibilitychange", syncMaintenanceState);
+  }, [maintenanceSignature]);
+
   const maintenancePath = location.pathname.startsWith("/swiat/")
     ? "/swiat/$id"
     : location.pathname;
