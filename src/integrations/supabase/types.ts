@@ -572,6 +572,7 @@ export type Database = {
       region_occupations: {
         Row: {
           current_country_id: string
+          event_type: "OCCUPATION" | "REVERT"
           id: string
           occupied_at: string
           previous_country_id: string
@@ -579,6 +580,7 @@ export type Database = {
         }
         Insert: {
           current_country_id: string
+          event_type?: "OCCUPATION" | "REVERT"
           id?: string
           occupied_at?: string
           previous_country_id: string
@@ -586,6 +588,7 @@ export type Database = {
         }
         Update: {
           current_country_id?: string
+          event_type?: "OCCUPATION" | "REVERT"
           id?: string
           occupied_at?: string
           previous_country_id?: string
