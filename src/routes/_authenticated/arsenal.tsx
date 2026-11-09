@@ -537,26 +537,38 @@ function Arsenal() {
       >
         <DialogContent className="admin-dialog max-h-[85vh] overflow-y-auto">
           {phase === "processing" ? (
-            <>
-              <DialogHeader>
-                <DialogTitle className="tracking-[0.16em] uppercase">Processing</DialogTitle>
-                <DialogDescription>Rakieta w drodze do celu</DialogDescription>
-              </DialogHeader>
-              <div className="panel relative h-24 overflow-hidden p-4">
-                <div className="border-primary/40 absolute inset-x-4 top-1/2 border-t border-dashed" />
-                <Rocket
-                  className="text-primary absolute top-1/2 size-5 -translate-y-1/2 animate-[flight_2.6s_linear_forwards]"
-                  strokeWidth={1.5}
-                />
-                <Target
-                  className="text-destructive absolute top-1/2 right-4 size-5 -translate-y-1/2"
-                  strokeWidth={1.5}
-                />
+            <div className={\`launch-flight-stage \${missile === "missile_3" ? "launch-flight-heavy" : ""}\`}>
+              <div className="launch-flight-topline">
+                <span className="label-hud">STRATEGIC COMMAND / LIVE OPERATION</span>
+                <span className="launch-flight-live"><span /> TRANSMISJA</span>
               </div>
-              <p className="label-hud text-center">
-                Processing<span className="animate-pulse">…</span>
-              </p>
-            </>
+              <DialogHeader className="launch-flight-heading">
+                <DialogTitle className="tracking-[0.12em] uppercase">
+                  {missile === "missile_3" ? "START RAKIETY STRATEGICZNEJ" : "ROZPOCZĘTO PROCEDURĘ STARTU"}
+                </DialogTitle>
+                <DialogDescription>{region?.name} / {targetCountryName}</DialogDescription>
+              </DialogHeader>
+              <div className={\`launch-flight-visual launch-flight-visual-\${missile ?? "missile_1"}\`}>
+                <div className="launch-flight-stars" />
+                <div className="launch-flight-radar launch-radar-a" />
+                <div className="launch-flight-radar launch-radar-b" />
+                <div className="launch-flight-horizon" />
+                <div className="launch-flight-target"><Target /></div>
+                <div className="launch-flight-trail" />
+                <div className="launch-flight-rocket"><Rocket strokeWidth={1.1} /><span className="launch-flight-flame" /></div>
+                {missile === "missile_3" ? <div className="launch-flight-afterburner" /> : null}
+              </div>
+              <div className="launch-flight-telemetry">
+                <div><span>WEAPON</span><strong>{missile?.toUpperCase()}</strong></div>
+                <div><span>PAYLOAD</span><strong>{units(result?.launched ?? count)} / {units(count)}</strong></div>
+                <div><span>DESTINATION</span><strong>{region?.name ?? "—"}</strong></div>
+              </div>
+              <div className="launch-flight-status">
+                <Activity className="size-4" />
+                <span>{missile === "missile_3" ? "RAKIETA STRATEGICZNA W LOCIE" : "RAKIETA W LOCIE"}</span>
+                <span className="launch-flight-status-dots">•••</span>
+              </div>
+            </div>
           ) : null}
 
           {phase === "result" && result ? (
