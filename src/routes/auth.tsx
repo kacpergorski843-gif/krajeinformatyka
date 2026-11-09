@@ -52,7 +52,7 @@ function AuthPage() {
     }
     router.navigate({ to: "/panstwo" });
   }
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); const formData = new FormData(e.currentTarget); const enteredUsername = String(formData.get("username") ?? username); const enteredPassword = String(formData.get("password") ?? password); setUsername(enteredUsername); setPassword(enteredPassword); const clean = normalizeUsername(enteredUsername); if (clean.length < 3) { toast.error("Nazwa użytkownika musi mieć co najmniej 3 znaki (litery, cyfry, . _ -)"); usernameRef.current?.focus(); return; }
     const email = `${clean}@${EMAIL_DOMAIN}`; const legacyEmail = `${clean}@${LEGACY_EMAIL_DOMAIN}`; setBusy(true);
     try {
