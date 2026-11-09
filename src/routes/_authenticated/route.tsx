@@ -63,14 +63,37 @@ function AuthenticatedLayout() {
       "user_roles",
     ] as const;
 
+    const invalidationKeys: Record<string, readonly (readonly unknown[])[]> = {
+      admin_actions: [["admin_actions"]],
+      app_maintenance_mode: [["maintenance_mode"]],
+      bilateral_agreement_runs: [["bilateral_agreement_runs"], ["bilateral_agreements"]],
+      bilateral_agreements: [["bilateral_agreements"], ["bilateral_agreement_runs"]],
+      countries: [["country_stats"], ["public_countries"], ["public_country"], ["me"], ["market", "offers"], ["market", "my-offers"]],
+      country_suggestions: [["country_suggestions"]],
+      economy_bonuses: [["active_income_bonuses"], ["economy_bonus"]],
+      economy_runs: [["economy_runs"], ["economy_run_today"]],
+      market_negotiations: [["market", "negotiations"], ["market", "offers"]],
+      market_offers: [["market", "offers"], ["market", "my-offers"], ["market", "negotiations"]],
+      market_sales: [["market", "sales"], ["market", "price-history"], ["transactions"]],
+      missile_strikes: [["missile_strikes"], ["incoming_strikes"]],
+      profiles: [["me"], ["admin_users"], ["public_countries"], ["public_country"]],
+      region_occupations: [["region_occupations"], ["occupied_regions"], ["regions"], ["all_regions"], ["country_stats"], ["public_countries"], ["public_country"]],
+      region_slots: [["regions"], ["all_regions"], ["country_stats"], ["public_countries"], ["public_country"], ["transfer_regions"]],
+      regions: [["regions"], ["all_regions"], ["all_region_options"], ["transfer_regions"], ["region_aa"], ["region_occupations"], ["occupied_regions"], ["country_stats"], ["public_countries"], ["public_country"]],
+      shop_items: [["shop_items"], ["admin_shop_items"], ["country_stats"], ["public_countries"], ["public_country"]],
+      transactions: [["transactions"]],
+      user_roles: [["me"], ["admin_users"]],
+    };
+
     let channel = supabase.channel("authenticated-game-realtime");
     for (const table of realtimeTables) {
       channel = channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table },
         () => {
-          // Views such as country_stats are refreshed when their source tables change.
-          void queryClient.invalidateQueries();
+          for (const queryKey of invalidationKeys[table] ?? []) {
+            void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+          }
         },
       );
     }
@@ -91,16 +114,18 @@ function AuthenticatedLayout() {
     ? "/swiat/$id"
     : location.pathname;
   const pageDisabled = mode.data?.pages.includes(maintenancePath) === true;
-  if (me.data?.isMainAdmin || (mode.data?.enabled !== true && !pageDisabled)) return <Outlet />;
+  const maintenanceUnavailable = !!me.data && !me.data.isMainAdmin && (mode.isPending || mode.isError);
+  const maintenanceEnabled = mode.data?.enabled === true || pageDisabled;
+  if (me.data?.isMainAdmin || (!maintenanceUnavailable && !maintenanceEnabled)) return <Outlet />;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-5 py-10">
       <section className="w-full max-w-md text-center">
         <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-          {mode.data?.messageTitle || "Ekonomia jest aktualnie w remoncie"}
+          {mode.data?.messageTitle || (maintenanceUnavailable ? "Nie można zweryfikować dostępności aplikacji" : "Ekonomia jest aktualnie w remoncie")}
         </h1>
         <p className="mx-auto mt-3 max-w-sm whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-          {mode.data?.messageBody || "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem."}
+          {mode.data?.messageBody || (maintenanceUnavailable ? "Spróbuj ponownie za chwilę. Dostęp zostanie przywrócony po potwierdzeniu ustawień serwera." : "Szykuje się aktualizacja! Po więcej informacji skontaktuj się z informatykiem.")}
         </p>
         <Button variant="outline" className="mt-6" onClick={() => {
           if (window.history.length > 1) router.history.back();
