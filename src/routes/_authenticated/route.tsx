@@ -71,7 +71,7 @@ function AuthenticatedLayout() {
       countries: [["country_stats"], ["public_countries"], ["public_country"], ["me"], ["market", "offers"], ["market", "my-offers"]],
       country_suggestions: [["country_suggestions"]],
       economy_bonuses: [["active_income_bonuses"], ["economy_bonus"]],
-      economy_runs: [["economy_runs"], ["economy_run_today"]],
+      economy_runs: [["economy_runs"], ["economy_run_latest"]],
       market_negotiations: [["market", "negotiations"], ["market", "offers"]],
       market_offers: [["market", "offers"], ["market", "my-offers"], ["market", "negotiations"]],
       market_sales: [["market", "sales"], ["market", "price-history"], ["transactions"]],
