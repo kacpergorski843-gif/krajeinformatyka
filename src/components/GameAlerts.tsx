@@ -48,7 +48,15 @@ export function GameAlerts({ countryId }: { countryId: string | null }) {
       };
       if (h === 19 && m >= 55) once("payout-soon", () => toast.info("Wypłata dzienna za 10 minut (20:05)."));
       if (h === 20 && m >= 15 && payoutRun.data?.run_date === day) once("payout-done", () => {
-        void queryClient.invalidateQueries();
+        for (const queryKey of [
+          ["country_stats"],
+          ["public_countries"],
+          ["public_country"],
+          ["economy_runs"],
+          ["transactions"],
+        ]) {
+          void queryClient.invalidateQueries({ queryKey });
+        }
         toast.success("Wypłata dzienna została rozliczona. Sprawdź skarbiec.");
         notifyBrowser("Wypłata dzienna", "Twoje państwo otrzymało dzisiejszy dochód.");
       });
