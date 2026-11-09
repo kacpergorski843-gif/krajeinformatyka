@@ -94,7 +94,6 @@ export function AppShell({ me, title, children }: {
           <Link
             key={item.to}
             to={item.to}
-            prefetch="intent"
             onClick={() => mobile && setMobileOpen(false)}
             activeProps={{ className: "nav-active" }}
             className="nav-item"
