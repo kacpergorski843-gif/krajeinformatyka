@@ -31,7 +31,8 @@ export const deletePlayerAccount = createServerFn({ method: "POST" })
 
     // The game profile is purged first. If Auth deletion fails afterwards, a retry
     // can safely continue because a missing profile means the purge already completed.
-    const { data: targetProfile, error: profileError } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: targetProfile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("id")
       .eq("id", data.userId)
@@ -45,7 +46,6 @@ export const deletePlayerAccount = createServerFn({ method: "POST" })
       if (purgeError) throw new Error(purgeError.message);
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     // Treat an already-removed Auth user as success so interrupted deletions are idempotent.
     if (deleteError && deleteError.code !== "user_not_found" && deleteError.status !== 404) {
