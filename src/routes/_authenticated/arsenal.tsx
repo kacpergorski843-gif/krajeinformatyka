@@ -224,7 +224,7 @@ function Arsenal() {
                       setMissile(m.code);
                       setSlotIds([]);
                     }}
-                    className={\`panel missile-select-card missile-select-\${m.code} p-4 text-left \${missile === m.code ? "missile-select-active" : ""}\`}
+                    className={`panel missile-select-card missile-select-${m.code} p-4 text-left ${missile === m.code ? "missile-select-active" : ""}`}
                   >
                     <div className="missile-card-top">
                       <span className="label-hud">WEAPON / {m.code.slice(-1)}</span>
@@ -237,7 +237,8 @@ function Arsenal() {
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <p className="truncate text-sm font-semibold">{MISSILE_LABELS[m.code]}</p>
                       <span className="missile-level">LVL {m.code.slice(-1)}</span>
-                    </div>                    <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                    </div>
+                    <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
                       {m.effect}
                     </p>
                     <p className="text-info mt-2 text-xs">Przechwycenie od {m.requiredAa} OPL</p>
@@ -420,7 +421,7 @@ function Arsenal() {
           ) : null}
 
           {step === 6 ? (
-            <div className={\`launch-console \${missile === "missile_3" ? "launch-console-heavy" : ""}\`}>
+            <div className={`launch-console ${missile === "missile_3" ? "launch-console-heavy" : ""}`}>
               <div className="launch-console-header">
                 <div>
                   <p className="label-hud">Final authorization / step 06</p>
@@ -431,7 +432,7 @@ function Arsenal() {
               <div className="launch-console-body">
                 <div className="launch-schematic-wrap">
                   <div className="launch-schematic-grid" />
-                  <div className={\`launch-schematic-rocket launch-schematic-\${missile ?? "missile_1"}\`}>
+                  <div className={`launch-schematic-rocket launch-schematic-${missile ?? "missile_1"}`}>
                     <Rocket strokeWidth={1.15} />
                     <span />
                   </div>
@@ -443,10 +444,10 @@ function Arsenal() {
                   <p className="label-hud">Potwierdź rozkaz</p>
                   <p className="launch-command-name">{missile ? MISSILE_LABELS[missile] : "Brak uzbrojenia"}</p>
                   <div className="launch-command-lines">
-                    <Row k="Cel" v={\`\${targetCountryName} / \${region?.name ?? "—"}\`} />
-                    <Row k="Liczba" v={\`\${units(count)} szt.\`} />
+                    <Row k="Cel" v={`${targetCountryName} / ${region?.name ?? "—"}`} />
+                    <Row k="Liczba" v={`${units(count)} szt.`} />
                     <Row k="Obiekty" v={targetsLabel || "—"} />
-                    <Row k="Obrona OPL" v={\`\${units(region?.aa_defense ?? 0)} pkt\`} />
+                    <Row k="Obrona OPL" v={`${units(region?.aa_defense ?? 0)} pkt`} />
                   </div>
                 </div>
               </div>
@@ -537,7 +538,7 @@ function Arsenal() {
       >
         <DialogContent className="admin-dialog max-h-[85vh] overflow-y-auto">
           {phase === "processing" ? (
-            <div className={\`launch-flight-stage \${missile === "missile_3" ? "launch-flight-heavy" : ""}\`}>
+            <div className={`launch-flight-stage ${missile === "missile_3" ? "launch-flight-heavy" : ""}`}>
               <div className="launch-flight-topline">
                 <span className="label-hud">STRATEGIC COMMAND / LIVE OPERATION</span>
                 <span className="launch-flight-live"><span /> TRANSMISJA</span>
@@ -548,7 +549,7 @@ function Arsenal() {
                 </DialogTitle>
                 <DialogDescription>{region?.name} / {targetCountryName}</DialogDescription>
               </DialogHeader>
-              <div className={\`launch-flight-visual launch-flight-visual-\${missile ?? "missile_1"}\`}>
+              <div className={`launch-flight-visual launch-flight-visual-${missile ?? "missile_1"}`}>
                 <div className="launch-flight-stars" />
                 <div className="launch-flight-radar launch-radar-a" />
                 <div className="launch-flight-radar launch-radar-b" />
@@ -585,7 +586,7 @@ function Arsenal() {
                   {region?.name} — {targetCountryName}
                 </DialogDescription>
               </DialogHeader>
-              <div className={\`launch-result-banner \${(result.impacts ?? 0) > 0 ? "launch-result-hit" : "launch-result-blocked"}\`}>
+              <div className={`launch-result-banner ${(result.impacts ?? 0) > 0 ? "launch-result-hit" : "launch-result-blocked"}`}>
                 {(result.impacts ?? 0) > 0 ? <CheckCircle2 /> : <XCircle />}
                 <div>
                   <p className="label-hud">RAPORT SYSTEMU</p>
@@ -593,7 +594,7 @@ function Arsenal() {
                 </div>
               </div>
               <div className="panel space-y-2 p-4 text-sm">
-                <Row k="Użyta rakieta" v={\`\${missile ? (MISSILE_LABELS[missile] ?? missile) : ""} x\${units(result.launched ?? count)}\`} />
+                <Row k="Użyta rakieta" v={`${missile ? (MISSILE_LABELS[missile] ?? missile) : ""} x${units(result.launched ?? count)}`} />
                 <Row k="Wystrzelono" v={units(result.launched ?? count)} />
                 <Row k="Przechwycono" v={units(result.intercepted ?? 0)} />
                 <Row k="Uderzenia" v={units(result.impacts ?? 0)} />
