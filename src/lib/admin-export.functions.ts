@@ -15,6 +15,12 @@ const EXPORT_TABLES = [
   "missile_strikes",
   "region_occupations",
   "ai_advisor_conversations",
+  "market_offers",
+  "market_negotiations",
+  "market_sales",
+  "bilateral_agreements",
+  "bilateral_agreement_runs",
+  "device_account_bindings",
 ] as const;
 
 type ExportTable = (typeof EXPORT_TABLES)[number];
