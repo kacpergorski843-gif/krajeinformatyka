@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownUp, Handshake, Package, Plus, Search, Tag, X, ChartNoAxesCombined } from "lucide-react";
+import { Handshake, Package, Plus, Search, X, ChartNoAxesCombined } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle } from "@/components/stat";
@@ -110,7 +110,7 @@ function MarketPage() {
     </div>}
 
     {tab==="add" && <div className="space-y-3">
-      <div className="flex items-center justify-between"><SectionTitle>Moje oferty</SectionTitle><Button size="sm" onClick={()=>setCreateOpen(v=>!v)}><Plus className="mr-1 size-4"/>Wystaw</Button></div>
+      <div className="flex items-center justify-between"><SectionTitle>Twoje produkty</SectionTitle><Button size="sm" onClick={()=>setCreateOpen(v=>!v)}><Plus className="mr-1 size-4"/>Dodaj produkt</Button></div>
       {createOpen && <Panel className="space-y-3 p-4"><h3 className="font-semibold">Nowa oferta</h3><label className="block text-xs text-muted-foreground">Towar<select value={resource} onChange={e=>setResource(e.target.value as MarketResource)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">{ITEMS.map(i=><option key={i.value} value={i.value}>{i.label}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="text-xs text-muted-foreground">Ilość<Input inputMode="numeric" value={newQuantity} onChange={e=>setNewQuantity(e.target.value)} placeholder="np. 100"/></label><label className="text-xs text-muted-foreground">Cena za jednostkę (KR)<Input inputMode="numeric" value={newPrice} onChange={e=>setNewPrice(e.target.value)} placeholder="np. 25"/></label></div><p className="text-xs text-muted-foreground">Wartość: {validInt(newQuantity)&&validInt(newPrice)?fmt(total(newQuantity,newPrice)):"—"} KR. Zasób zostanie odjęty z magazynu przy wystawieniu.</p><div className="flex gap-2"><Button disabled={mutation.isPending} onClick={create}>Wystaw ofertę</Button><Button variant="outline" onClick={()=>setCreateOpen(false)}>Anuluj</Button></div></Panel>}
       {mine.isLoading ? <Panel className="p-6 text-sm text-muted-foreground">Ładowanie…</Panel> : (mine.data??[]).map(o=><Panel key={o.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><p className="font-semibold">{itemLabel(o.resource)}</p><p className="text-xs text-muted-foreground">Pozostało {fmt(o.quantity_remaining)} · {fmt(o.unit_price)} KR/jedn. · wygasa {new Date(o.expires_at).toLocaleDateString("pl-PL")}</p><p className="text-[10px] text-muted-foreground">{o.status==="ACTIVE"?"Aktywna":o.status==="SOLD"?"Sprzedana":o.status==="CANCELLED"?"Anulowana":"Wygasła"}</p></div>{o.status==="ACTIVE" && <div className="flex gap-2"><Button size="sm" variant="outline" onClick={()=>{setEditOffer(o);setEditPrice(o.unit_price);}}>Cena</Button><Button size="sm" variant="ghost" onClick={()=>run("market_cancel_offer",{p_offer_id:o.id})}>Anuluj</Button></div>}</Panel>)}
       {!mine.isLoading&&!mine.data?.length&&<Panel className="p-8 text-center text-sm text-muted-foreground">Nie masz jeszcze ofert.</Panel>}
