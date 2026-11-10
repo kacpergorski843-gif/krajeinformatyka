@@ -25,6 +25,19 @@ const EXPORT_TABLES = [
 
 type ExportTable = (typeof EXPORT_TABLES)[number];
 
+type ExportQueryResult = {
+  data: unknown[] | null;
+  error: { message: string } | null;
+};
+
+type ExportClient = {
+  from(table: ExportTable): {
+    select(columns: "*"): {
+      range(from: number, to: number): PromiseLike<ExportQueryResult>;
+    };
+  };
+};
+
 type ExportResult = {
   generated_at: string;
   tables: Record<string, unknown[]>;
@@ -34,7 +47,7 @@ type ExportResult = {
 
 async function readAllRows(table: ExportTable): Promise<{ rows: unknown[]; error?: string }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const db = supabaseAdmin as any;
+  const db = supabaseAdmin as unknown as ExportClient;
   const rows: unknown[] = [];
   const pageSize = 1000;
 
