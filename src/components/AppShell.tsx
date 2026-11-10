@@ -1,7 +1,8 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft } from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft, FlaskConical } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +10,6 @@ import type { Me } from "@/lib/api";
 import { getMaintenanceMode } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
 
-
-// Set to true to restore navigation icons without changing the menu structure.
 const SHOW_NAV_ICONS = false;
 
 const NAV = [
@@ -32,15 +31,14 @@ export function AppShell({ me, title, children }: {
   const queryClient = useQueryClient();
   const [confirmOut, setConfirmOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [switchingTestCountry, setSwitchingTestCountry] = useState(false);
   const getMode = useServerFn(getMaintenanceMode);
   const maintenanceMode = useQuery({
     queryKey: ["maintenance_mode"],
     queryFn: () => getMode(),
-    // Poll the shared global setting so every connected client reacts without a reload.
     refetchInterval: 60_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
-    // Only the main administrator is exempt from maintenance mode.
     enabled: !!me && !me.isMainAdmin,
   });
 
@@ -63,6 +61,27 @@ export function AppShell({ me, title, children }: {
     queryClient.clear();
     await supabase.auth.signOut();
     router.navigate({ to: "/auth", replace: true });
+  }
+
+  async function switchTestCountry(target: "V1" | "V2" | "ORIGINAL") {
+    if (switchingTestCountry) return;
+    setSwitchingTestCountry(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)("main_admin_switch_test_country", { p_target: target });
+      if (error) throw new Error(error.message);
+      const result = data as { changed?: boolean; country_name?: string };
+      await queryClient.invalidateQueries();
+      await router.invalidate();
+      toast.success(result.changed === false
+        ? "Jesteś już w oryginalnym państwie"
+        : target === "ORIGINAL"
+          ? "Przywrócono oryginalne państwo"
+          : `Przełączono na ${result.country_name ?? (target === "V1" ? "Testy v1" : "Testy v2")}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się zmienić państwa");
+    } finally {
+      setSwitchingTestCountry(false);
+    }
   }
 
   const items = me?.isAdmin ? [...NAV, { to: "/admin", label: "Administracja", icon: ShieldHalf } as const] : NAV;
@@ -118,7 +137,19 @@ export function AppShell({ me, title, children }: {
       </aside>
       <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 lg:px-10 lg:py-8">
         <header className="page-header command-header">
-          <div className="min-w-0"><h1 className="page-title truncate">{title}</h1></div>
+          <div className="min-w-0 flex-1">
+            <h1 className="page-title truncate">{title}</h1>
+            {me?.isMainAdmin ? (
+              <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/5 p-2.5">
+                <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600">
+                  <FlaskConical className="size-4" /> ŚRODOWISKO TESTOWE
+                </span>
+                <Button type="button" size="sm" variant="outline" disabled={switchingTestCountry} onClick={() => void switchTestCountry("V1")}>Testy v1</Button>
+                <Button type="button" size="sm" variant="outline" disabled={switchingTestCountry} onClick={() => void switchTestCountry("V2")}>Testy v2</Button>
+                <Button type="button" size="sm" variant="secondary" disabled={switchingTestCountry} onClick={() => void switchTestCountry("ORIGINAL")}>Oryginalny kraj</Button>
+              </div>
+            ) : null}
+          </div>
         </header>
         <div className="content-area">{children}</div>
       </main>
