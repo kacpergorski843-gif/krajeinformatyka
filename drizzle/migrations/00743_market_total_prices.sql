@@ -137,3 +137,14 @@ grant execute on function public.market_update_offer_total(uuid,numeric) to auth
 grant execute on function public.market_buy_total(uuid,numeric) to authenticated;
 grant execute on function public.market_propose_total(uuid,numeric,numeric) to authenticated;
 grant execute on function public.market_respond_negotiation_total(uuid,text,numeric,numeric) to authenticated;
+
+revoke all on function public.market_create_offer_total(text,numeric,numeric) from public;
+revoke all on function public.market_update_offer_total(uuid,numeric) from public;
+revoke all on function public.market_buy_total(uuid,numeric) from public;
+revoke all on function public.market_propose_total(uuid,numeric,numeric) from public;
+revoke all on function public.market_respond_negotiation_total(uuid,text,numeric,numeric) from public;
+grant execute on function public.market_create_offer_total(text,numeric,numeric) to authenticated;
+grant execute on function public.market_update_offer_total(uuid,numeric) to authenticated;
+grant execute on function public.market_buy_total(uuid,numeric) to authenticated;
+grant execute on function public.market_propose_total(uuid,numeric,numeric) to authenticated;
+grant execute on function public.market_respond_negotiation_total(uuid,text,numeric,numeric) to authenticated;
