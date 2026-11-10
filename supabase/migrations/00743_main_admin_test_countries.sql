@@ -1,3 +1,28 @@
+-- Prevent ordinary users from assigning a test country to their own profile.
+create or replace function public.guard_test_country_profile_assignment()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.country_id is distinct from old.country_id
+     and exists (
+       select 1 from public.countries
+       where id = new.country_id and name in ('Testy v1', 'Testy v2')
+     )
+     and not public.has_role(auth.uid(), 'MAIN_ADMIN') then
+    raise exception 'Dostęp do państw testowych ma wyłącznie główny administrator';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists guard_test_country_profile_assignment on public.profiles;
+create trigger guard_test_country_profile_assignment
+before update of country_id on public.profiles
+for each row execute function public.guard_test_country_profile_assignment();
+
 -- Isolated test countries and a main-admin-only country context switch.
 -- Numeric stock fields use their maximum supported 30-digit value; integer military
 -- counters use the largest positive PostgreSQL integer.
