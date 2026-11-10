@@ -39,7 +39,7 @@ begin
       'MARKET_ESCROW_RELEASE',
       'Zwrot rezerwacji rynkowej: ' || old.resource,
       0,
-      auth.uid(),
+      case when new.status = 'CANCELLED' then auth.uid() else null end,
       jsonb_build_object(
         'direction', 'in',
         'offer_id', old.id,
