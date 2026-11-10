@@ -23,7 +23,16 @@ export const Route = createFileRoute("/auth")({
 const EMAIL_DOMAIN = "kbcofzdboyzgsquvtzfq.supabase.co";
 const LEGACY_EMAIL_DOMAIN = "nationdynamics.internal";
 
-function normalizeUsername(raw: string) { return raw.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^[.\-_]+|[.\-_]+$/g, ""); }
+function normalizeUsername(raw: string) {
+  return raw.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^[.\\-_]+|[.\\-_]+$/g, "");
+}
+
+function hasControlCharacters(value: string): boolean {
+  return Array.from(value).some((character) => {
+    const code = character.charCodeAt(0);
+    return code <= 0x1f || code === 0x7f;
+  });
+}
 
 function AuthPage() {
   const router = useRouter();
@@ -37,7 +46,7 @@ function AuthPage() {
       next.startsWith("/") &&
       !next.startsWith("//") &&
       !next.startsWith("/\\") &&
-      !/[\u0000-\u001f\u007f]/.test(next)
+      !hasControlCharacters(next)
     ) {
       try {
         const target = new URL(next, window.location.origin);
