@@ -158,8 +158,22 @@ export function AppShell({ me, title, children }: {
     {mobileOpen ? <div className="mobile-drawer-backdrop lg:hidden" role="presentation" onClick={() => setMobileOpen(false)}>
       <aside className="mobile-drawer flex flex-col" role="dialog" aria-modal="true" aria-label="Menu nawigacji" onClick={(e) => e.stopPropagation()}>
         <button className="ml-auto mb-4 block" onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button>
-        <div className="min-h-0 flex-1 overflow-y-auto">{nav(true)}</div>
-        <div className="mt-auto space-y-2 pt-4">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {nav(true)}
+          {me?.isMainAdmin ? (
+            <section className="mt-4 border-t border-border pt-4" aria-label="Przełączanie państwa testowego">
+              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-600">
+                <FlaskConical className="size-4" /> Środowisko testowe
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                <Button type="button" className="min-h-11 w-full justify-start" variant="outline" disabled={switchingTestCountry} onClick={() => { setMobileOpen(false); void switchTestCountry("V1"); }}>Testy v1</Button>
+                <Button type="button" className="min-h-11 w-full justify-start" variant="outline" disabled={switchingTestCountry} onClick={() => { setMobileOpen(false); void switchTestCountry("V2"); }}>Testy v2</Button>
+                <Button type="button" className="min-h-11 w-full justify-start" variant="secondary" disabled={switchingTestCountry} onClick={() => { setMobileOpen(false); void switchTestCountry("ORIGINAL"); }}>Wróć do oryginalnego kraju</Button>
+              </div>
+            </section>
+          ) : null}
+        </div>
+        <div className="mt-auto space-y-2 border-t border-border pt-4">
           <button type="button" onClick={() => { setMobileOpen(false); setConfirmOut(true); }} className="nav-item w-full">
             <LogOut className="size-[18px]" /> Wyloguj
           </button>
