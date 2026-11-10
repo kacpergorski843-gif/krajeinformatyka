@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Rocket, ShieldCheck, Crosshair, Target, ChevronLeft } from "lucide-react";
+import { Rocket, ShieldCheck, Crosshair, Target, ChevronLeft, Activity, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
@@ -138,7 +138,7 @@ function Arsenal() {
     onSuccess: (data) => {
       setResult(data);
       setPhase("processing");
-      window.setTimeout(() => setPhase("result"), 3000);
+      window.setTimeout(() => setPhase("result"), missile === "missile_3" ? 5600 : 4200);
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
       void queryClient.invalidateQueries({ queryKey: ["regions"] });
       void queryClient.invalidateQueries({ queryKey: ["strikes"] });
@@ -189,8 +189,8 @@ function Arsenal() {
         <Stat label="Rakiety III" value={units(country?.missile_3 ?? 0)} tone="primary" />
       </div>
 
-      <SectionTitle>Wystrzel rakietę</SectionTitle>
-      <Panel className="hud-frame p-5">
+      <div className="arsenal-heading"><div><p className="label-hud">Strategic weapons command</p><SectionTitle>Procedura odpalenia</SectionTitle><p className="text-muted-foreground -mt-2 text-xs">Wybierz uzbrojenie, wyznacz cel i zatwierdź rozkaz startu.</p></div><div className="arsenal-live"><span /> SYSTEM GOTOWY</div></div>
+      <Panel className={"hud-frame arsenal-wizard p-5 " + (missile === "missile_3" ? "arsenal-wizard-heavy" : "")}>
         <div className="flex items-center justify-between gap-3">
           <p className="label-hud">
             Krok {step}/6 — {STEP_TITLES[step - 1]}
@@ -224,18 +224,19 @@ function Arsenal() {
                       setMissile(m.code);
                       setSlotIds([]);
                     }}
-                    className={`panel p-4 text-left ${
-                      missile === m.code ? "border-primary/70" : ""
-                    }`}
+                    className={`panel missile-select-card missile-select-${m.code} p-4 text-left ${missile === m.code ? "missile-select-active" : ""}`}
                   >
+                    <div className="missile-card-top">
+                      <span className="label-hud">WEAPON / {m.code.slice(-1)}</span>
+                      <span className="missile-card-status">{missile === m.code ? "WYBRANA" : "GOTOWA"}</span>
+                    </div>
+                    <div className="missile-card-art">
+                      <Rocket className="missile-card-icon" strokeWidth={1.25} />
+                      {m.code === "missile_3" ? <span className="missile-card-orbit" /> : null}
+                    </div>
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <p className="truncate text-sm font-semibold">{MISSILE_LABELS[m.code]}</p>
-                      <Rocket
-                        className={`size-4 shrink-0 ${
-                          missile === m.code ? "text-primary" : "text-inactive"
-                        }`}
-                        strokeWidth={1.5}
-                      />
+                      <span className="missile-level">LVL {m.code.slice(-1)}</span>
                     </div>
                     <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
                       {m.effect}
@@ -420,19 +421,57 @@ function Arsenal() {
           ) : null}
 
           {step === 6 ? (
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Atak na region {region?.name} ({targetCountryName}). Operacja jest nieodwracalna —
-                rakiety zużywają się niezależnie od wyniku.
-              </p>
-              <Button
-                className="h-14 w-full text-sm tracking-[0.16em] uppercase"
+            <div className={`launch-console ${missile === "missile_3" ? "launch-console-heavy" : ""}`}>
+              <div className="launch-console-header">
+                <div>
+                  <p className="label-hud">Final authorization / step 06</p>
+                  <p className="launch-console-title">Stanowisko odpalania</p>
+                </div>
+                <span className="launch-ready"><span /> GOTOWOŚĆ BOJOWA</span>
+              </div>
+              <div className="launch-console-body">
+                <div className="launch-schematic-wrap">
+                  <div className="launch-schematic-grid" />
+                  <div className={`launch-schematic-rocket launch-schematic-${missile ?? "missile_1"}`}>
+                    <Rocket strokeWidth={1.15} />
+                    <span />
+                  </div>
+                  <span className="launch-schematic-crosshair"><Target /></span>
+                  {missile === "missile_3" ? <span className="launch-schematic-orbit launch-orbit-one" /> : null}
+                  {missile === "missile_3" ? <span className="launch-schematic-orbit launch-orbit-two" /> : null}
+                </div>
+                <div className="launch-command-details">
+                  <p className="label-hud">Potwierdź rozkaz</p>
+                  <p className="launch-command-name">{missile ? MISSILE_LABELS[missile] : "Brak uzbrojenia"}</p>
+                  <div className="launch-command-lines">
+                    <Row k="Cel" v={`${targetCountryName} / ${region?.name ?? "—"}`} />
+                    <Row k="Liczba" v={`${units(count)} szt.`} />
+                    <Row k="Obiekty" v={targetsLabel || "—"} />
+                    <Row k="Obrona OPL" v={`${units(region?.aa_defense ?? 0)} pkt`} />
+                  </div>
+                </div>
+              </div>
+              <div className="launch-warning">
+                <span className="launch-warning-light" />
+                <span>ROZKAZ NIEODWRACALNY — AMUNICJA ZOSTANIE ZUŻYTA PO ZATWIERDZENIU</span>
+              </div>
+              <button
+                type="button"
+                className="launch-red-button"
                 disabled={launch.isPending}
-                onClick={() => launch.mutate()}
+                onClick={() => {
+                  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(45);
+                  launch.mutate();
+                }}
               >
-                <Target className="mr-2 size-5" strokeWidth={1.5} />
-                {launch.isPending ? "Odpalam…" : "Wystrzel rakietę"}
-              </Button>
+                <span className="launch-red-button-inner">
+                  <span className="launch-red-button-light" />
+                  <Target className="size-5" />
+                  <span>{launch.isPending ? "PRZEKAZYWANIE ROZKAZU…" : "URUCHOM PROCEDURĘ STARTU"}</span>
+                  <span className="launch-red-button-key">EXECUTE</span>
+                </span>
+              </button>
+              <p className="launch-footnote">Naciśnięcie przycisku natychmiast przekazuje rozkaz do centrum dowodzenia.</p>
             </div>
           ) : null}
 
@@ -499,26 +538,38 @@ function Arsenal() {
       >
         <DialogContent className="admin-dialog max-h-[85vh] overflow-y-auto">
           {phase === "processing" ? (
-            <>
-              <DialogHeader>
-                <DialogTitle className="tracking-[0.16em] uppercase">Processing</DialogTitle>
-                <DialogDescription>Rakieta w drodze do celu</DialogDescription>
-              </DialogHeader>
-              <div className="panel relative h-24 overflow-hidden p-4">
-                <div className="border-primary/40 absolute inset-x-4 top-1/2 border-t border-dashed" />
-                <Rocket
-                  className="text-primary absolute top-1/2 size-5 -translate-y-1/2 animate-[flight_2.6s_linear_forwards]"
-                  strokeWidth={1.5}
-                />
-                <Target
-                  className="text-destructive absolute top-1/2 right-4 size-5 -translate-y-1/2"
-                  strokeWidth={1.5}
-                />
+            <div className={`launch-flight-stage ${missile === "missile_3" ? "launch-flight-heavy" : ""}`}>
+              <div className="launch-flight-topline">
+                <span className="label-hud">STRATEGIC COMMAND / LIVE OPERATION</span>
+                <span className="launch-flight-live"><span /> TRANSMISJA</span>
               </div>
-              <p className="label-hud text-center">
-                Processing<span className="animate-pulse">…</span>
-              </p>
-            </>
+              <DialogHeader className="launch-flight-heading">
+                <DialogTitle className="tracking-[0.12em] uppercase">
+                  {missile === "missile_3" ? "START RAKIETY STRATEGICZNEJ" : "ROZPOCZĘTO PROCEDURĘ STARTU"}
+                </DialogTitle>
+                <DialogDescription>{region?.name} / {targetCountryName}</DialogDescription>
+              </DialogHeader>
+              <div className={`launch-flight-visual launch-flight-visual-${missile ?? "missile_1"}`}>
+                <div className="launch-flight-stars" />
+                <div className="launch-flight-radar launch-radar-a" />
+                <div className="launch-flight-radar launch-radar-b" />
+                <div className="launch-flight-horizon" />
+                <div className="launch-flight-target"><Target /></div>
+                <div className="launch-flight-trail" />
+                <div className="launch-flight-rocket"><Rocket strokeWidth={1.1} /><span className="launch-flight-flame" /></div>
+                {missile === "missile_3" ? <div className="launch-flight-afterburner" /> : null}
+              </div>
+              <div className="launch-flight-telemetry">
+                <div><span>WEAPON</span><strong>{missile?.toUpperCase()}</strong></div>
+                <div><span>PAYLOAD</span><strong>{units(result?.launched ?? count)} / {units(count)}</strong></div>
+                <div><span>DESTINATION</span><strong>{region?.name ?? "—"}</strong></div>
+              </div>
+              <div className="launch-flight-status">
+                <Activity className="size-4" />
+                <span>{missile === "missile_3" ? "RAKIETA STRATEGICZNA W LOCIE" : "RAKIETA W LOCIE"}</span>
+                <span className="launch-flight-status-dots">•••</span>
+              </div>
+            </div>
           ) : null}
 
           {phase === "result" && result ? (
@@ -535,20 +586,22 @@ function Arsenal() {
                   {region?.name} — {targetCountryName}
                 </DialogDescription>
               </DialogHeader>
-              <div className="panel space-y-2 p-4 text-sm">
-                <Row
-                  k="Użyta rakieta"
-                  v={`${missile ? (MISSILE_LABELS[missile] ?? missile) : ""} x${units(
-                    result.launched ?? count,
-                  )}`}
-                />
-                {(result.impacts ?? 0) > 0 ? (
-                  <Row k="Zniszczone budynki" v={units(result.destroyed ?? 0)} />
-                ) : (
-                  <Row k="Obrona" v="OPL regionu" />
-                )}
+              <div className={`launch-result-banner ${(result.impacts ?? 0) > 0 ? "launch-result-hit" : "launch-result-blocked"}`}>
+                {(result.impacts ?? 0) > 0 ? <CheckCircle2 /> : <XCircle />}
+                <div>
+                  <p className="label-hud">RAPORT SYSTEMU</p>
+                  <strong>{(result.impacts ?? 0) > 0 ? "CEL TRAFIONY" : "RAKIETA PRZECHWYCONA"}</strong>
+                </div>
               </div>
-              <Button onClick={reset}>Zamknij</Button>
+              <div className="panel space-y-2 p-4 text-sm">
+                <Row k="Użyta rakieta" v={`${missile ? (MISSILE_LABELS[missile] ?? missile) : ""} x${units(result.launched ?? count)}`} />
+                <Row k="Wystrzelono" v={units(result.launched ?? count)} />
+                <Row k="Przechwycono" v={units(result.intercepted ?? 0)} />
+                <Row k="Uderzenia" v={units(result.impacts ?? 0)} />
+                <Row k="Zniszczone budynki" v={units(result.destroyed ?? 0)} />
+                {result.stopped_reason ? <Row k="Powód zatrzymania" v={result.stopped_reason} /> : null}
+              </div>
+              <Button onClick={reset} className="w-full">ZAMKNIJ RAPORT OPERACJI</Button>
             </>
           ) : null}
         </DialogContent>
