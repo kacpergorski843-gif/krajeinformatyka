@@ -1846,7 +1846,6 @@ function ShopTab() {
   const toggle = useMutation({
     mutationFn: ({ code, active }: { code: string; active: boolean }) => rpc("admin_toggle_shop_item", { p_code: code, p_active: active }),
     onSuccess: () => {
-      toast.success("Widoczność produktu zmieniona");
       void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] });
       void queryClient.invalidateQueries({ queryKey: ["shop_items"] });
     },
@@ -1863,62 +1862,66 @@ function ShopTab() {
   });
 
   return (
-    <div className="min-w-0 space-y-4">
-      <Panel className="min-w-0 p-3 sm:p-4">
-        <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_12rem_11rem_auto]">
-          <div className="relative min-w-0">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="min-w-0 pl-9" placeholder="Szukaj po nazwie, opisie lub ID…" value={search} onChange={(event) => setSearch(event.target.value)} />
-          </div>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="min-w-0"><SelectValue placeholder="Kategoria" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Wszystkie kategorie</SelectItem>
-              {categories.map((value) => <SelectItem key={value} value={value}>{shopCategoryLabel(value)}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={visibility} onValueChange={setVisibility}>
-            <SelectTrigger className="min-w-0"><SelectValue placeholder="Widoczność" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Każda widoczność</SelectItem>
-              <SelectItem value="true">Widoczne w sklepie</SelectItem>
-              <SelectItem value="false">Ukryte w sklepie</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button className="w-full sm:col-span-2 xl:col-span-1" onClick={() => setEdit(emptyForm)}><PackagePlus />Dodaj produkt</Button>
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Produkty</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{items.length} produktów</p>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">Produkty: <span className="num text-foreground">{items.length}</span> z {itemQuery.data?.length ?? 0}</p>
-      </Panel>
+        <Button className="h-11 w-full sm:w-auto" onClick={() => setEdit(emptyForm)}><PackagePlus />Dodaj produkt</Button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_12rem]">
+        <div className="relative min-w-0">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="h-11 pl-10" placeholder="Szukaj produktu…" value={search} onChange={(event) => setSearch(event.target.value)} />
+        </div>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger className="h-11"><SelectValue placeholder="Kategoria" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Wszystkie kategorie</SelectItem>
+            {categories.map((value) => <SelectItem key={value} value={value}>{shopCategoryLabel(value)}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={visibility} onValueChange={setVisibility}>
+          <SelectTrigger className="h-11"><SelectValue placeholder="Widoczność" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Wszystkie</SelectItem>
+            <SelectItem value="true">Widoczne</SelectItem>
+            <SelectItem value="false">Ukryte</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {itemQuery.isLoading ? <LoadingRows /> : itemQuery.isError ? (
-        <HudState icon={<ShieldAlert />} title="Nie udało się pobrać produktów" description={itemQuery.error instanceof Error ? itemQuery.error.message : "Sprawdź połączenie i spróbuj ponownie."}>
-          <Button variant="outline" onClick={() => void itemQuery.refetch()}>Spróbuj ponownie</Button>
+        <HudState icon={<ShieldAlert />} title="Nie udało się pobrać produktów" description="Spróbuj ponownie." >
+          <Button variant="outline" onClick={() => void itemQuery.refetch()}>Odśwież</Button>
         </HudState>
       ) : items.length === 0 ? (
-        <HudState icon={<ShoppingCart />} title="Brak produktów" description="Zmień filtry lub dodaj nowy produkt." />
+        <HudState icon={<ShoppingCart />} title="Brak produktów" description="Zmień filtry lub dodaj produkt." />
       ) : (
-        <div className="grid min-w-0 gap-3 xl:grid-cols-2">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
           {items.map((item) => (
-            <Panel key={item.code} className="min-w-0 p-3 sm:p-4">
-              <div className="flex min-w-0 items-start gap-3">
-                <button type="button" className="min-w-0 flex-1 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setEdit(toForm(item))} aria-label={`Edytuj produkt ${item.name}`}>
-                  <span className={`block break-words font-semibold ${item.active ? "" : "text-muted-foreground"}`}>{item.name}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{shopCategoryLabel(item.category)}</span>
+            <Panel key={item.code} className="min-w-0 p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setEdit(toForm(item))}>
+                  <span className="block break-words text-lg font-semibold leading-snug">{item.name}</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{shopCategoryLabel(item.category)}</span>
                 </button>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-[11px] text-muted-foreground">{item.active ? "Widoczny" : "Ukryty"}</span>
-                  <Switch aria-label={`Widoczność produktu ${item.name}`} checked={item.active} disabled={toggle.isPending} onCheckedChange={(active) => toggle.mutate({ code: item.code, active })} />
+                <Switch aria-label={`Widoczność produktu ${item.name}`} checked={item.active} disabled={toggle.isPending} onCheckedChange={(active) => toggle.mutate({ code: item.code, active })} />
+              </div>
+              {item.description ? <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p> : null}
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-secondary/50 p-3">
+                  <p className="text-sm text-muted-foreground">Cena</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums">{fmtKR(item.cost_kr)} KR</p>
+                </div>
+                <div className="rounded-lg bg-secondary/50 p-3">
+                  <p className="text-sm text-muted-foreground">Dzienny efekt</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums text-success">{Number(item.income_kr) ? `+${fmtKR(item.income_kr)} KR` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "Brak"}</p>
                 </div>
               </div>
-              {item.description ? <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.description}</p> : null}
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <ValueBox label="Koszt zakupu" value={fmtKR(item.cost_kr)} />
-                <ValueBox label="Efekt na dobę" value={Number(item.income_kr) ? `+${fmtKR(item.income_kr)}` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "Brak"} tone={Number(item.income_kr) || item.produces ? "success" : "muted"} />
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-2">
-                <span className="min-w-0 truncate font-mono text-[10px] text-muted-foreground" title={item.code}>ID: {item.code}</span>
-                <Button size="sm" variant="outline" onClick={() => setEdit(toForm(item))}>Edytuj <ChevronRight /></Button>
-              </div>
+              <Button variant="outline" className="mt-4 h-11 w-full" onClick={() => setEdit(toForm(item))}>Edytuj produkt</Button>
             </Panel>
           ))}
         </div>
@@ -1933,16 +1936,16 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
   const update = (key: string, value: string) => onEdit({ ...edit, [key]: value });
   const isExisting = items.some((item) => item.code === edit.code);
   const numericFields = [
-    { key: "cost_kr", label: "Cena w KR", hint: "Jednorazowy koszt zakupu produktu." },
-    { key: "cost_coal", label: "Koszt: węgiel", hint: "Ilość węgla pobierana przy zakupie." },
-    { key: "cost_oil", label: "Koszt: ropa", hint: "Ilość ropy pobierana przy zakupie." },
-    { key: "cost_copper", label: "Koszt: miedź", hint: "Ilość miedzi pobierana przy zakupie." },
-    { key: "cost_iron", label: "Koszt: żelazo", hint: "Ilość żelaza pobierana przy zakupie." },
-    { key: "cost_uranium", label: "Koszt: uran", hint: "Ilość uranu pobierana przy zakupie." },
-    { key: "income_kr", label: "Dochód KR / dobę", hint: "Kwota dopisywana do skarbca podczas cyklu dobowego." },
-    { key: "upkeep_coal", label: "Zużycie węgla / dobę", hint: "Ilość węgla pobierana podczas cyklu dobowego." },
-    { key: "produces_amount", label: "Produkcja surowca / dobę", hint: "Ilość surowca produkowana podczas cyklu dobowego." },
-    { key: "sort_order", label: "Pozycja na liście", hint: "Mniejsza liczba wyświetla produkt wyżej w sklepie." },
+    { key: "cost_kr", label: "Cena (KR)" },
+    { key: "cost_coal", label: "Węgiel" },
+    { key: "cost_oil", label: "Ropa" },
+    { key: "cost_copper", label: "Miedź" },
+    { key: "cost_iron", label: "Żelazo" },
+    { key: "cost_uranium", label: "Uran" },
+    { key: "income_kr", label: "Dochód (KR)" },
+    { key: "upkeep_coal", label: "Zużycie węgla" },
+    { key: "produces_amount", label: "Produkcja surowca" },
+    { key: "sort_order", label: "Kolejność" },
   ];
   const validNumbers = numericFields.every(({ key }) => {
     const value = String(edit[key] ?? "0").trim();
@@ -1952,74 +1955,59 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
 
   return (
     <Dialog open onOpenChange={(open) => !open && onEdit(null)}>
-      <DialogContent className="admin-dialog max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl overflow-y-auto sm:w-[calc(100%-2rem)]">
+      <DialogContent className="admin-dialog max-h-[94dvh] w-[calc(100%-1rem)] max-w-2xl overflow-y-auto sm:w-[calc(100%-2rem)]">
         <DialogHeader>
-          <DialogTitle>{isExisting ? "Edytuj produkt" : "Dodaj produkt"}</DialogTitle>
-          <DialogDescription>Ustaw nazwę widoczną w grze, koszty zakupu i efekty naliczane codziennie. Zmiany wpływają na sklep gracza.</DialogDescription>
+          <DialogTitle className="text-xl">{isExisting ? "Edytuj produkt" : "Nowy produkt"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-6">
-          <section className="space-y-3">
-            <div>
-              <h3 className="text-sm font-semibold">Podstawowe informacje</h3>
-              <p className="text-xs text-muted-foreground">Te dane pomagają rozpoznać produkt w panelu i sklepie.</p>
+        <div className="space-y-7">
+          <section className="space-y-4">
+            <h3 className="text-base font-semibold">Podstawowe</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Nazwa"><Input className="h-11" autoFocus={!isExisting} value={edit.name} onChange={(event) => update("name", event.target.value)} placeholder="Nazwa produktu" /></Field>
+              <Field label="Kategoria"><Input className="h-11" value={edit.category} onChange={(event) => update("category", event.target.value)} placeholder="Kategoria" /></Field>
+              <Field label="Kod produktu"><Input className="h-11" value={edit.code} disabled={isExisting} onChange={(event) => update("code", event.target.value)} placeholder="np. factory_1" /></Field>
+              <Field label="Opis"><Input className="h-11" value={edit.description} onChange={(event) => update("description", event.target.value)} placeholder="Krótki opis" /></Field>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Nazwa produktu"><Input autoFocus={!isExisting} value={edit.name} onChange={(event) => update("name", event.target.value)} placeholder="Np. Fabryka I" /></Field>
-              <Field label="Kategoria"><Input value={edit.category} onChange={(event) => update("category", event.target.value)} placeholder="Np. Budynki" /><span className="block text-[11px] text-muted-foreground">Nazwa kategorii wyświetlana w sklepie.</span></Field>
-            </div>
-            <Field label="Opis produktu"><Input value={edit.description} onChange={(event) => update("description", event.target.value)} placeholder="Krótko opisz, co daje zakup." /><span className="block text-[11px] text-muted-foreground">Opis widoczny dla graczy w sklepie.</span></Field>
-            <Field label="Identyfikator techniczny">
-              <Input value={edit.code} disabled={isExisting} onChange={(event) => update("code", event.target.value)} placeholder="np. factory_1" />
-              <span className="block text-[11px] text-muted-foreground">{isExisting ? "Stały identyfikator produktu. Nie można go zmienić po utworzeniu." : "Unikalny kod używany przez grę. Użyj małych liter, cyfr i podkreśleń, np. factory_1."}</span>
-            </Field>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Powiązany budynek">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Budynek">
                 <Select value={edit.building || "none"} onValueChange={(value) => update("building", value === "none" ? "" : value)}>
-                  <SelectTrigger><SelectValue placeholder="Nie dotyczy" /></SelectTrigger>
-                  <SelectContent><SelectItem value="none">Nie dotyczy</SelectItem>{Object.entries(BUILDING_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="Brak" /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">Brak</SelectItem>{Object.entries(BUILDING_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
                 </Select>
-                <span className="block text-[11px] text-muted-foreground">Wybierz, jeśli produkt jest budynkiem możliwym do postawienia w regionie.</span>
               </Field>
               <Field label="Produkowany surowiec">
                 <Select value={edit.produces || "none"} onValueChange={(value) => update("produces", value === "none" ? "" : value)}>
-                  <SelectTrigger><SelectValue placeholder="Brak produkcji" /></SelectTrigger>
-                  <SelectContent><SelectItem value="none">Brak produkcji</SelectItem>{Object.entries(RESOURCE_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="Brak" /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">Brak</SelectItem>{Object.entries(RESOURCE_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
                 </Select>
-                <span className="block text-[11px] text-muted-foreground">Wybierz surowiec, jeśli budynek coś produkuje.</span>
               </Field>
             </div>
           </section>
-          <section className="space-y-3 border-t border-border pt-4">
-            <div>
-              <h3 className="text-sm font-semibold">Koszty zakupu</h3>
-              <p className="text-xs text-muted-foreground">Wartości pobierane jednorazowo z zasobów państwa przy zakupie.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {numericFields.slice(0, 6).map(({ key, label, hint }) => <Field key={key} label={label}><Input className="num" type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /><span className="block text-[11px] text-muted-foreground">{hint}</span></Field>)}
+
+          <section className="space-y-4 border-t border-border pt-5">
+            <h3 className="text-base font-semibold">Koszt zakupu</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {numericFields.slice(0, 6).map(({ key, label }) => <Field key={key} label={label}><Input className="num h-11" type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /></Field>)}
             </div>
           </section>
-          <section className="space-y-3 border-t border-border pt-4">
-            <div>
-              <h3 className="text-sm font-semibold">Efekty podczas cyklu dobowego</h3>
-              <p className="text-xs text-muted-foreground">Te wartości są naliczane automatycznie raz dziennie.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {numericFields.slice(6, 9).map(({ key, label, hint }) => <Field key={key} label={label}><Input className="num" type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /><span className="block text-[11px] text-muted-foreground">{hint}</span></Field>)}
+
+          <section className="space-y-4 border-t border-border pt-5">
+            <h3 className="text-base font-semibold">Efekt dzienny</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {numericFields.slice(6, 9).map(({ key, label }) => <Field key={key} label={label}><Input className="num h-11" type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /></Field>)}
             </div>
           </section>
-          <section className="space-y-3 border-t border-border pt-4">
-            <Field label="Kolejność wyświetlania">
-              <Input className="num" type="number" min="0" step="1" value={edit.sort_order ?? "100"} onChange={(event) => update("sort_order", event.target.value)} />
-              <span className="block text-[11px] text-muted-foreground">Mniejsza wartość oznacza wyższą pozycję na liście produktów.</span>
-            </Field>
-            <div className="flex items-center justify-between gap-3 border border-border p-3">
-              <div><p className="text-sm font-medium">Produkt dostępny w sklepie</p><p className="text-xs text-muted-foreground">Wyłącz, aby ukryć go przed graczami bez usuwania danych.</p></div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Kolejność"><Input className="num h-11" type="number" min="0" step="1" value={edit.sort_order ?? "100"} onChange={(event) => update("sort_order", event.target.value)} /></Field>
+            <div className="flex min-h-11 items-center justify-between rounded-lg border border-border px-4">
+              <Label className="text-sm">Produkt aktywny</Label>
               <Switch checked={edit.active === "true"} onCheckedChange={(active) => update("active", String(active))} />
             </div>
-          </section>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Button variant="outline" onClick={() => onEdit(null)}>Anuluj</Button>
-            <Button disabled={!valid || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button>
+          </div>
+          <div className="grid gap-3 border-t border-border pt-5 sm:grid-cols-2">
+            <Button variant="outline" className="h-11" onClick={() => onEdit(null)}>Anuluj</Button>
+            <Button className="h-11" disabled={!valid || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button>
           </div>
         </div>
       </DialogContent>
