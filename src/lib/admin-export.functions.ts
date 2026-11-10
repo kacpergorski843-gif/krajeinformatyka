@@ -22,6 +22,8 @@ const EXPORT_TABLES = [
   "bilateral_agreements",
   "bilateral_agreement_runs",
   "device_account_bindings",
+  "country_suggestions",
+  "app_maintenance_mode",
 ] as const;
 
 type ExportTable = (typeof EXPORT_TABLES)[number];
