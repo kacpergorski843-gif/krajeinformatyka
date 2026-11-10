@@ -98,10 +98,6 @@ function MarketPage() {
   const respond = (id:string, action:string, quantity?:string, price?:string) => run("market_respond_negotiation", {p_negotiation_id:id,p_action:action,p_quantity:quantity ?? null,p_unit_price:price ?? null});
 
   return <AppShell me={me ?? null} title="Rynek">
-    <Panel className="mb-4 space-y-1 p-3">
-      <p className="flex items-center gap-2 text-sm font-semibold"><Tag className="size-4 text-primary"/> Rynek państw</p>
-      <p className="text-xs text-muted-foreground">0% prowizji · oferty ważne 7 dni · maksymalnie 10 aktywnych ofert na państwo. Wystawione towary są rezerwowane do sprzedaży, anulowania lub wygaśnięcia. Handel działa również podczas wojny.</p>
-    </Panel>
     <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
       {tabs.map(t => <button key={t.id} type="button" onClick={()=>setTab(t.id)} className={`rounded-lg border px-2 py-3 text-xs font-semibold ${tab===t.id?"border-primary bg-primary/10 text-primary":"border-border bg-card text-muted-foreground"}`}><span className="flex items-center justify-center gap-2"><t.icon className="size-4"/>{t.label}</span></button>)}
     </div>
