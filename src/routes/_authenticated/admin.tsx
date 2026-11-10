@@ -1817,6 +1817,22 @@ Dodaj nowe państwo
     </div>
   );
 }
+function shopCategoryLabel(value: string) {
+  const labels: Record<string, string> = {
+    BUILDING: "Budynki",
+    BUILDINGS: "Budynki",
+    RESOURCE: "Surowce",
+    RESOURCES: "Surowce",
+    MILITARY: "Wojsko",
+    UNIT: "Jednostki",
+    UNITS: "Jednostki",
+    OTHER: "Inne",
+    INNE: "Inne",
+  };
+  const normalized = value.trim();
+  return labels[normalized.toUpperCase()] ?? normalized.replace(/[_-]+/g, " ").toLocaleLowerCase("pl-PL").replace(/(^|\\s)\\p{L}/gu, (letter) => letter.toLocaleUpperCase("pl-PL"));
+}
+
 function ShopTab() {
   const itemQuery = useQuery(adminShopQuery);
   const queryClient = useQueryClient();
@@ -1825,17 +1841,204 @@ function ShopTab() {
   const [category, setCategory] = useState("all");
   const [visibility, setVisibility] = useState("all");
   const [edit, setEdit] = useState<Record<string, string> | null>(null);
-  const categories = useMemo(() => [...new Set((itemQuery.data ?? []).map((item) => item.category))], [itemQuery.data]);
-  const items = useMemo(() => (itemQuery.data ?? []).filter((item) => item.name.toLowerCase().includes(deferredSearch.toLowerCase()) && (category === "all" || item.category === category) && (visibility === "all" || String(item.active) === visibility)), [itemQuery.data, deferredSearch, category, visibility]);
-  const save = useMutation({ mutationFn: (payload: Record<string, string>) => rpc("admin_upsert_shop_item", { p_item: payload }), onSuccess: () => { toast.success("Produkt zapisany"); setEdit(null); void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] }); void queryClient.invalidateQueries({ queryKey: ["shop_items"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const toggle = useMutation({ mutationFn: ({ code, active }: { code: string; active: boolean }) => rpc("admin_toggle_shop_item", { p_code: code, p_active: active }), onSuccess: () => { toast.success("Widoczność zmieniona"); void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] }); void queryClient.invalidateQueries({ queryKey: ["shop_items"] }); }, onError: (error: Error) => toast.error(error.message) });
+  const categories = useMemo(() => [...new Set((itemQuery.data ?? []).map((item) => item.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pl")), [itemQuery.data]);
+  const items = useMemo(() => (itemQuery.data ?? []).filter((item) =>
+    `${item.name} ${item.code} ${item.description} ${shopCategoryLabel(item.category)}`.toLocaleLowerCase("pl-PL").includes(deferredSearch.trim().toLocaleLowerCase("pl-PL")) &&
+    (category === "all" || item.category === category) &&
+    (visibility === "all" || String(item.active) === visibility)
+  ), [itemQuery.data, deferredSearch, category, visibility]);
+  const save = useMutation({
+    mutationFn: (payload: Record<string, string>) => rpc("admin_upsert_shop_item", { p_item: payload }),
+    onSuccess: () => {
+      toast.success("Produkt zapisany");
+      setEdit(null);
+      void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] });
+      void queryClient.invalidateQueries({ queryKey: ["shop_items"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const toggle = useMutation({
+    mutationFn: ({ code, active }: { code: string; active: boolean }) => rpc("admin_toggle_shop_item", { p_code: code, p_active: active }),
+    onSuccess: () => {
+      toast.success("Widoczność produktu zmieniona");
+      void queryClient.invalidateQueries({ queryKey: ["admin_shop_items"] });
+      void queryClient.invalidateQueries({ queryKey: ["shop_items"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const emptyForm = { code: "", name: "", category: "INNE", description: "", building: "", produces: "", active: "true", cost_kr: "0", cost_coal: "0", cost_oil: "0", cost_copper: "0", cost_iron: "0", cost_uranium: "0", income_kr: "0", upkeep_coal: "0", produces_amount: "0", sort_order: "100" };
-  const toForm = (item: ShopItem) => ({ code: item.code, name: item.name, category: item.category, description: item.description, building: item.building ?? "", produces: item.produces ?? "", active: String(item.active), cost_kr: item.cost_kr, cost_coal: item.cost_coal, cost_oil: item.cost_oil, cost_copper: item.cost_copper, cost_iron: item.cost_iron, cost_uranium: item.cost_uranium, income_kr: item.income_kr, upkeep_coal: item.upkeep_coal, produces_amount: item.produces_amount, sort_order: String(item.sort_order) });
-  return <div className="space-y-4"><Panel className="p-3"><div className="grid gap-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_11rem_auto]"><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Szukaj produktu…" value={search} onChange={(event) => setSearch(event.target.value)} /></div><Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Wszystkie kategorie</SelectItem>{categories.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select><Select value={visibility} onValueChange={setVisibility}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Każda widoczność</SelectItem><SelectItem value="true">Widoczne</SelectItem><SelectItem value="false">Ukryte</SelectItem></SelectContent></Select><Button onClick={() => setEdit(emptyForm)}><PackagePlus />Dodaj produkt</Button></div></Panel>{itemQuery.isLoading ? <LoadingRows /> : items.length === 0 ? <HudState icon={<ShoppingCart />} title="Brak produktów" description="Zmień filtry lub dodaj nowy produkt." /> : <div className="grid gap-3 lg:grid-cols-2">{items.map((item) => <Panel key={item.code} className="min-w-0 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><Button variant="ghost" className="h-auto min-w-0 justify-start p-0 text-left hover:bg-transparent" onClick={() => setEdit(toForm(item))}><span className="min-w-0"><span className={`block truncate font-semibold ${item.active ? "" : "text-inactive"}`}>{item.name}</span><span className="block truncate text-[11px] font-normal text-muted-foreground">{item.category} · {item.code}</span></span></Button><Switch checked={item.active} onCheckedChange={(active) => toggle.mutate({ code: item.code, active })} /></div><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Cena" value={fmtKR(item.cost_kr)} /><ValueBox label="Efekt / doba" value={Number(item.income_kr) ? `+${fmtKR(item.income_kr)}` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "—"} tone={Number(item.income_kr) || item.produces ? "success" : "muted"} /></div></Panel>)}</div>}<ProductDialog edit={edit} items={itemQuery.data ?? []} onEdit={setEdit} onSave={(payload) => save.mutate(payload)} pending={save.isPending} /></div>;
+  const toForm = (item: ShopItem) => ({
+    code: item.code, name: item.name, category: item.category, description: item.description,
+    building: item.building ?? "", produces: item.produces ?? "", active: String(item.active),
+    cost_kr: item.cost_kr, cost_coal: item.cost_coal, cost_oil: item.cost_oil,
+    cost_copper: item.cost_copper, cost_iron: item.cost_iron, cost_uranium: item.cost_uranium,
+    income_kr: item.income_kr, upkeep_coal: item.upkeep_coal,
+    produces_amount: item.produces_amount, sort_order: String(item.sort_order),
+  });
+
+  return (
+    <div className="min-w-0 space-y-4">
+      <Panel className="min-w-0 p-3 sm:p-4">
+        <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_12rem_11rem_auto]">
+          <div className="relative min-w-0">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input className="min-w-0 pl-9" placeholder="Szukaj po nazwie, opisie lub ID…" value={search} onChange={(event) => setSearch(event.target.value)} />
+          </div>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="min-w-0"><SelectValue placeholder="Kategoria" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Wszystkie kategorie</SelectItem>
+              {categories.map((value) => <SelectItem key={value} value={value}>{shopCategoryLabel(value)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={visibility} onValueChange={setVisibility}>
+            <SelectTrigger className="min-w-0"><SelectValue placeholder="Widoczność" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Każda widoczność</SelectItem>
+              <SelectItem value="true">Widoczne w sklepie</SelectItem>
+              <SelectItem value="false">Ukryte w sklepie</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button className="w-full sm:col-span-2 xl:col-span-1" onClick={() => setEdit(emptyForm)}><PackagePlus />Dodaj produkt</Button>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">Produkty: <span className="num text-foreground">{items.length}</span> z {itemQuery.data?.length ?? 0}</p>
+      </Panel>
+
+      {itemQuery.isLoading ? <LoadingRows /> : itemQuery.isError ? (
+        <HudState icon={<ShieldAlert />} title="Nie udało się pobrać produktów" description={itemQuery.error instanceof Error ? itemQuery.error.message : "Sprawdź połączenie i spróbuj ponownie."}>
+          <Button variant="outline" onClick={() => void itemQuery.refetch()}>Spróbuj ponownie</Button>
+        </HudState>
+      ) : items.length === 0 ? (
+        <HudState icon={<ShoppingCart />} title="Brak produktów" description="Zmień filtry lub dodaj nowy produkt." />
+      ) : (
+        <div className="grid min-w-0 gap-3 xl:grid-cols-2">
+          {items.map((item) => (
+            <Panel key={item.code} className="min-w-0 p-3 sm:p-4">
+              <div className="flex min-w-0 items-start gap-3">
+                <button type="button" className="min-w-0 flex-1 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setEdit(toForm(item))} aria-label={`Edytuj produkt ${item.name}`}>
+                  <span className={`block break-words font-semibold ${item.active ? "" : "text-muted-foreground"}`}>{item.name}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{shopCategoryLabel(item.category)}</span>
+                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-[11px] text-muted-foreground">{item.active ? "Widoczny" : "Ukryty"}</span>
+                  <Switch aria-label={`Widoczność produktu ${item.name}`} checked={item.active} disabled={toggle.isPending} onCheckedChange={(active) => toggle.mutate({ code: item.code, active })} />
+                </div>
+              </div>
+              {item.description ? <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.description}</p> : null}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <ValueBox label="Koszt zakupu" value={fmtKR(item.cost_kr)} />
+                <ValueBox label="Efekt na dobę" value={Number(item.income_kr) ? `+${fmtKR(item.income_kr)}` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "Brak"} tone={Number(item.income_kr) || item.produces ? "success" : "muted"} />
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-2">
+                <span className="min-w-0 truncate font-mono text-[10px] text-muted-foreground" title={item.code}>ID: {item.code}</span>
+                <Button size="sm" variant="outline" onClick={() => setEdit(toForm(item))}>Edytuj <ChevronRight /></Button>
+              </div>
+            </Panel>
+          ))}
+        </div>
+      )}
+      <ProductDialog edit={edit} items={itemQuery.data ?? []} onEdit={setEdit} onSave={(payload) => save.mutate(payload)} pending={save.isPending} />
+    </div>
+  );
 }
 
 function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<string, string> | null; items: ShopItem[]; onEdit: (value: Record<string, string> | null) => void; onSave: (value: Record<string, string>) => void; pending: boolean }) {
-  return <Dialog open={!!edit} onOpenChange={(open) => !open && onEdit(null)}><DialogContent className="admin-dialog max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl overflow-y-auto sm:w-[calc(100%-2rem)]"><DialogHeader><DialogTitle>{edit?.["code"] ? "Edycja produktu" : "Nowy produkt"}</DialogTitle><DialogDescription>Te wartości są wspólnym źródłem dla sklepu i walidacji zakupów.</DialogDescription></DialogHeader>{edit ? <div className="space-y-5"><section><p className="label-hud mb-3">Identyfikacja</p><div className="grid gap-3 sm:grid-cols-2">{([["code","Kod produktu"],["name","Nazwa"],["category","Kategoria"],["building","Typ budynku"],["produces","Produkowany surowiec"]] as const).map(([key,label]) => <Field key={key} label={label}><Input value={edit[key] ?? ""} disabled={key === "code" && items.some((item) => item.code === edit["code"])} onChange={(event) => onEdit({ ...edit, [key]: event.target.value })} /></Field>)}</div><Field label="Opis" className="mt-3"><Input value={edit["description"] ?? ""} onChange={(event) => onEdit({ ...edit, description: event.target.value })} /></Field></section><section><p className="label-hud mb-3">Koszty i efekty</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{SHOP_NUMERIC.map(([key,label]) => <Field key={key} label={label}><Input className="num" type="number" min="0" value={edit[key] ?? "0"} onChange={(event) => onEdit({ ...edit, [key]: event.target.value })} /></Field>)}</div></section><div className="flex items-center gap-3 border border-border p-3"><Switch checked={edit["active"] === "true"} onCheckedChange={(active) => onEdit({ ...edit, active: String(active) })} /><span className="text-sm">Produkt widoczny w sklepie</span></div><div className="grid gap-2 sm:grid-cols-2"><Button variant="outline" onClick={() => onEdit(null)}>Anuluj</Button><Button disabled={!(edit["code"] ?? "").trim() || !(edit["name"] ?? "").trim() || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button></div></div> : null}</DialogContent></Dialog>;
+  if (!edit) return null;
+  const update = (key: string, value: string) => onEdit({ ...edit, [key]: value });
+  const isExisting = items.some((item) => item.code === edit.code);
+  const numericFields = [
+    { key: "cost_kr", label: "Cena w KR", hint: "Jednorazowy koszt zakupu produktu." },
+    { key: "cost_coal", label: "Koszt: węgiel", hint: "Ilość węgla pobierana przy zakupie." },
+    { key: "cost_oil", label: "Koszt: ropa", hint: "Ilość ropy pobierana przy zakupie." },
+    { key: "cost_copper", label: "Koszt: miedź", hint: "Ilość miedzi pobierana przy zakupie." },
+    { key: "cost_iron", label: "Koszt: żelazo", hint: "Ilość żelaza pobierana przy zakupie." },
+    { key: "cost_uranium", label: "Koszt: uran", hint: "Ilość uranu pobierana przy zakupie." },
+    { key: "income_kr", label: "Dochód KR / dobę", hint: "Kwota dopisywana do skarbca podczas cyklu dobowego." },
+    { key: "upkeep_coal", label: "Zużycie węgla / dobę", hint: "Ilość węgla pobierana podczas cyklu dobowego." },
+    { key: "produces_amount", label: "Produkcja surowca / dobę", hint: "Ilość surowca produkowana podczas cyklu dobowego." },
+    { key: "sort_order", label: "Pozycja na liście", hint: "Mniejsza liczba wyświetla produkt wyżej w sklepie." },
+  ];
+  const validNumbers = numericFields.every(({ key }) => {
+    const value = edit[key] ?? "0";
+    return value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
+  });
+  const valid = !!edit.code.trim() && !!edit.name.trim() && !!edit.category.trim() && validNumbers;
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onEdit(null)}>
+      <DialogContent className="admin-dialog max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl overflow-y-auto sm:w-[calc(100%-2rem)]">
+        <DialogHeader>
+          <DialogTitle>{isExisting ? "Edytuj produkt" : "Dodaj produkt"}</DialogTitle>
+          <DialogDescription>Ustaw nazwę widoczną w grze, koszty zakupu i efekty naliczane codziennie. Zmiany wpływają na sklep gracza.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold">Podstawowe informacje</h3>
+              <p className="text-xs text-muted-foreground">Te dane pomagają rozpoznać produkt w panelu i sklepie.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Nazwa produktu"><Input autoFocus={!isExisting} value={edit.name} onChange={(event) => update("name", event.target.value)} placeholder="Np. Fabryka I" /></Field>
+              <Field label="Kategoria"><Input value={edit.category} onChange={(event) => update("category", event.target.value)} placeholder="Np. Budynki" /><span className="block text-[11px] text-muted-foreground">Nazwa kategorii wyświetlana w sklepie.</span></Field>
+            </div>
+            <Field label="Opis produktu"><Input value={edit.description} onChange={(event) => update("description", event.target.value)} placeholder="Krótko opisz, co daje zakup." /><span className="block text-[11px] text-muted-foreground">Opis widoczny dla graczy w sklepie.</span></Field>
+            <Field label="Identyfikator techniczny">
+              <Input value={edit.code} disabled={isExisting} onChange={(event) => update("code", event.target.value)} placeholder="np. factory_1" />
+              <span className="block text-[11px] text-muted-foreground">{isExisting ? "Stały identyfikator produktu. Nie można go zmienić po utworzeniu." : "Unikalny kod używany przez grę. Użyj małych liter, cyfr i podkreśleń, np. factory_1."}</span>
+            </Field>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Powiązany budynek">
+                <Select value={edit.building || "none"} onValueChange={(value) => update("building", value === "none" ? "" : value)}>
+                  <SelectTrigger><SelectValue placeholder="Nie dotyczy" /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">Nie dotyczy</SelectItem>{Object.entries(BUILDING_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                </Select>
+                <span className="block text-[11px] text-muted-foreground">Wybierz, jeśli produkt jest budynkiem możliwym do postawienia w regionie.</span>
+              </Field>
+              <Field label="Produkowany surowiec">
+                <Select value={edit.produces || "none"} onValueChange={(value) => update("produces", value === "none" ? "" : value)}>
+                  <SelectTrigger><SelectValue placeholder="Brak produkcji" /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">Brak produkcji</SelectItem>{Object.entries(RESOURCE_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                </Select>
+                <span className="block text-[11px] text-muted-foreground">Wybierz surowiec, jeśli budynek coś produkuje.</span>
+              </Field>
+            </div>
+          </section>
+          <section className="space-y-3 border-t border-border pt-4">
+            <div>
+              <h3 className="text-sm font-semibold">Koszty zakupu</h3>
+              <p className="text-xs text-muted-foreground">Wartości pobierane jednorazowo z zasobów państwa przy zakupie.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {numericFields.slice(0, 6).map(({ key, label, hint }) => <Field key={key} label={label}><Input className="num" type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /><span className="block text-[11px] text-muted-foreground">{hint}</span></Field>)}
+            </div>
+          </section>
+          <section className="space-y-3 border-t border-border pt-4">
+            <div>
+              <h3 className="text-sm font-semibold">Efekty podczas cyklu dobowego</h3>
+              <p className="text-xs text-muted-foreground">Te wartości są naliczane automatycznie raz dziennie.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {numericFields.slice(6, 9).map(({ key, label, hint }) => <Field key={key} label={label}><Input className="num" type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /><span className="block text-[11px] text-muted-foreground">{hint}</span></Field>)}
+            </div>
+          </section>
+          <section className="space-y-3 border-t border-border pt-4">
+            <Field label="Kolejność wyświetlania">
+              <Input className="num" type="number" min="0" step="1" value={edit.sort_order ?? "100"} onChange={(event) => update("sort_order", event.target.value)} />
+              <span className="block text-[11px] text-muted-foreground">Mniejsza wartość oznacza wyższą pozycję na liście produktów.</span>
+            </Field>
+            <div className="flex items-center justify-between gap-3 border border-border p-3">
+              <div><p className="text-sm font-medium">Produkt dostępny w sklepie</p><p className="text-xs text-muted-foreground">Wyłącz, aby ukryć go przed graczami bez usuwania danych.</p></div>
+              <Switch checked={edit.active === "true"} onCheckedChange={(active) => update("active", String(active))} />
+            </div>
+          </section>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button variant="outline" onClick={() => onEdit(null)}>Anuluj</Button>
+            <Button disabled={!valid || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function EconomyTab() {
