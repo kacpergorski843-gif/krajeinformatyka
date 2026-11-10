@@ -1936,7 +1936,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
   const update = (key: string, value: string) => onEdit({ ...edit, [key]: value });
   const isExisting = items.some((item) => item.code === edit.code);
   const numericFields = [
-    { key: "cost_kr", label: "Cena (KR)" },
+    { key: "cost_kr", label: "Pieniądze (KR)" },
     { key: "cost_coal", label: "Węgiel" },
     { key: "cost_oil", label: "Ropa" },
     { key: "cost_copper", label: "Miedź" },
@@ -1944,7 +1944,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
     { key: "cost_uranium", label: "Uran" },
     { key: "income_kr", label: "Dochód (KR)" },
     { key: "upkeep_coal", label: "Zużycie węgla" },
-    { key: "produces_amount", label: "Produkcja surowca" },
+    { key: "produces_amount", label: "Ilość surowca" },
     { key: "sort_order", label: "Kolejność" },
   ];
   const validNumbers = numericFields.every(({ key }) => {
@@ -1952,62 +1952,67 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
     return value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
   });
   const valid = !!edit.code.trim() && !!edit.name.trim() && !!edit.category.trim() && validNumbers;
+  const inputClass = "h-12 text-base";
+  const numberClass = "num h-12 text-base";
 
   return (
     <Dialog open onOpenChange={(open) => !open && onEdit(null)}>
-      <DialogContent className="admin-dialog max-h-[94dvh] w-[calc(100%-1rem)] max-w-2xl overflow-y-auto sm:w-[calc(100%-2rem)]">
-        <DialogHeader>
-          <DialogTitle className="text-xl">{isExisting ? "Edytuj produkt" : "Nowy produkt"}</DialogTitle>
+      <DialogContent className="admin-dialog max-h-[96dvh] w-[calc(100%-0.5rem)] max-w-3xl overflow-y-auto rounded-2xl p-5 sm:w-[calc(100%-2rem)] sm:p-8">
+        <DialogHeader className="mb-2 text-left">
+          <DialogTitle className="text-2xl font-semibold tracking-tight">{isExisting ? "Edytuj produkt" : "Nowy produkt"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-7">
+
+        <div className="space-y-8">
           <section className="space-y-4">
-            <h3 className="text-base font-semibold">Podstawowe</h3>
+            <h3 className="text-lg font-semibold">Informacje</h3>
+            <Field label="Nazwa produktu"><Input className={inputClass} autoFocus={!isExisting} value={edit.name} onChange={(event) => update("name", event.target.value)} placeholder="Wpisz nazwę" /></Field>
+            <Field label="Opis"><Input className={inputClass} value={edit.description} onChange={(event) => update("description", event.target.value)} placeholder="Opis produktu" /></Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nazwa"><Input className="h-11" autoFocus={!isExisting} value={edit.name} onChange={(event) => update("name", event.target.value)} placeholder="Nazwa produktu" /></Field>
-              <Field label="Kategoria"><Input className="h-11" value={edit.category} onChange={(event) => update("category", event.target.value)} placeholder="Kategoria" /></Field>
-              <Field label="Kod produktu"><Input className="h-11" value={edit.code} disabled={isExisting} onChange={(event) => update("code", event.target.value)} placeholder="np. factory_1" /></Field>
-              <Field label="Opis"><Input className="h-11" value={edit.description} onChange={(event) => update("description", event.target.value)} placeholder="Krótki opis" /></Field>
+              <Field label="Kategoria"><Input className={inputClass} value={edit.category} onChange={(event) => update("category", event.target.value)} placeholder="Kategoria" /></Field>
+              <Field label="Kod"><Input className={inputClass} value={edit.code} disabled={isExisting} onChange={(event) => update("code", event.target.value)} placeholder="Kod produktu" /></Field>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Budynek">
                 <Select value={edit.building || "none"} onValueChange={(value) => update("building", value === "none" ? "" : value)}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Brak" /></SelectTrigger>
+                  <SelectTrigger className={inputClass}><SelectValue placeholder="Brak" /></SelectTrigger>
                   <SelectContent><SelectItem value="none">Brak</SelectItem>{Object.entries(BUILDING_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
               <Field label="Produkowany surowiec">
                 <Select value={edit.produces || "none"} onValueChange={(value) => update("produces", value === "none" ? "" : value)}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Brak" /></SelectTrigger>
+                  <SelectTrigger className={inputClass}><SelectValue placeholder="Brak" /></SelectTrigger>
                   <SelectContent><SelectItem value="none">Brak</SelectItem>{Object.entries(RESOURCE_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
             </div>
           </section>
 
-          <section className="space-y-4 border-t border-border pt-5">
-            <h3 className="text-base font-semibold">Koszt zakupu</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {numericFields.slice(0, 6).map(({ key, label }) => <Field key={key} label={label}><Input className="num h-11" type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /></Field>)}
+          <section className="space-y-4 border-t border-border pt-6">
+            <h3 className="text-lg font-semibold">Koszt zakupu</h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+              {numericFields.slice(0, 6).map(({ key, label }) => (
+                <Field key={key} label={label}><Input className={numberClass} type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /></Field>
+              ))}
             </div>
           </section>
 
-          <section className="space-y-4 border-t border-border pt-5">
-            <h3 className="text-base font-semibold">Efekt dzienny</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {numericFields.slice(6, 9).map(({ key, label }) => <Field key={key} label={label}><Input className="num h-11" type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /></Field>)}
+          <section className="space-y-4 border-t border-border pt-6">
+            <h3 className="text-lg font-semibold">Efekt dzienny</h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+              {numericFields.slice(6, 9).map(({ key, label }) => (
+                <Field key={key} label={label}><Input className={numberClass} type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} /></Field>
+              ))}
             </div>
           </section>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Kolejność"><Input className="num h-11" type="number" min="0" step="1" value={edit.sort_order ?? "100"} onChange={(event) => update("sort_order", event.target.value)} /></Field>
-            <div className="flex min-h-11 items-center justify-between rounded-lg border border-border px-4">
-              <Label className="text-sm">Produkt aktywny</Label>
-              <Switch checked={edit.active === "true"} onCheckedChange={(active) => update("active", String(active))} />
-            </div>
+          <div className="flex items-center justify-between rounded-xl border border-border px-4 py-4">
+            <span className="text-base font-medium">Produkt aktywny</span>
+            <Switch checked={edit.active === "true"} onCheckedChange={(active) => update("active", String(active))} />
           </div>
-          <div className="grid gap-3 border-t border-border pt-5 sm:grid-cols-2">
-            <Button variant="outline" className="h-11" onClick={() => onEdit(null)}>Anuluj</Button>
-            <Button className="h-11" disabled={!valid || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button>
+
+          <div className="grid gap-3 border-t border-border pt-6 sm:grid-cols-2">
+            <Button variant="outline" className="h-12 text-base" onClick={() => onEdit(null)}>Anuluj</Button>
+            <Button className="h-12 text-base" disabled={!valid || pending} onClick={() => onSave(edit)}>{pending ? "Zapisywanie…" : "Zapisz produkt"}</Button>
           </div>
         </div>
       </DialogContent>
