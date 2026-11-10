@@ -205,7 +205,7 @@ export const setMaintenanceMode = createServerFn({ method: "POST" })
     if (roleError) throw new Error(roleError.message);
     if (isMainAdmin !== true) throw new Error("Tylko główny administrator może zmienić tryb konserwacji");
 
-    const maintenanceTable = (context.supabase as any).from("app_maintenance_mode");
+    const maintenanceTable = getMaintenanceTable(context.supabase);
     const { error } = await maintenanceTable.upsert({
       id: 1,
       enabled: data.enabled,
