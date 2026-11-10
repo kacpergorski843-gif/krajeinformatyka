@@ -907,6 +907,9 @@ export type MarketSale = {
 export const marketOffersQuery = queryOptions({
   queryKey: ["market", "offers"],
   queryFn: async (): Promise<MarketOffer[]> => {
+    // Process expired escrow when the market is opened so sellers do not keep
+    // resources locked indefinitely while no one is trading.
+    await marketRpc<number>("market_expire_offers");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = await unwrap((supabase as any).from("market_offers").select("id,seller_country_id,resource,quantity_total,quantity_remaining,unit_price,created_at,expires_at,status").eq("status","ACTIVE").gt("expires_at",new Date().toISOString()).order("unit_price").order("created_at"));
     const offers = (rows ?? []) as unknown as MarketOffer[];
