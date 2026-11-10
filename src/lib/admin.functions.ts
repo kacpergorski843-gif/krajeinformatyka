@@ -2,6 +2,38 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+type MaintenanceRow = {
+  id: number;
+  enabled: boolean;
+  pages?: string[];
+  message_title?: string;
+  message_body?: string;
+};
+
+type MaintenanceError = { message: string; code?: string } | null;
+
+type MaintenanceTable = {
+  select(columns: string): {
+    eq(column: "id", value: 1): {
+      maybeSingle(): PromiseLike<{
+        data: Partial<MaintenanceRow> | null;
+        error: MaintenanceError;
+      }>;
+    };
+  };
+  upsert(
+    values: Partial<MaintenanceRow> & { id: number },
+    options: { onConflict: "id" },
+  ): PromiseLike<{ error: MaintenanceError }>;
+};
+
+function getMaintenanceTable(client: unknown): MaintenanceTable {
+  const typedClient = client as {
+    from(table: "app_maintenance_mode"): MaintenanceTable;
+  };
+  return typedClient.from("app_maintenance_mode");
+}
+
 /**
  * Trwałe usunięcie konta gracza: dane gry usuwa RPC administratora,
  * samo konto logowania usuwa Auth Admin API po stronie serwera.
@@ -115,7 +147,7 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
 export const getMaintenanceMode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const maintenanceTable = (context.supabase as any).from("app_maintenance_mode");
+    const maintenanceTable = getMaintenanceTable(context.supabase);
 
     // Read the required global switch independently. This query works on the
     // original table schema and does not depend on migration 0071.
