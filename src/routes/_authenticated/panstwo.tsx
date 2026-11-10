@@ -73,7 +73,7 @@ function TestCountryControls({ currentCountryName }: { currentCountryName?: stri
       <p className="text-sm font-semibold">Środowisko testowe głównego administratora</p>
       <p className="mt-1 text-xs text-muted-foreground">
         Aktywne państwo: {currentCountryName ?? "brak"}.
-        {" "}Zasoby testowe są prezentowane jako ∞; baza przechowuje największą wartość obsługiwaną przez typ kolumny.
+        {" "}Zasoby testowe są prezentowane jako ∞; baza przechowuje duży zapas z bezpiecznym limitem dla danego typu kolumny.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button className="rounded-md border border-border px-3 py-2 text-sm disabled:opacity-50" disabled={pending} onClick={() => void switchTo("V1")}>Testy v1</button>
