@@ -84,15 +84,24 @@ function MarketPage() {
     {id:"offers",label:"Oferty",icon:Package},{id:"mine",label:"Moje oferty",icon:Tag},{id:"negotiations",label:"Negocjacje",icon:Handshake},{id:"history",label:"Historia",icon:ArrowDownUp},{id:"prices",label:"Ceny",icon:ChartNoAxesCombined},
   ];
   const create = () => {
-    if (!validInt(newQuantity) || !validInt(newPrice)) return toast.error("Podaj dodatnią ilość i cenę, bez części dziesiętnych.");
+    if (!validInt(newQuantity) || !validInt(newPrice)) {
+      toast.error("Podaj dodatnią ilość i cenę, bez części dziesiętnych.");
+      return;
+    }
     run("market_create_offer", {p_resource:resource,p_quantity:newQuantity,p_unit_price:newPrice});
   };
   const buy = () => {
-    if (!selected || !validInt(buyQuantity) || BigInt(buyQuantity)>BigInt(selected.quantity_remaining)) return toast.error("Nieprawidłowa ilość.");
+    if (!selected || !validInt(buyQuantity) || BigInt(buyQuantity)>BigInt(selected.quantity_remaining)) {
+      toast.error("Nieprawidłowa ilość.");
+      return;
+    }
     run("market_buy", {p_offer_id:selected.id,p_quantity:buyQuantity});
   };
   const propose = () => {
-    if (!selected || !validInt(proposalQuantity) || !validInt(proposalPrice) || BigInt(proposalQuantity)>BigInt(selected.quantity_remaining)) return toast.error("Sprawdź ilość i cenę propozycji.");
+    if (!selected || !validInt(proposalQuantity) || !validInt(proposalPrice) || BigInt(proposalQuantity)>BigInt(selected.quantity_remaining)) {
+      toast.error("Sprawdź ilość i cenę propozycji.");
+      return;
+    }
     run("market_propose", {p_offer_id:selected.id,p_quantity:proposalQuantity,p_unit_price:proposalPrice});
   };
   const respond = (id:string, action:string, quantity?:string, price?:string) => run("market_respond_negotiation", {p_negotiation_id:id,p_action:action,p_quantity:quantity ?? null,p_unit_price:price ?? null});
