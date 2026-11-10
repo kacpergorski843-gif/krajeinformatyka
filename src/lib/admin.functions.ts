@@ -64,9 +64,35 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(data.fileBase64)) {
+      throw new Error("Nieprawidłowy plik flagi.");
+    }
     const bytes = Buffer.from(data.fileBase64, "base64");
     if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) {
       throw new Error("Flaga może mieć maksymalnie 5 MB.");
+    }
+
+    const isPng = bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    const isJpeg = bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const isGif = bytes.length >= 6 && ["GIF87a", "GIF89a"].includes(bytes.subarray(0, 6).toString("ascii"));
+    const isWebp = bytes.length >= 12
+      && bytes.subarray(0, 4).toString("ascii") === "RIFF"
+      && bytes.subarray(8, 12).toString("ascii") === "WEBP";
+    const detectedType = isPng ? "image/png"
+      : isJpeg ? "image/jpeg"
+      : isGif ? "image/gif"
+      : isWebp ? "image/webp"
+      : null;
+    const expectedTypeByExtension: Record<string, string> = {
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      webp: "image/webp",
+      gif: "image/gif",
+    };
+
+    if (!detectedType || detectedType !== data.contentType || expectedTypeByExtension[data.extension] !== detectedType) {
+      throw new Error("Zawartość pliku nie zgadza się z deklarowanym formatem flagi.");
     }
 
     const path = data.countryId + "/flag-" + Date.now() + "." + data.extension;
