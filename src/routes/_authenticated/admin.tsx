@@ -1816,7 +1816,7 @@ function shopCategoryLabel(value: string) {
     INNE: "Inne",
   };
   const normalized = value.trim();
-  return labels[normalized.toUpperCase()] ?? normalized.replace(/[_-]+/g, " ").toLocaleLowerCase("pl-PL").replace(/(^|\\s)\\p{L}/gu, (letter) => letter.toLocaleUpperCase("pl-PL"));
+  return labels[normalized.toUpperCase()] ?? normalized.replace(/[_-]+/g, " ").toLocaleLowerCase("pl-PL").replace(/(^|\s)\p{L}/gu, (letter) => letter.toLocaleUpperCase("pl-PL"));
 }
 
 function ShopTab() {
