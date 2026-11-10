@@ -24,7 +24,7 @@ const EMAIL_DOMAIN = "kbcofzdboyzgsquvtzfq.supabase.co";
 const LEGACY_EMAIL_DOMAIN = "nationdynamics.internal";
 
 function normalizeUsername(raw: string) {
-  return raw.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^[.\\-_]+|[.\\-_]+$/g, "");
+  return raw.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^[._-]+|[._-]+$/g, "");
 }
 
 function hasControlCharacters(value: string): boolean {
