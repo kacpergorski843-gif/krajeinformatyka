@@ -894,7 +894,7 @@ export type MarketOffer = {
 };
 export type MarketNegotiation = {
   id: string; offer_id: string; buyer_country_id: string; quantity: string;
-  unit_price: string; last_offer_by: "BUYER" | "SELLER";
+  unit_price: string; total_price: string; last_offer_by: "BUYER" | "SELLER";
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "EXPIRED";
   expires_at: string; created_at: string; updated_at: string;
 };
