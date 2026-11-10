@@ -448,4 +448,26 @@ revoke all on function public.market_respond_negotiation(uuid, text, numeric, nu
 grant execute on function public.market_respond_negotiation(uuid, text, numeric, numeric)
   to authenticated, service_role;
 
+-- The economic views join shop_items by building. More than one row per
+-- building multiplies income, upkeep and production. Refuse the migration with
+-- an actionable message rather than silently choosing or deleting live items.
+do $
+begin
+  if exists (
+    select 1
+    from public.shop_items
+    where building is not null
+    group by building
+    having count(*) > 1
+  ) then
+    raise exception 'shop_items contains duplicate building values'
+      using hint = 'Keep one canonical shop_items row per building, then rerun migration 00745.';
+  end if;
+end
+$;
+
+create unique index if not exists shop_items_building_unique_idx
+  on public.shop_items (building)
+  where building is not null;
+
 notify pgrst, 'reload schema';
