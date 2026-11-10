@@ -2,6 +2,38 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+type MaintenanceRow = {
+  id: number;
+  enabled: boolean;
+  pages?: string[];
+  message_title?: string;
+  message_body?: string;
+};
+
+type MaintenanceError = { message: string; code?: string } | null;
+
+type MaintenanceTable = {
+  select(columns: string): {
+    eq(column: "id", value: 1): {
+      maybeSingle(): PromiseLike<{
+        data: Partial<MaintenanceRow> | null;
+        error: MaintenanceError;
+      }>;
+    };
+  };
+  upsert(
+    values: Partial<MaintenanceRow> & { id: number },
+    options: { onConflict: "id" },
+  ): PromiseLike<{ error: MaintenanceError }>;
+};
+
+function getMaintenanceTable(client: unknown): MaintenanceTable {
+  const typedClient = client as {
+    from(table: "app_maintenance_mode"): MaintenanceTable;
+  };
+  return typedClient.from("app_maintenance_mode");
+}
+
 /**
  * Trwałe usunięcie konta gracza: dane gry usuwa RPC administratora,
  * samo konto logowania usuwa Auth Admin API po stronie serwera.
@@ -64,9 +96,35 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(data.fileBase64)) {
+      throw new Error("Nieprawidłowy plik flagi.");
+    }
     const bytes = Buffer.from(data.fileBase64, "base64");
     if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) {
       throw new Error("Flaga może mieć maksymalnie 5 MB.");
+    }
+
+    const isPng = bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    const isJpeg = bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const isGif = bytes.length >= 6 && ["GIF87a", "GIF89a"].includes(bytes.subarray(0, 6).toString("ascii"));
+    const isWebp = bytes.length >= 12
+      && bytes.subarray(0, 4).toString("ascii") === "RIFF"
+      && bytes.subarray(8, 12).toString("ascii") === "WEBP";
+    const detectedType = isPng ? "image/png"
+      : isJpeg ? "image/jpeg"
+      : isGif ? "image/gif"
+      : isWebp ? "image/webp"
+      : null;
+    const expectedTypeByExtension: Record<string, string> = {
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      webp: "image/webp",
+      gif: "image/gif",
+    };
+
+    if (!detectedType || detectedType !== data.contentType || expectedTypeByExtension[data.extension] !== detectedType) {
+      throw new Error("Zawartość pliku nie zgadza się z deklarowanym formatem flagi.");
     }
 
     const path = data.countryId + "/flag-" + Date.now() + "." + data.extension;
@@ -89,7 +147,7 @@ export const rulerUploadCountryFlag = createServerFn({ method: "POST" })
 export const getMaintenanceMode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const maintenanceTable = (context.supabase as any).from("app_maintenance_mode");
+    const maintenanceTable = getMaintenanceTable(context.supabase);
 
     // Read the required global switch independently. This query works on the
     // original table schema and does not depend on migration 0071.
@@ -147,7 +205,7 @@ export const setMaintenanceMode = createServerFn({ method: "POST" })
     if (roleError) throw new Error(roleError.message);
     if (isMainAdmin !== true) throw new Error("Tylko główny administrator może zmienić tryb konserwacji");
 
-    const maintenanceTable = (context.supabase as any).from("app_maintenance_mode");
+    const maintenanceTable = getMaintenanceTable(context.supabase);
     const { error } = await maintenanceTable.upsert({
       id: 1,
       enabled: data.enabled,

@@ -7,11 +7,32 @@ export function toNum(v: string | number | null | undefined): number {
 
 /** 1500000000000 -> "1 500 000 000 000" */
 export function groupDigits(v: string | number | null | undefined): string {
-  const raw = String(v ?? 0);
-  const neg = raw.trim().startsWith("-");
-  const digits = raw.replace(/[^0-9]/g, "").replace(/^0+(?=\d)/, "");
-  const grouped = (digits || "0").replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
-  return (neg ? "-" : "") + grouped;
+  if (v === null || v === undefined) return "0";
+
+  // Numbers may stringify in exponential notation; let Intl expand those safely.
+  if (typeof v === "number" && (!Number.isFinite(v) || /e/i.test(String(v)))) {
+    if (!Number.isFinite(v)) return "0";
+    return new Intl.NumberFormat("pl-PL", {
+      useGrouping: true,
+      maximumFractionDigits: 20,
+    }).format(v).replace(/[\u00a0\u202f]/g, NBSP);
+  }
+
+  const raw = String(v).trim();
+  const match = raw.match(/^([+-]?)(\d+)(?:[.,](\d+))?$/);
+
+  if (!match) {
+    const neg = raw.startsWith("-");
+    const digits = raw.replace(/[^0-9]/g, "").replace(/^0+(?=\d)/, "");
+    const grouped = (digits || "0").replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+    return (neg ? "-" : "") + grouped;
+  }
+
+  const [, sign, integerPart, fractionPart] = match;
+  const digits = integerPart.replace(/^0+(?=\d)/, "") || "0";
+  const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+  return sign === "-" ? `-${grouped}${fractionPart ? `,${fractionPart}` : ""}`
+    : `${grouped}${fractionPart ? `,${fractionPart}` : ""}`;
 }
 
 const BILLION = 1_000_000_000;

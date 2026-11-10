@@ -323,7 +323,7 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
           .in("region_id", [...new Set(rows.map((row) => row.region_id))])
           .order("occupied_at", { ascending: false })
           .order("id", { ascending: false }),
-      )) as Array<{
+      )) as unknown as Array<{
         id: string;
         region_id: string;
         event_type: "OCCUPATION" | "REVERT";
@@ -480,6 +480,7 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
     enabled: !!countryId,
     queryFn: async (): Promise<OccupiedRegion[]> => {
       const stateRows = await unwrap(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any)
           .from("region_control_state")
           .select("region_id,controller_country_id,is_occupied")
@@ -494,6 +495,7 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
       if (!stateRows.length) return [];
 
       const events = await unwrap(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any)
           .from("region_occupations")
           .select("id,region_id,current_country_id,occupied_at,event_type")
@@ -905,25 +907,39 @@ export type MarketSale = {
 export const marketOffersQuery = queryOptions({
   queryKey: ["market", "offers"],
   queryFn: async (): Promise<MarketOffer[]> => {
+    // Process expired escrow when the market is opened so sellers do not keep
+    // resources locked indefinitely while no one is trading.
+    await marketRpc<number>("market_expire_offers");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = await unwrap((supabase as any).from("market_offers").select("id,seller_country_id,resource,quantity_total,quantity_remaining,unit_price,created_at,expires_at,status").eq("status","ACTIVE").gt("expires_at",new Date().toISOString()).order("unit_price").order("created_at"));
     const offers = (rows ?? []) as unknown as MarketOffer[];
     if (!offers.length) return [];
     const ids = [...new Set(offers.map(o => o.seller_country_id))];
-    const countries = await unwrap((supabase as any).from("countries").select("id,name,flag").in("id",ids));
-    const byId = new Map((countries ?? []).map(c => [c.id,{name:c.name,flag:c.flag}]));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const countries = (await unwrap((supabase as any).from("countries").select("id,name,flag").in("id",ids))) as Array<{
+      id: string;
+      name: string;
+      flag: string | null;
+    }>;
+    const byId = new Map<string, { name: string; flag: string | null }>(
+      countries.map((country) => [country.id, { name: country.name, flag: country.flag }]),
+    );
     return offers.map(o => ({...o,seller:byId.get(o.seller_country_id)}));
   },
 });
 export const marketMyOffersQuery = (countryId: string | null | undefined) => queryOptions({
   queryKey: ["market","my-offers",countryId], enabled: !!countryId,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   queryFn: async (): Promise<MarketOffer[]> => (await unwrap((supabase as any).from("market_offers").select("*").eq("seller_country_id",countryId!).order("created_at",{ascending:false}))) as unknown as MarketOffer[],
 });
 export const marketNegotiationsQuery = queryOptions({
   queryKey: ["market","negotiations"],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   queryFn: async (): Promise<MarketNegotiation[]> => (await unwrap((supabase as any).from("market_negotiations").select("*").eq("status","PENDING").gt("expires_at",new Date().toISOString()).order("updated_at",{ascending:false}))) as unknown as MarketNegotiation[],
 });
 export const marketSalesQuery = queryOptions({
   queryKey: ["market","sales"],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   queryFn: async (): Promise<MarketSale[]> => (await unwrap((supabase as any).from("market_sales").select("*").order("created_at",{ascending:false}).limit(100))) as unknown as MarketSale[],
 });
 export async function marketRpc<T = unknown>(name: string, args: Record<string, unknown> = {}): Promise<T> {
@@ -934,5 +950,6 @@ export async function marketRpc<T = unknown>(name: string, args: Record<string, 
 export type MarketPricePoint = { resource: MarketResource; created_at: string; unit_price: string; quantity: string };
 export const marketPriceHistoryQuery = queryOptions({
   queryKey: ["market","price-history"],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   queryFn: async (): Promise<MarketPricePoint[]> => (await unwrap((supabase as any).from("market_price_history").select("resource,created_at,unit_price,quantity").order("created_at",{ascending:false}).limit(500))) as unknown as MarketPricePoint[],
 });

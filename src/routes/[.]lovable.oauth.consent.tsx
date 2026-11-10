@@ -3,7 +3,19 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-type OAuthResult = { data: any; error: { message: string } | null };
+type OAuthData = {
+  redirect_url?: string | null;
+  redirect_to?: string | null;
+  client?: { name?: string | null } | null;
+};
+
+type OAuthResult = { data: OAuthData | null; error: { message: string } | null };
+
+type OAuthApi = {
+  getAuthorizationDetails: (id: string) => Promise<OAuthResult>;
+  approveAuthorization: (id: string) => Promise<OAuthResult>;
+  denyAuthorization: (id: string) => Promise<OAuthResult>;
+};
 
 function getSafeRedirectTarget(value: unknown): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -16,11 +28,7 @@ function getSafeRedirectTarget(value: unknown): string | null {
     return null;
   }
 }
-const oauth = (supabase.auth as any).oauth as {
-  getAuthorizationDetails: (id: string) => Promise<OAuthResult>;
-  approveAuthorization: (id: string) => Promise<OAuthResult>;
-  denyAuthorization: (id: string) => Promise<OAuthResult>;
-};
+const oauth = (supabase.auth as unknown as { oauth: OAuthApi }).oauth;
 
 export const Route = createFileRoute("/.lovable/oauth/consent")({
   ssr: false,
