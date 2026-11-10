@@ -135,10 +135,14 @@ export const meQuery = queryOptions({
 
 export const countriesQuery = queryOptions({
   queryKey: ["country_stats"],
-  queryFn: async () =>
-    (await unwrap(
-      supabase.from("country_stats").select(COUNTRY_STATS_SELECT).order("gross_income", { ascending: false }),
-    )) as unknown as CountryStats[],
+  queryFn: async () => {
+    try {
+      return await readCountryStats("world_country_stats");
+    } catch (error) {
+      if (!isMissingRelationError(error)) throw error;
+      return readCountryStats("country_stats");
+    }
+  },
 });
 
 export type AgreementAmounts = {
