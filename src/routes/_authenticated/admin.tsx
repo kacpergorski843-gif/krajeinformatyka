@@ -1945,8 +1945,8 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
     { key: "sort_order", label: "Pozycja na liście", hint: "Mniejsza liczba wyświetla produkt wyżej w sklepie." },
   ];
   const validNumbers = numericFields.every(({ key }) => {
-    const value = edit[key] ?? "0";
-    return value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
+    const value = String(edit[key] ?? "0").trim();
+    return value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
   });
   const valid = !!edit.code.trim() && !!edit.name.trim() && !!edit.category.trim() && validNumbers;
 
