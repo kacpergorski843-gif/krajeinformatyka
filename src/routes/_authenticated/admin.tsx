@@ -1845,7 +1845,13 @@ function EconomyTab() {
   const [confirm, setConfirm] = useState(false);
   const runs = (runQuery.data ?? []) as unknown as EconomyRun[];
   const totals = (countryQuery.data ?? []).reduce((sum, country) => ({ income: sum.income + Number(country.gross_income), coal: sum.coal + Number(country.coal_prod), oil: sum.oil + Number(country.oil_prod), copper: sum.copper + Number(country.copper_prod), iron: sum.iron + Number(country.iron_prod), uranium: sum.uranium + Number(country.uranium_prod), upkeep: sum.upkeep + Number(country.coal_upkeep) }), { income: 0, coal: 0, oil: 0, copper: 0, iron: 0, uranium: 0, upkeep: 0 });
-  const run = useMutation({ mutationFn: () => rpc<{ ok: boolean; reason?: string }>("run_daily_economy", {}), onSuccess: (result) => { result?.ok ? toast.success("Cykl dobowy rozliczony") : toast.info("Dzisiejszy cykl został już rozliczony"); setConfirm(false);
+  const run = useMutation({ mutationFn: () => rpc<{ ok: boolean; reason?: string }>("run_daily_economy", {}), onSuccess: (result) => {
+        if (result?.ok) {
+          toast.success("Cykl dobowy rozliczony");
+        } else {
+          toast.info("Dzisiejszy cykl został już rozliczony");
+        }
+        setConfirm(false);
         void queryClient.invalidateQueries({ queryKey: ["economy_runs"] });
         void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
         void queryClient.invalidateQueries({ queryKey: ["countries"] });
