@@ -17,4 +17,6 @@ jobs:
       - run: bun run test:format
       - run: bun run lint
       - run: bun run typecheck
+        if: always()
       - run: bun run build
+        if: always()
