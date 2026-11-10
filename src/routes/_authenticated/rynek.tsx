@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownUp, Handshake, Package, Plus, Search, Tag, X, ChartNoAxesCombined } from "lucide-react";
+import { Handshake, Package, Plus, Search, X, ChartNoAxesCombined } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Panel, SectionTitle } from "@/components/stat";
@@ -26,7 +26,7 @@ const ITEMS: { value: MarketResource; label: string; category: "Surowce" | "Uzbr
   { value: "missile_2", label: "Rakiety II", category: "Uzbrojenie", unit: "szt." },
   { value: "missile_3", label: "Rakiety III", category: "Uzbrojenie", unit: "szt." },
 ];
-type Tab = "offers" | "mine" | "negotiations" | "history" | "prices";
+type Tab = "market" | "add" | "messages" | "prices";
 const fmt = (value: string | number | bigint) => {
   try { return BigInt(value).toLocaleString("pl-PL"); } catch { return "0"; }
 };
@@ -37,7 +37,7 @@ const itemLabel = (resource: string) => ITEMS.find(item => item.value === resour
 function MarketPage() {
   const { data: me } = useQuery(meQuery);
   const client = useQueryClient();
-  const [tab, setTab] = useState<Tab>("offers");
+  const [tab, setTab] = useState<Tab>("market");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Wszystkie");
   const [sort, setSort] = useState("price");
@@ -81,7 +81,7 @@ function MarketPage() {
   [offers.data, me?.countryId, category, search, sort]);
 
   const tabs: {id:Tab; label:string; icon:typeof Package}[] = [
-    {id:"offers",label:"Oferty",icon:Package},{id:"mine",label:"Moje oferty",icon:Tag},{id:"negotiations",label:"Negocjacje",icon:Handshake},{id:"history",label:"Historia",icon:ArrowDownUp},{id:"prices",label:"Ceny",icon:ChartNoAxesCombined},
+    {id:"market",label:"Rynek",icon:Package},{id:"add",label:"Dodaj produkt",icon:Plus},{id:"messages",label:"Wiadomości",icon:Handshake},{id:"prices",label:"Ceny",icon:ChartNoAxesCombined},
   ];
   const create = () => {
     if (!validInt(newQuantity) || !validInt(newPrice)) return toast.error("Podaj dodatnią ilość i cenę, bez części dziesiętnych.");
@@ -98,26 +98,26 @@ function MarketPage() {
   const respond = (id:string, action:string, quantity?:string, price?:string) => run("market_respond_negotiation", {p_negotiation_id:id,p_action:action,p_quantity:quantity ?? null,p_unit_price:price ?? null});
 
   return <AppShell me={me ?? null} title="Rynek">
-    <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
       {tabs.map(t => <button key={t.id} type="button" onClick={()=>setTab(t.id)} className={`rounded-lg border px-2 py-3 text-xs font-semibold ${tab===t.id?"border-primary bg-primary/10 text-primary":"border-border bg-card text-muted-foreground"}`}><span className="flex items-center justify-center gap-2"><t.icon className="size-4"/>{t.label}</span></button>)}
     </div>
 
-    {tab==="offers" && <div className="space-y-3">
+    {tab==="market" && <div className="space-y-3">
       <div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"/><Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Szukaj towaru lub państwa..." className="pl-9 pr-9"/>{search && <button onClick={()=>setSearch("")} aria-label="Wyczyść"><X className="absolute right-3 top-1/2 size-4 -translate-y-1/2"/></button>}</div>
       <div className="flex gap-2 overflow-x-auto">{["Wszystkie","Surowce","Uzbrojenie"].map(v=><button key={v} onClick={()=>setCategory(v)} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs ${category===v?"border-primary bg-primary/10 text-primary":"border-border text-muted-foreground"}`}>{v}</button>)}</div>
       <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{visibleOffers.length} ofert</span><select value={sort} onChange={e=>setSort(e.target.value)} className="rounded-md border border-border bg-card px-2 py-2 text-xs"><option value="price">Najniższa cena</option><option value="newest">Najnowsze</option><option value="amount">Największa ilość</option></select></div>
       {offers.isLoading ? <Panel className="p-8 text-center text-sm text-muted-foreground">Ładowanie ofert…</Panel> : offers.isError ? <Panel className="p-5 text-sm text-destructive">Nie udało się pobrać ofert. Sprawdź, czy migracja rynku została wdrożona.</Panel> : visibleOffers.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{visibleOffers.map(o=><button key={o.id} onClick={()=>{setSelected(o);setBuyQuantity("1");setProposalQuantity("1");setProposalPrice(o.unit_price);}} className="panel flex min-w-0 flex-col gap-3 p-4 text-left hover:border-primary/50"><div className="flex items-center justify-between gap-2"><span className="rounded-full bg-secondary px-2 py-1 text-[10px]">{ITEMS.find(i=>i.value===o.resource)?.category}</span><span className="text-xs text-muted-foreground">{o.seller?.flag ?? "🏳️"} {o.seller?.name ?? "Państwo"}</span></div><div><h3 className="font-semibold">{itemLabel(o.resource)}</h3><p className="mt-1 text-xs text-muted-foreground">Dostępne: {fmt(o.quantity_remaining)}</p></div><div className="border-t border-border pt-3"><p className="num text-xl font-bold text-primary">{fmt(o.unit_price)} KR <span className="text-xs font-normal text-muted-foreground">/ jednostkę</span></p><p className="text-xs text-muted-foreground">Całość: {fmt(total(o.quantity_remaining,o.unit_price))} KR</p></div></button>)}</div> : <Panel className="p-8 text-center text-sm text-muted-foreground">Brak aktywnych ofert. Wystaw własną w zakładce „Moje oferty”.</Panel>}
     </div>}
 
-    {tab==="mine" && <div className="space-y-3">
-      <div className="flex items-center justify-between"><SectionTitle>Moje oferty</SectionTitle><Button size="sm" onClick={()=>setCreateOpen(v=>!v)}><Plus className="mr-1 size-4"/>Wystaw</Button></div>
+    {tab==="add" && <div className="space-y-3">
+      <div className="flex items-center justify-between"><SectionTitle>Twoje produkty</SectionTitle><Button size="sm" onClick={()=>setCreateOpen(v=>!v)}><Plus className="mr-1 size-4"/>Dodaj produkt</Button></div>
       {createOpen && <Panel className="space-y-3 p-4"><h3 className="font-semibold">Nowa oferta</h3><label className="block text-xs text-muted-foreground">Towar<select value={resource} onChange={e=>setResource(e.target.value as MarketResource)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">{ITEMS.map(i=><option key={i.value} value={i.value}>{i.label}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="text-xs text-muted-foreground">Ilość<Input inputMode="numeric" value={newQuantity} onChange={e=>setNewQuantity(e.target.value)} placeholder="np. 100"/></label><label className="text-xs text-muted-foreground">Cena za jednostkę (KR)<Input inputMode="numeric" value={newPrice} onChange={e=>setNewPrice(e.target.value)} placeholder="np. 25"/></label></div><p className="text-xs text-muted-foreground">Wartość: {validInt(newQuantity)&&validInt(newPrice)?fmt(total(newQuantity,newPrice)):"—"} KR. Zasób zostanie odjęty z magazynu przy wystawieniu.</p><div className="flex gap-2"><Button disabled={mutation.isPending} onClick={create}>Wystaw ofertę</Button><Button variant="outline" onClick={()=>setCreateOpen(false)}>Anuluj</Button></div></Panel>}
       {mine.isLoading ? <Panel className="p-6 text-sm text-muted-foreground">Ładowanie…</Panel> : (mine.data??[]).map(o=><Panel key={o.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><p className="font-semibold">{itemLabel(o.resource)}</p><p className="text-xs text-muted-foreground">Pozostało {fmt(o.quantity_remaining)} · {fmt(o.unit_price)} KR/jedn. · wygasa {new Date(o.expires_at).toLocaleDateString("pl-PL")}</p><p className="text-[10px] text-muted-foreground">{o.status==="ACTIVE"?"Aktywna":o.status==="SOLD"?"Sprzedana":o.status==="CANCELLED"?"Anulowana":"Wygasła"}</p></div>{o.status==="ACTIVE" && <div className="flex gap-2"><Button size="sm" variant="outline" onClick={()=>{setEditOffer(o);setEditPrice(o.unit_price);}}>Cena</Button><Button size="sm" variant="ghost" onClick={()=>run("market_cancel_offer",{p_offer_id:o.id})}>Anuluj</Button></div>}</Panel>)}
       {!mine.isLoading&&!mine.data?.length&&<Panel className="p-8 text-center text-sm text-muted-foreground">Nie masz jeszcze ofert.</Panel>}
       {editOffer && <Panel className="space-y-3 p-4"><h3 className="font-semibold">Zmień cenę — {itemLabel(editOffer.resource)}</h3><Input inputMode="numeric" value={editPrice} onChange={e=>setEditPrice(e.target.value)}/><p className="text-xs text-muted-foreground">Termin wygaśnięcia pozostaje bez zmian.</p><div className="flex gap-2"><Button disabled={!validInt(editPrice)} onClick={()=>run("market_update_offer_price",{p_offer_id:editOffer.id,p_unit_price:editPrice})}>Zapisz cenę</Button><Button variant="outline" onClick={()=>setEditOffer(null)}>Wróć</Button></div></Panel>}
     </div>}
 
-    {tab==="negotiations" && <div className="space-y-3"><SectionTitle>Negocjacje</SectionTitle>{(negotiations.data??[]).map(n=>{
+    {tab==="messages" && <div className="space-y-3"><SectionTitle>Negocjacje</SectionTitle>{(negotiations.data??[]).map(n=>{
       const offer=(offers.data??[]).find(o=>o.id===n.offer_id) ?? (mine.data??[]).find(o=>o.id===n.offer_id);
       const seller=offer?.seller_country_id===me?.countryId;
       const buyer=n.buyer_country_id===me?.countryId;
@@ -129,7 +129,7 @@ function MarketPage() {
       </Panel>;
     })}{!negotiations.isLoading&&!negotiations.data?.length&&<Panel className="p-8 text-center text-sm text-muted-foreground">Brak aktywnych negocjacji.</Panel>}</div>}
 
-    {tab==="history" && <div className="space-y-3"><SectionTitle>Historia transakcji</SectionTitle>{(sales.data??[]).map(s=><Panel key={s.id} className="flex items-center justify-between gap-3 p-4"><div><p className="font-semibold">{itemLabel(s.resource)}</p><p className="text-xs text-muted-foreground">{fmt(s.quantity)} szt. · {fmt(s.unit_price)} KR/jedn. · {new Date(s.created_at).toLocaleString("pl-PL")}</p></div><div className="text-right"><p className="num font-semibold">{fmt(s.total_price)} KR</p><p className="text-[10px] text-muted-foreground">{s.buyer_country_id===me?.countryId?"Zakup":"Sprzedaż"}</p></div></Panel>)}{!sales.isLoading&&!sales.data?.length&&<Panel className="p-8 text-center text-sm text-muted-foreground">Brak transakcji.</Panel>}</div>}
+    {tab==="messages" && <div className="space-y-3"><SectionTitle>Historia transakcji</SectionTitle>{(sales.data??[]).map(s=><Panel key={s.id} className="flex items-center justify-between gap-3 p-4"><div><p className="font-semibold">{itemLabel(s.resource)}</p><p className="text-xs text-muted-foreground">{fmt(s.quantity)} szt. · {fmt(s.unit_price)} KR/jedn. · {new Date(s.created_at).toLocaleString("pl-PL")}</p></div><div className="text-right"><p className="num font-semibold">{fmt(s.total_price)} KR</p><p className="text-[10px] text-muted-foreground">{s.buyer_country_id===me?.countryId?"Zakup":"Sprzedaż"}</p></div></Panel>)}{!sales.isLoading&&!sales.data?.length&&<Panel className="p-8 text-center text-sm text-muted-foreground">Brak transakcji.</Panel>}</div>}
 
     {tab==="prices" && (() => { const rows=(priceHistory.data??[]).filter(p=>p.resource===priceResource).slice(0,40).reverse(); const values=rows.map(p=>BigInt(p.unit_price)); const min=values.length?values.reduce((a,b)=>a<b?a:b):0n; const max=values.length?values.reduce((a,b)=>a>b?a:b):1n; const span=max-min||1n; const index=Math.max(0,Math.min(rows.length-1,activePricePoint??rows.length-1)); const selectedPoint=rows[index]; const points=values.map((v,i)=>{const x=12+i*276/Math.max(1,values.length-1);const y=104-Number((v-min)*82n/span);return `${x},${y}`;}).join(" "); return <div className="space-y-3"><SectionTitle>Ceny transakcyjne</SectionTitle><p className="text-xs text-muted-foreground">Rzeczywiste, anonimowe ceny jednostkowe ze wszystkich zakończonych transakcji rynku.</p><Panel className="space-y-3 p-4"><label className="block text-xs text-muted-foreground">Towar<select value={priceResource} onChange={e=>{setPriceResource(e.target.value as MarketResource);setActivePricePoint(null);}} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">{ITEMS.map(i=><option key={i.value} value={i.value}>{i.label}</option>)}</select></label>{rows.length>0?<><div className="rounded-lg bg-secondary/20 p-2"><svg viewBox="0 0 300 120" preserveAspectRatio="none" className="h-44 w-full touch-pan-y" role="img" aria-label="Interaktywny wykres rzeczywistych cen"><line x1="10" x2="290" y1="104" y2="104" stroke="currentColor" opacity=".15"/><polyline points={points} fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>{values.map((v,i)=><circle key={i} cx={12+i*276/Math.max(1,values.length-1)} cy={104-Number((v-min)*82n/span)} r={i===index?5:2.5} fill="hsl(var(--primary))"/>)}<rect x="0" y="0" width="300" height="120" fill="transparent" onPointerMove={e=>{const rect=e.currentTarget.getBoundingClientRect();setActivePricePoint(Math.max(0,Math.min(rows.length-1,Math.round(((e.clientX-rect.left)/rect.width)*Math.max(0,rows.length-1)))));}} onClick={e=>{const rect=e.currentTarget.getBoundingClientRect();setActivePricePoint(Math.max(0,Math.min(rows.length-1,Math.round(((e.clientX-rect.left)/rect.width)*Math.max(0,rows.length-1)))));}}/></svg></div><div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3"><p className="text-[10px] uppercase text-muted-foreground">Wybrana transakcja</p><p className="num text-xl font-bold text-primary">{fmt(selectedPoint.unit_price)} KR / jednostkę</p><p className="text-xs text-muted-foreground">{new Date(selectedPoint.created_at).toLocaleString("pl-PL")} · ilość {fmt(selectedPoint.quantity)}</p></div><p className="text-[10px] text-muted-foreground">Punktów na wykresie: {rows.length}. Przesuń palcem lub kursorem po wykresie, aby wybrać transakcję.</p></>:<p className="py-8 text-center text-sm text-muted-foreground">Brak sprzedaży tego towaru. Historia cen pojawi się po pierwszej transakcji.</p>}</Panel></div>; })()}
 
