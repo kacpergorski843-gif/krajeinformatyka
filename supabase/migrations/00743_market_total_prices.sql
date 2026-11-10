@@ -91,7 +91,7 @@ end $$;
 
 create or replace function public.market_respond_negotiation_total(p_negotiation_id uuid,p_action text,p_quantity numeric default null,p_total_price numeric default null)
 returns jsonb language plpgsql security definer set search_path=public as $$
-declare n public.market_negotiations; o public.market_offers; v_actor uuid:=public.my_country_id(); v_total numeric;
+declare n public.market_negotiations; o public.market_offers; v_actor uuid:=public.my_country_id(); v_total numeric; v_offer_share numeric;
 begin
  if auth.uid() is null or v_actor is null then raise exception 'Brak przypisanego państwa'; end if;
  select * into n from public.market_negotiations where id=p_negotiation_id for update;
@@ -113,14 +113,15 @@ begin
  else raise exception 'Nieznana operacja'; end if;
  if n.quantity>o.quantity_remaining then raise exception 'Oferta nie ma już takiej ilości'; end if;
  v_total:=n.total_price;
+ v_offer_share:=case when n.quantity=o.quantity_remaining then o.total_price_remaining else floor(o.total_price_remaining*n.quantity/o.quantity_remaining) end;
  perform 1 from public.countries where id=least(n.buyer_country_id,o.seller_country_id) for update;
  perform 1 from public.countries where id=greatest(n.buyer_country_id,o.seller_country_id) for update;
  if (select balance from public.countries where id=n.buyer_country_id)<v_total then raise exception 'Kupujący nie ma wystarczających środków'; end if;
  update public.countries set balance=balance-v_total where id=n.buyer_country_id;
  execute format('update public.countries set %I=%I+$1 where id=$2',o.resource,o.resource) using n.quantity,n.buyer_country_id;
  update public.countries set balance=balance+v_total where id=o.seller_country_id;
- update public.market_offers set quantity_remaining=quantity_remaining-n.quantity,total_price_remaining=greatest(0,total_price_remaining-v_total),
-   unit_price=case when quantity_remaining-n.quantity>0 then greatest(1,ceil(greatest(0,total_price_remaining-v_total)/(quantity_remaining-n.quantity))) else unit_price end,
+ update public.market_offers set quantity_remaining=quantity_remaining-n.quantity,total_price_remaining=greatest(0,total_price_remaining-v_offer_share),
+   unit_price=case when quantity_remaining-n.quantity>0 then greatest(1,ceil(greatest(0,total_price_remaining-v_offer_share)/(quantity_remaining-n.quantity))) else unit_price end,
    status=case when quantity_remaining-n.quantity=0 then 'SOLD' else 'ACTIVE' end where id=o.id;
  if o.quantity_remaining-n.quantity=0 then update public.market_negotiations set status='CANCELLED',updated_at=now() where offer_id=o.id and status='PENDING' and id<>n.id; end if;
  insert into public.market_sales(offer_id,seller_country_id,buyer_country_id,resource,quantity,unit_price,total_price)
