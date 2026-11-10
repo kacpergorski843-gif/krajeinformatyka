@@ -23,9 +23,9 @@ begin
           power(10::numeric, v_column.numeric_precision - coalesce(v_column.numeric_scale, 0)) - 1
         );
       else
-        -- Unconstrained NUMERIC has no catalog precision; cap it at the app's
-        -- documented 30-digit display range to avoid unbounded arithmetic.
-        v_max := 999999999999999999999999999999::numeric;
+        -- Unconstrained NUMERIC has no catalog precision; use a large but
+        -- bounded reserve to leave room for future income and production.
+        v_max := 1000000000000000000000000::numeric;
       end if;
     elsif v_column.data_type = 'smallint' then
       v_max := 32767;
@@ -36,6 +36,16 @@ begin
     end if;
 
     if v_max is not null then
+      v_max := least(
+        v_max,
+        case
+          when v_column.column_name in (
+            'aa_defense', 'missile_1', 'missile_2', 'missile_3',
+            'soldier_packs', 'tank_packs'
+          ) then 1000000::numeric
+          else 1000000000000000000000000::numeric
+        end
+      );
       execute format(
         'update public.countries set %I = $1 where name in (%L, %L)',
         v_column.column_name, 'Testy v1', 'Testy v2'
