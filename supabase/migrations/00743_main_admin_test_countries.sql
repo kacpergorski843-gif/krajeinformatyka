@@ -175,3 +175,48 @@ $$;
 
 revoke all on function public.main_admin_switch_test_country(text) from public;
 grant execute on function public.main_admin_switch_test_country(text) to authenticated;
+
+
+-- Test countries, their regions and their slots are invisible to everyone else.
+drop policy if exists "countries readable" on public.countries;
+create policy "countries readable" on public.countries
+for select to authenticated
+using (name not in ('Testy v1', 'Testy v2') or public.has_role(auth.uid(), 'MAIN_ADMIN'));
+
+drop policy if exists "regions readable" on public.regions;
+create policy "regions readable" on public.regions
+for select to authenticated
+using (
+  exists (
+    select 1 from public.countries c
+    where c.id = regions.country_id
+      and (c.name not in ('Testy v1', 'Testy v2') or public.has_role(auth.uid(), 'MAIN_ADMIN'))
+  )
+);
+
+drop policy if exists "slots readable" on public.region_slots;
+create policy "slots readable" on public.region_slots
+for select to authenticated
+using (
+  exists (
+    select 1
+    from public.regions r
+    join public.countries c on c.id = r.country_id
+    where r.id = region_slots.region_id
+      and (c.name not in ('Testy v1', 'Testy v2') or public.has_role(auth.uid(), 'MAIN_ADMIN'))
+  )
+);
+
+create or replace view public.world_country_stats
+with (security_invoker = false) as
+select
+  country_id, name, flag, balance, coal, oil, copper, iron, uranium,
+  aa_defense, missile_1, missile_2, missile_3, soldier_packs, tank_packs,
+  war_votes, fort_votes, total_votes, regions_count, gross_income, coal_upkeep,
+  coal_prod, oil_prod, copper_prod, iron_prod, uranium_prod, forts,
+  military_value, vote_potential, region_aa_total
+from public.country_stats
+where name not in ('Testy v1', 'Testy v2')
+   or public.has_role(auth.uid(), 'MAIN_ADMIN');
+
+grant select on public.world_country_stats to authenticated;
