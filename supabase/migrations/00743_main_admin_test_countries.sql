@@ -220,3 +220,46 @@ where name not in ('Testy v1', 'Testy v2')
    or public.has_role(auth.uid(), 'MAIN_ADMIN');
 
 grant select on public.world_country_stats to authenticated;
+
+
+-- Keep the public ranking free of internal test environments.
+create or replace view public.public_ranking
+with (security_invoker = false) as
+select
+  c.id as country_id,
+  c.name,
+  c.flag,
+  coalesce(x.gross_income,0::numeric)::numeric(30,0) as gross_income,
+  (
+    c.aa_defense::numeric * 1000000000
+    + c.missile_1::numeric * 2000000000
+    + c.missile_2::numeric * 5000000000
+    + c.missile_3::numeric * 12000000000
+    + c.soldier_packs::numeric * 20000000000
+    + c.tank_packs::numeric * 30000000000
+    + coalesce(x.fort_votes,0)::numeric * 40000000000
+  )::numeric(30,0) as military_value,
+  least(c.soldier_packs, 6) + least(c.tank_packs, 4) as war_votes,
+  coalesce(x.regions_count,0)::int as regions_count
+from public.countries c
+left join (
+  select
+    r.country_id,
+    count(distinct r.id) as regions_count,
+    sum(coalesce(si.income_kr, 0)) as gross_income,
+    sum(case s.building
+      when 'fort_1' then 1
+      when 'fort_2' then 2
+      when 'fort_3' then 3
+      else 0
+    end) as fort_votes
+  from public.regions r
+  left join public.region_slots s on s.region_id = r.id
+  left join public.shop_items si on si.building = s.building
+  group by r.country_id
+) x on x.country_id = c.id
+where c.name not in ('Testy v1', 'Testy v2')
+   or public.has_role(auth.uid(), 'MAIN_ADMIN');
+
+grant select on public.public_ranking to anon, authenticated;
+notify pgrst, 'reload schema';
