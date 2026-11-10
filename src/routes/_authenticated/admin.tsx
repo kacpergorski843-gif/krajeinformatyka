@@ -749,6 +749,8 @@ function UpdateLogTab() {
   const log = useQuery({
     queryKey: ["app_update_log"],
     queryFn: async () => {
+      // The app_update_log table is introduced by migration 00747.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("app_update_log")
         .select("id,source,actor_id,actor_label,summary,details,created_at")
@@ -772,13 +774,21 @@ function UpdateLogTab() {
   const copyLog = async () => {
     const entries = log.data ?? [];
     const content = entries.length
-      ? entries.map((entry) => [
-          new Date(entry.created_at).toLocaleString("pl-PL"),
-          entry.source === "project" ? "ZMIANA W PROJEKCIE" : "ZMIANA ADMINISTRACYJNA",
-          "Autor: " + entry.actor_label,
-          entry.summary,
-          Object.keys(entry.details ?? {}).length ? JSON.stringify(entry.details, null, 2) : "",
-        ].filter(Boolean).join("\n")).join("\n\n------------------------------\n\n")
+      ? entries
+          .map((entry) =>
+            [
+              new Date(entry.created_at).toLocaleString("pl-PL"),
+              entry.source === "project" ? "ZMIANA W PROJEKCIE" : "ZMIANA ADMINISTRACYJNA",
+              "Autor: " + entry.actor_label,
+              entry.summary,
+              Object.keys(entry.details ?? {}).length
+                ? JSON.stringify(entry.details, null, 2)
+                : "",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          )
+          .join("\n\n------------------------------\n\n")
       : "Dziennik Update jest pusty.";
     try {
       await navigator.clipboard.writeText(content);
@@ -805,30 +815,47 @@ function UpdateLogTab() {
             </div>
           </div>
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            <Button variant="outline" onClick={() => void copyLog()} disabled={log.isLoading || !log.data?.length}>
+            <Button
+              variant="outline"
+              onClick={() => void copyLog()}
+              disabled={log.isLoading || !log.data?.length}
+            >
               <Copy className="mr-2 size-4" /> Kopiuj wszystko
             </Button>
             <Button
               variant="destructive"
               onClick={() => {
-                if (window.confirm("Na pewno wyczyścić cały dziennik Update? Tej operacji nie można cofnąć.")) {
+                if (
+                  window.confirm(
+                    "Na pewno wyczyścić cały dziennik Update? Tej operacji nie można cofnąć.",
+                  )
+                ) {
                   reset.mutate();
                 }
               }}
               disabled={reset.isPending || log.isLoading || !log.data?.length}
             >
-              <RotateCcw className="mr-2 size-4" /> {reset.isPending ? "Czyszczenie…" : "Reset"}
+              <RotateCcw className="mr-2 size-4" />
+              {reset.isPending ? "Czyszczenie…" : "Reset"}
             </Button>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
-          <span className="rounded border border-border px-2 py-1">Wpisów: {log.data?.length ?? 0}</span>
+          <span className="rounded border border-border px-2 py-1">
+            Wpisów: {log.data?.length ?? 0}
+          </span>
           <span>Nowe wpisy pojawiają się automatycznie po zapisaniu zmian.</span>
         </div>
       </Panel>
 
-      {log.isLoading ? <LoadingRows /> : log.isError ? (
-        <Panel><p className="text-sm text-destructive">Nie udało się pobrać dziennika: {log.error.message}</p></Panel>
+      {log.isLoading ? (
+        <LoadingRows />
+      ) : log.isError ? (
+        <Panel>
+          <p className="text-sm text-destructive">
+            Nie udało się pobrać dziennika: {log.error.message}
+          </p>
+        </Panel>
       ) : log.data?.length ? (
         <div className="space-y-2">
           {log.data.map((entry) => (
@@ -843,13 +870,18 @@ function UpdateLogTab() {
                   </div>
                   <p className="text-sm font-semibold leading-relaxed">{entry.summary}</p>
                 </div>
-                <time className="shrink-0 text-xs text-muted-foreground" dateTime={entry.created_at}>
+                <time
+                  className="shrink-0 text-xs text-muted-foreground"
+                  dateTime={entry.created_at}
+                >
                   {new Date(entry.created_at).toLocaleString("pl-PL")}
                 </time>
               </div>
               {Object.keys(entry.details ?? {}).length ? (
                 <details className="rounded-md border border-border/70 bg-secondary/20 p-3">
-                  <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Szczegóły zmiany</summary>
+                  <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                    Szczegóły zmiany
+                  </summary>
                   <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
                     {JSON.stringify(entry.details, null, 2)}
                   </pre>
@@ -862,7 +894,9 @@ function UpdateLogTab() {
         <Panel className="py-10 text-center">
           <ClipboardList className="mx-auto size-8 text-muted-foreground" />
           <p className="mt-3 font-semibold">Dziennik jest pusty</p>
-          <p className="mt-1 text-sm text-muted-foreground">Kolejne zmiany zostaną zapisane automatycznie.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Kolejne zmiany zostaną zapisane automatycznie.
+          </p>
         </Panel>
       )}
     </div>
