@@ -53,10 +53,11 @@ function Transfers() {
   const isAa = resource === "aa_defense";
   const isMilitary = ["soldier_packs","tank_packs","missile_1","missile_2","missile_3","aa_defense"].includes(resource);
   const validMilitaryAmount = !isMilitary || Number.isInteger(amountNumber);
+  const validResourceAmount = isMoney || isMilitary || Number.isInteger(amountNumber);
   const validMoneyAmount = !isMoney || (amountNumber >= 1_000_000_000 && amountNumber % 1_000_000_000 === 0);
   const available = isAa ? Number(sourceRegionData?.aa_defense ?? 0) : mine ? Number(mine[resource as keyof typeof mine] ?? 0) : 0;
   const remaining = Math.max(0, available - amountNumber);
-  const canSend = !!mine && !!recipient && amountNumber > 0 && amountNumber <= available && validMoneyAmount && validMilitaryAmount && (!isAa || (!!sourceRegionData && !!targetRegionData));
+  const canSend = !!mine && !!recipient && amountNumber > 0 && amountNumber <= available && validMoneyAmount && validMilitaryAmount && validResourceAmount && (!isAa || (!!sourceRegionData && !!targetRegionData));
 
   const transfer = useMutation({
     mutationFn: () => isMilitary ? rpc("transfer_military", {
