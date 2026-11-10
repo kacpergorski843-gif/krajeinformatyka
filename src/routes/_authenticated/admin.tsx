@@ -343,20 +343,6 @@ async function openApplicationExportPdf(data: ApplicationExport) {
   downloadBlob(pdf, `nation-dynamics-eksport-${date}.pdf`);
 }
 
-const SHOP_NUMERIC = [
-  ["cost_kr", "Koszt KR"],
-  ["cost_coal", "Węgiel"],
-  ["cost_oil", "Ropa"],
-  ["cost_copper", "Miedź"],
-  ["cost_iron", "Żelazo"],
-  ["cost_uranium", "Uran"],
-  ["income_kr", "Przychód KR / doba"],
-  ["upkeep_coal", "Zużycie węgla / doba"],
-  ["produces_amount", "Produkcja / doba"],
-  ["sort_order", "Kolejność"],
-] as const;
-
-
 function Update4Tools() {
   const [activeOperation, setActiveOperation] = useState<"building" | "bonus" | "occupation">("building");
   const { data: countries } = useQuery(countriesQuery);
