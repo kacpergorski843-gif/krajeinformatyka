@@ -43,11 +43,52 @@ function DailyCycleCountdown() {
   return <span className="num font-medium text-primary">{countdown}</span>;
 }
 
+
+function TestCountryControls({ currentCountryName }: { currentCountryName?: string }) {
+  const queryClient = useQueryClient();
+  const [pending, setPending] = useState(false);
+
+  const switchTo = async (target: "V1" | "V2" | "ORIGINAL") => {
+    setPending(true);
+    try {
+      await rpc("main_admin_switch_test_country", { p_target: target });
+      toast.success(target === "ORIGINAL" ? "Przywrócono pierwotne państwo" : `Przełączono na Testy ${target.toLowerCase()}`);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["me"] }),
+        queryClient.invalidateQueries({ queryKey: ["country_stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["regions"] }),
+        queryClient.invalidateQueries({ queryKey: ["region_occupations"] }),
+        queryClient.invalidateQueries({ queryKey: ["economy_bonus"] }),
+      ]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się przełączyć państwa.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Panel className="mb-4 border-primary/40 bg-primary/5 p-4">
+      <p className="text-sm font-semibold">Środowisko testowe głównego administratora</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Aktywne państwo: {currentCountryName ?? "brak"}.
+        {" "}Zasoby testowe są prezentowane jako ∞; baza przechowuje największą wartość obsługiwaną przez typ kolumny.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button className="rounded-md border border-border px-3 py-2 text-sm disabled:opacity-50" disabled={pending} onClick={() => void switchTo("V1")}>Testy v1</button>
+        <button className="rounded-md border border-border px-3 py-2 text-sm disabled:opacity-50" disabled={pending} onClick={() => void switchTo("V2")}>Testy v2</button>
+        <button className="rounded-md border border-border px-3 py-2 text-sm disabled:opacity-50" disabled={pending} onClick={() => void switchTo("ORIGINAL")}>Wróć do pierwotnego państwa</button>
+      </div>
+    </Panel>
+  );
+}
+
 function MyCountry() {
   const queryClient = useQueryClient();
   const { data: me } = useQuery(meQuery);
 
-  const { data: countries } = useQuery(countriesQuery);
+  const { data: countries, isLoading: countriesLoading, error: countriesError } = useQuery(countriesQuery);
   const country = countries?.find((c) => c.country_id === me?.countryId);
   const { data: economyBonus } = useQuery(economyBonusQuery(me?.countryId));
   const { data: history } = useQuery(transactionsQuery(me?.countryId ?? null, 50));
@@ -98,15 +139,23 @@ function MyCountry() {
   if (!country) {
     return (
       <AppShell me={me} title="Moje państwo">
-        <Panel className="p-4">
+        {countriesLoading ? (
+          <Panel className="p-4"><p className="text-sm">Ładowanie państwa…</p></Panel>
+        ) : countriesError ? (
+          <Panel className="p-4"><p className="text-sm font-semibold">Nie udało się wczytać państwa</p><p className="mt-2 text-sm text-muted-foreground">{countriesError.message}</p></Panel>
+        ) : me.isMainAdmin ? (
+          <TestCountryControls />
+        ) : (
+          <Panel className="p-4">
           <p className="text-sm font-semibold">Nie masz jeszcze przypisanego państwa</p>
           <p className="text-muted-foreground mt-2 text-sm">
             Poproś administratora gry o przypisanie państwa do Twojego konta. Do tego czasu możesz
             przeglądać <Link to="/swiat" className="text-primary">świat</Link> i{" "}
             <Link to="/ranking" className="text-primary">ranking</Link>.
           </p>
-        </Panel>
-        <SuggestCountryPanel userId={me.userId} />
+          </Panel>
+        )}
+        {!me.isMainAdmin ? <SuggestCountryPanel userId={me.userId} /> : null}
         {claimPanel}
       </AppShell>
     );
@@ -125,6 +174,7 @@ function MyCountry() {
     { key: "uranium", label: "Uran", value: country.uranium, prod: country.uranium_prod },
   ];
 
+  const isTestCountry = country.name === "Testy v1" || country.name === "Testy v2";
   const shortage = Number(country.coal_upkeep) > Number(country.coal) + Number(country.coal_prod);
 
   const military = [
@@ -138,6 +188,7 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title="Państwo">
+      {me.isMainAdmin ? <TestCountryControls currentCountryName={country.name} /> : null}
       <section className="mb-8 flex items-center gap-5 border-b border-border pb-6 sm:gap-7">
         <CountryFlag
           flag={country.flag}
@@ -205,7 +256,7 @@ function MyCountry() {
       <section className="mb-8">
         <p className="mb-2 text-sm font-medium text-muted-foreground">Budżet państwa</p>
         <Panel className="rounded-xl border-border/80 p-6 shadow-sm sm:p-8">
-          <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.balance)}</p>
+          <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{isTestCountry ? "∞" : kr(country.balance)}</p>
           <p className="mt-2 text-xs text-muted-foreground">Aktualny stan skarbca</p>
         </Panel>
         <div className="mt-3">
@@ -231,7 +282,7 @@ function MyCountry() {
               <div key={r.key} className="min-w-0 rounded-xl border border-border/80 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md sm:p-5">
                 <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">{r.label}</p>
                 <p className={`num mt-3 text-xl font-semibold tracking-tight sm:text-2xl ${zero ? "text-inactive" : "text-foreground"}`}>
-                  {units(r.value)}
+                  {isTestCountry ? "∞" : units(r.value)}
                 </p>
                 <p className={`mt-2 text-xs ${Number(r.prod) > 0 ? "text-success" : "text-inactive"}`}>
                   +{units(r.prod)} <span className="text-muted-foreground">/ doba</span>
