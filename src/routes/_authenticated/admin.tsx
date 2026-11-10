@@ -9,12 +9,15 @@ import {
   Building2,
   CalendarClock,
   ChevronRight,
+  ClipboardList,
   CircleDollarSign,
   Construction,
+  Copy,
   History,
   PackagePlus,
   Radar,
   Rocket,
+  RotateCcw,
   Search,
   Shield,
   ShieldAlert,
@@ -730,6 +733,176 @@ function Update4Tools() {
   );
 }
 
+
+type UpdateLogEntry = {
+  id: string;
+  source: "admin" | "project";
+  actor_id: string | null;
+  actor_label: string;
+  summary: string;
+  details: Record<string, unknown>;
+  created_at: string;
+};
+
+function UpdateLogTab() {
+  const queryClient = useQueryClient();
+  const log = useQuery({
+    queryKey: ["app_update_log"],
+    queryFn: async () => {
+      // The app_update_log table is introduced by migration 00747.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("app_update_log")
+        .select("id,source,actor_id,actor_label,summary,details,created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as UpdateLogEntry[];
+    },
+    refetchInterval: 30_000,
+  });
+
+  const reset = useMutation({
+    mutationFn: async () => await rpc("admin_reset_update_log", {}),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["app_update_log"] });
+      toast.success("Dziennik Update został wyczyszczony");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const copyLog = async () => {
+    const entries = log.data ?? [];
+    const content = entries.length
+      ? entries
+          .map((entry) =>
+            [
+              new Date(entry.created_at).toLocaleString("pl-PL"),
+              entry.source === "project" ? "ZMIANA W PROJEKCIE" : "ZMIANA ADMINISTRACYJNA",
+              "Autor: " + entry.actor_label,
+              entry.summary,
+              Object.keys(entry.details ?? {}).length
+                ? JSON.stringify(entry.details, null, 2)
+                : "",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          )
+          .join("\n\n------------------------------\n\n")
+      : "Dziennik Update jest pusty.";
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Skopiowano dziennik Update");
+    } catch {
+      toast.error("Nie udało się skopiować. Sprawdź uprawnienia przeglądarki.");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Panel className="space-y-4 p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="grid size-11 shrink-0 place-items-center border border-primary/30 bg-primary/10 text-primary">
+              <ClipboardList className="size-5" />
+            </span>
+            <div>
+              <p className="label-hud">REJESTR ZMIAN</p>
+              <h2 className="mt-1 font-display text-lg font-semibold">Update</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Automatyczna historia zmian w projekcie i działań administratorów, w tym zmian cen produktów.
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() => void copyLog()}
+              disabled={log.isLoading || !log.data?.length}
+            >
+              <Copy className="mr-2 size-4" /> Kopiuj wszystko
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Na pewno wyczyścić cały dziennik Update? Tej operacji nie można cofnąć.",
+                  )
+                ) {
+                  reset.mutate();
+                }
+              }}
+              disabled={reset.isPending || log.isLoading || !log.data?.length}
+            >
+              <RotateCcw className="mr-2 size-4" />
+              {reset.isPending ? "Czyszczenie…" : "Reset"}
+            </Button>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
+          <span className="rounded border border-border px-2 py-1">
+            Wpisów: {log.data?.length ?? 0}
+          </span>
+          <span>Nowe wpisy pojawiają się automatycznie po zapisaniu zmian.</span>
+        </div>
+      </Panel>
+
+      {log.isLoading ? (
+        <LoadingRows />
+      ) : log.isError ? (
+        <Panel>
+          <p className="text-sm text-destructive">
+            Nie udało się pobrać dziennika: {log.error.message}
+          </p>
+        </Panel>
+      ) : log.data?.length ? (
+        <div className="space-y-2">
+          {log.data.map((entry) => (
+            <Panel key={entry.id} className="space-y-3 p-3 sm:p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <Badge variant={entry.source === "project" ? "default" : "secondary"}>
+                      {entry.source === "project" ? "Projekt" : "Administracja"}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">{entry.actor_label}</span>
+                  </div>
+                  <p className="text-sm font-semibold leading-relaxed">{entry.summary}</p>
+                </div>
+                <time
+                  className="shrink-0 text-xs text-muted-foreground"
+                  dateTime={entry.created_at}
+                >
+                  {new Date(entry.created_at).toLocaleString("pl-PL")}
+                </time>
+              </div>
+              {Object.keys(entry.details ?? {}).length ? (
+                <details className="rounded-md border border-border/70 bg-secondary/20 p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                    Szczegóły zmiany
+                  </summary>
+                  <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
+                    {JSON.stringify(entry.details, null, 2)}
+                  </pre>
+                </details>
+              ) : null}
+            </Panel>
+          ))}
+        </div>
+      ) : (
+        <Panel className="py-10 text-center">
+          <ClipboardList className="mx-auto size-8 text-muted-foreground" />
+          <p className="mt-3 font-semibold">Dziennik jest pusty</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Kolejne zmiany zostaną zapisane automatycznie.
+          </p>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
 function AdminPanel() {
   const { data: me } = useQuery(meQuery);
   const queryClient = useQueryClient();
@@ -780,6 +953,7 @@ function AdminPanel() {
                 <SelectItem value="shop">Sklep / Produkty</SelectItem>
                 <SelectItem value="economy">Cykl dobowy</SelectItem>
                 <SelectItem value="history">Historia / Audyt</SelectItem>
+                <SelectItem value="updateLog">Update</SelectItem>
                 <SelectItem value="update4">Operacje</SelectItem>
                 {me?.isMainAdmin ? <SelectItem value="maintenance">Tryb konserwacji</SelectItem> : null}
               </SelectContent>
@@ -794,6 +968,7 @@ function AdminPanel() {
                 <AdminTab value="shop" icon={<ShoppingCart />}>Sklep / Produkty</AdminTab>
                 <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
                 <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
+                <AdminTab value="updateLog" icon={<ClipboardList />}>Update</AdminTab>
                 <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>
                 {me?.isMainAdmin ? <AdminTab value="maintenance" icon={<Construction />}>Konserwacja</AdminTab> : null}
               </TabsList>
@@ -805,6 +980,7 @@ function AdminPanel() {
           <TabsContent value="shop"><ShopTab /></TabsContent>
           <TabsContent value="economy"><EconomyCountdownTab /></TabsContent>
           <TabsContent value="history"><HistoryTab /></TabsContent>
+          <TabsContent value="updateLog"><UpdateLogTab /></TabsContent>
           <TabsContent value="update4"><Update4Tools /></TabsContent>
           {me?.isMainAdmin ? <TabsContent value="maintenance"><MaintenanceTab /></TabsContent> : null}
         </Tabs>
