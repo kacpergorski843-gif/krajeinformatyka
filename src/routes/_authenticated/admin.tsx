@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   Boxes,
   FileDown,
+  FlaskConical,
   Building2,
   CalendarClock,
   ChevronRight,
@@ -903,6 +904,59 @@ function UpdateLogTab() {
   );
 }
 
+function TestCountryEnvironmentTab() {
+  const queryClient = useQueryClient();
+  const me = useQuery(meQuery);
+  const countries = useQuery(countriesQuery);
+  const [pending, setPending] = useState(false);
+  const currentCountry = countries.data?.find((country) => country.country_id === me.data?.countryId);
+
+  const switchTo = async (target: "V1" | "V2" | "ORIGINAL") => {
+    if (pending) return;
+    setPending(true);
+    try {
+      const { data, error } = await supabase.rpc("main_admin_switch_test_country", { p_target: target });
+      if (error) throw new Error(error.message);
+      const result = data as { changed?: boolean; country_name?: string };
+      await queryClient.invalidateQueries();
+      toast.success(result.changed === false
+        ? "Jesteś już w oryginalnym państwie"
+        : target === "ORIGINAL"
+          ? "Przywrócono oryginalne państwo"
+          : `Przełączono na ${result.country_name ?? (target === "V1" ? "Testy v1" : "Testy v2")}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się zmienić państwa");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto grid min-w-0 max-w-3xl gap-4">
+      <Panel className="space-y-4 border-amber-500/30 bg-amber-500/5 p-4 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="grid size-11 shrink-0 place-items-center border border-amber-500/30 bg-amber-500/10 text-amber-600">
+            <FlaskConical className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="label-hud text-amber-600">TYLKO MAIN_ADMIN</p>
+            <h2 className="mt-1 font-display text-lg font-semibold">Środowisko testowe</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Aktywne państwo: {currentCountry?.name ?? (me.data?.countryId ? "Ładowanie…" : "brak przypisanego państwa")}.
+              {" "}Przełącz środowisko testowe lub wróć do pierwotnego państwa.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" disabled={pending} onClick={() => void switchTo("V1")}>Testy v1</Button>
+          <Button type="button" variant="outline" disabled={pending} onClick={() => void switchTo("V2")}>Testy v2</Button>
+          <Button type="button" variant="secondary" disabled={pending} onClick={() => void switchTo("ORIGINAL")}>Oryginalny kraj</Button>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
 function AdminPanel() {
   const { data: me } = useQuery(meQuery);
   const queryClient = useQueryClient();
@@ -955,6 +1009,7 @@ function AdminPanel() {
                 <SelectItem value="history">Historia / Audyt</SelectItem>
                 <SelectItem value="updateLog">Update</SelectItem>
                 <SelectItem value="update4">Operacje</SelectItem>
+                {me?.isMainAdmin ? <SelectItem value="testEnvironment">Środowisko testowe</SelectItem> : null}
                 {me?.isMainAdmin ? <SelectItem value="maintenance">Tryb konserwacji</SelectItem> : null}
               </SelectContent>
             </Select>
@@ -970,6 +1025,7 @@ function AdminPanel() {
                 <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
                 <AdminTab value="updateLog" icon={<ClipboardList />}>Update</AdminTab>
                 <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>
+                {me?.isMainAdmin ? <AdminTab value="testEnvironment" icon={<FlaskConical />}>Środowisko testowe</AdminTab> : null}
                 {me?.isMainAdmin ? <AdminTab value="maintenance" icon={<Construction />}>Konserwacja</AdminTab> : null}
               </TabsList>
             </div>
@@ -982,6 +1038,7 @@ function AdminPanel() {
           <TabsContent value="history"><HistoryTab /></TabsContent>
           <TabsContent value="updateLog"><UpdateLogTab /></TabsContent>
           <TabsContent value="update4"><Update4Tools /></TabsContent>
+          {me?.isMainAdmin ? <TabsContent value="testEnvironment"><TestCountryEnvironmentTab /></TabsContent> : null}
           {me?.isMainAdmin ? <TabsContent value="maintenance"><MaintenanceTab /></TabsContent> : null}
         </Tabs>
       </div>
