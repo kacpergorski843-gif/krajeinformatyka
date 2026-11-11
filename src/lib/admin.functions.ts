@@ -35,8 +35,13 @@ export const deletePlayerAccount = createServerFn({ method: "POST" })
     if (purgeError) throw new Error(purgeError.message);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (authDeleteError) {
+      throw new Error(
+        "Dane gry zostały usunięte, ale konto logowania nie. Ponów usuwanie tego użytkownika, aby dokończyć operację. Szczegóły: " +
+        authDeleteError.message,
+      );
+    }
     return { ok: true };
   });
 
