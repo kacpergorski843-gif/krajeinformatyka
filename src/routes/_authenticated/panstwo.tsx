@@ -44,46 +44,6 @@ function DailyCycleCountdown() {
 }
 
 
-function TestCountryControls({ currentCountryName }: { currentCountryName?: string }) {
-  const queryClient = useQueryClient();
-  const [pending, setPending] = useState(false);
-
-  const switchTo = async (target: "V1" | "V2" | "ORIGINAL") => {
-    setPending(true);
-    try {
-      await rpc("main_admin_switch_test_country", { p_target: target });
-      toast.success(target === "ORIGINAL" ? "Przywrócono pierwotne państwo" : `Przełączono na Testy ${target.toLowerCase()}`);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["me"] }),
-        queryClient.invalidateQueries({ queryKey: ["country_stats"] }),
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["regions"] }),
-        queryClient.invalidateQueries({ queryKey: ["region_occupations"] }),
-        queryClient.invalidateQueries({ queryKey: ["economy_bonus"] }),
-      ]);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Nie udało się przełączyć państwa.");
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <Panel className="mb-4 border-primary/40 bg-primary/5 p-4">
-      <p className="text-sm font-semibold">Środowisko testowe głównego administratora</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Aktywne państwo: {currentCountryName ?? "brak"}.
-        {" "}Zasoby testowe są prezentowane jako ∞; baza przechowuje duży zapas z bezpiecznym limitem dla danego typu kolumny.
-      </p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button className="rounded-md border border-border px-3 py-2 text-sm disabled:opacity-50" disabled={pending} onClick={() => void switchTo("V1")}>Testy v1</button>
-        <button className="rounded-md border border-border px-3 py-2 text-sm disabled:opacity-50" disabled={pending} onClick={() => void switchTo("V2")}>Testy v2</button>
-        <button className="rounded-md border border-border px-3 py-2 text-sm disabled:opacity-50" disabled={pending} onClick={() => void switchTo("ORIGINAL")}>Wróć do pierwotnego państwa</button>
-      </div>
-    </Panel>
-  );
-}
-
 function MyCountry() {
   const queryClient = useQueryClient();
   const { data: me } = useQuery(meQuery);
@@ -143,9 +103,7 @@ function MyCountry() {
           <Panel className="p-4"><p className="text-sm">Ładowanie państwa…</p></Panel>
         ) : countriesError ? (
           <Panel className="p-4"><p className="text-sm font-semibold">Nie udało się wczytać państwa</p><p className="mt-2 text-sm text-muted-foreground">{countriesError.message}</p></Panel>
-        ) : me.isMainAdmin ? (
-          <TestCountryControls />
-        ) : (
+        ) : !me.isMainAdmin ? (
           <Panel className="p-4">
           <p className="text-sm font-semibold">Nie masz jeszcze przypisanego państwa</p>
           <p className="text-muted-foreground mt-2 text-sm">
@@ -188,7 +146,6 @@ function MyCountry() {
 
   return (
     <AppShell me={me} title="Państwo">
-      {me.isMainAdmin ? <TestCountryControls currentCountryName={country.name} /> : null}
       <section className="mb-8 flex items-center gap-5 border-b border-border pb-6 sm:gap-7">
         <CountryFlag
           flag={country.flag}

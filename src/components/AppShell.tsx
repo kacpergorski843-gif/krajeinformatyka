@@ -1,8 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft, FlaskConical } from "lucide-react";
+import { Landmark, Globe2, Map, ShoppingCart, Trophy, ShieldHalf, Rocket, LogOut, Menu, X, ArrowRightLeft } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +30,6 @@ export function AppShell({ me, title, children }: {
   const queryClient = useQueryClient();
   const [confirmOut, setConfirmOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [switchingTestCountry, setSwitchingTestCountry] = useState(false);
   const getMode = useServerFn(getMaintenanceMode);
   const maintenanceMode = useQuery({
     queryKey: ["maintenance_mode"],
@@ -61,27 +59,6 @@ export function AppShell({ me, title, children }: {
     queryClient.clear();
     await supabase.auth.signOut();
     router.navigate({ to: "/auth", replace: true });
-  }
-
-  async function switchTestCountry(target: "V1" | "V2" | "ORIGINAL") {
-    if (switchingTestCountry) return;
-    setSwitchingTestCountry(true);
-    try {
-      const { data, error } = await (supabase.rpc as any)("main_admin_switch_test_country", { p_target: target });
-      if (error) throw new Error(error.message);
-      const result = data as { changed?: boolean; country_name?: string };
-      await queryClient.invalidateQueries();
-      await router.invalidate();
-      toast.success(result.changed === false
-        ? "Jesteś już w oryginalnym państwie"
-        : target === "ORIGINAL"
-          ? "Przywrócono oryginalne państwo"
-          : `Przełączono na ${result.country_name ?? (target === "V1" ? "Testy v1" : "Testy v2")}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Nie udało się zmienić państwa");
-    } finally {
-      setSwitchingTestCountry(false);
-    }
   }
 
   const items = me?.isAdmin ? [...NAV, { to: "/admin", label: "Administracja", icon: ShieldHalf } as const] : NAV;
@@ -138,16 +115,6 @@ export function AppShell({ me, title, children }: {
         <header className="page-header command-header">
           <div className="min-w-0 flex-1">
             <h1 className="page-title truncate">{title}</h1>
-            {me?.isMainAdmin ? (
-              <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/5 p-2.5">
-                <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600">
-                  <FlaskConical className="size-4" /> ŚRODOWISKO TESTOWE
-                </span>
-                <Button type="button" size="sm" variant="outline" disabled={switchingTestCountry} onClick={() => void switchTestCountry("V1")}>Testy v1</Button>
-                <Button type="button" size="sm" variant="outline" disabled={switchingTestCountry} onClick={() => void switchTestCountry("V2")}>Testy v2</Button>
-                <Button type="button" size="sm" variant="secondary" disabled={switchingTestCountry} onClick={() => void switchTestCountry("ORIGINAL")}>Oryginalny kraj</Button>
-              </div>
-            ) : null}
           </div>
         </header>
         <div className="content-area">{children}</div>
@@ -159,18 +126,6 @@ export function AppShell({ me, title, children }: {
         <button className="ml-auto mb-4 block" onClick={() => setMobileOpen(false)} aria-label="Zamknij menu"><X className="size-5"/></button>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {nav(true)}
-          {me?.isMainAdmin ? (
-            <section className="mt-4 border-t border-border pt-4" aria-label="Przełączanie państwa testowego">
-              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-600">
-                <FlaskConical className="size-4" /> Środowisko testowe
-              </p>
-              <div className="grid grid-cols-1 gap-2">
-                <Button type="button" className="min-h-11 w-full justify-start" variant="outline" disabled={switchingTestCountry} onClick={() => { setMobileOpen(false); void switchTestCountry("V1"); }}>Testy v1</Button>
-                <Button type="button" className="min-h-11 w-full justify-start" variant="outline" disabled={switchingTestCountry} onClick={() => { setMobileOpen(false); void switchTestCountry("V2"); }}>Testy v2</Button>
-                <Button type="button" className="min-h-11 w-full justify-start" variant="secondary" disabled={switchingTestCountry} onClick={() => { setMobileOpen(false); void switchTestCountry("ORIGINAL"); }}>Wróć do oryginalnego kraju</Button>
-              </div>
-            </section>
-          ) : null}
         </div>
         <div className="mt-auto space-y-2 border-t border-border pt-4">
           <button type="button" onClick={() => { setMobileOpen(false); setConfirmOut(true); }} className="nav-item w-full">
