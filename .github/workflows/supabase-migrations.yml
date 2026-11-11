@@ -79,17 +79,21 @@ jobs:
 
       - name: Show remote migration state
         if: steps.credentials.outputs.ready == 'true'
-        run: supabase migration list --linked
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase migration list --remote --password "$SUPABASE_DB_PASSWORD"
 
       - name: Preview pending migrations
         if: steps.credentials.outputs.ready == 'true'
-        run: supabase db push --linked --dry-run
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push --remote --dry-run --password "$SUPABASE_DB_PASSWORD"
 
       - name: Apply migrations to production
         if: steps.credentials.outputs.ready == 'true' && vars.SUPABASE_MIGRATIONS_AUTODEPLOY == 'true'
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: supabase db push --linked --yes
+        run: supabase db push --remote --yes --password "$SUPABASE_DB_PASSWORD"
 
       - name: Explain deployment is awaiting explicit enablement
         if: steps.credentials.outputs.ready == 'true' && vars.SUPABASE_MIGRATIONS_AUTODEPLOY != 'true'
