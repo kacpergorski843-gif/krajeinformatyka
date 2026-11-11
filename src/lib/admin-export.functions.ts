@@ -21,7 +21,7 @@ type ExportTable = (typeof EXPORT_TABLES)[number];
 
 type ExportResult = {
   generated_at: string;
-  tables: Record<string, unknown[]>;
+  tables: Record<string, any[]>;
   errors: { table: string; message: string }[];
   auth_users: unknown[];
 };
@@ -94,7 +94,7 @@ export const exportApplicationData = createServerFn({ method: "POST" })
       throw new Error("Pełny eksport danych jest dostępny wyłącznie dla głównego administratora");
     }
 
-    const tables: Record<string, unknown[]> = {};
+    const tables: Record<string, any[]> = {};
     const errors: { table: string; message: string }[] = [];
 
     for (const table of EXPORT_TABLES) {

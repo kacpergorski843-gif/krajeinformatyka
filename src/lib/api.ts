@@ -321,7 +321,7 @@ export function regionOccupationsQuery(countryId: string | null | undefined) {
       // A country can appear in several historical takeovers of the same region.
       // Determine the latest event across all countries before marking any row active.
       const latestEvents = (await unwrap(
-        supabase
+        (supabase as any)
           .from("region_occupations")
           .select("id, region_id, event_type")
           .in("region_id", [...new Set(rows.map((row) => row.region_id))])
@@ -914,8 +914,8 @@ export const marketOffersQuery = queryOptions({
     if (!offers.length) return [];
     const ids = [...new Set(offers.map(o => o.seller_country_id))];
     const countries = await unwrap((supabase as any).from("countries").select("id,name,flag").in("id",ids));
-    const byId = new Map((countries ?? []).map(c => [c.id,{name:c.name,flag:c.flag}]));
-    return offers.map(o => ({...o,seller:byId.get(o.seller_country_id)}));
+    const byId = new Map(((countries ?? []) as any[]).map((c: any) => [c.id,{name:c.name,flag:c.flag}]));
+    return offers.map(o => ({...o,seller:byId.get(o.seller_country_id) as MarketOffer["seller"]}));
   },
 });
 export const marketMyOffersQuery = (countryId: string | null | undefined) => queryOptions({
