@@ -13,20 +13,20 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as McpRouteImport } from './routes/mcp'
-import { Route as ApiAppVersionRouteImport } from './routes/api.app-version'
 import { Route as RankingPublicznyRouteImport } from './routes/ranking-publiczny'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedMasterkiRouteImport } from './routes/_authenticated/masterki'
 import { Route as AuthenticatedArsenalRouteImport } from './routes/_authenticated/arsenal'
+import { Route as AuthenticatedMasterkiRouteImport } from './routes/_authenticated/masterki'
 import { Route as AuthenticatedPanstwoRouteImport } from './routes/_authenticated/panstwo'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
-import { Route as AuthenticatedRynekRouteImport } from './routes/_authenticated/rynek'
 import { Route as AuthenticatedRegionyRouteImport } from './routes/_authenticated/regiony'
+import { Route as AuthenticatedRynekRouteImport } from './routes/_authenticated/rynek'
 import { Route as AuthenticatedSklepRouteImport } from './routes/_authenticated/sklep'
 import { Route as AuthenticatedSwiatRouteImport } from './routes/_authenticated/swiat'
 import { Route as AuthenticatedTransferRouteImport } from './routes/_authenticated/transfer'
 import { Route as AuthenticatedUmowyRouteImport } from './routes/_authenticated/umowy'
+import { Route as ApiAppVersionRouteImport } from './routes/api.app-version'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedSwiatIdRouteImport } from './routes/_authenticated/swiat.$id'
 
@@ -49,11 +49,6 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAppVersionRoute = ApiAppVersionRouteImport.update({
-  id: '/api/app-version',
-  path: '/api/app-version',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RankingPublicznyRoute = RankingPublicznyRouteImport.update({
   id: '/ranking-publiczny',
   path: '/ranking-publiczny',
@@ -70,14 +65,14 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedMasterkiRoute = AuthenticatedMasterkiRouteImport.update({
-  id: '/masterki',
-  path: '/masterki',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedArsenalRoute = AuthenticatedArsenalRouteImport.update({
   id: '/arsenal',
   path: '/arsenal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMasterkiRoute = AuthenticatedMasterkiRouteImport.update({
+  id: '/masterki',
+  path: '/masterki',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPanstwoRoute = AuthenticatedPanstwoRouteImport.update({
@@ -90,14 +85,14 @@ const AuthenticatedRankingRoute = AuthenticatedRankingRouteImport.update({
   path: '/ranking',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedRynekRoute = AuthenticatedRynekRouteImport.update({
-  id: '/rynek',
-  path: '/rynek',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedRegionyRoute = AuthenticatedRegionyRouteImport.update({
   id: '/regiony',
   path: '/regiony',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRynekRoute = AuthenticatedRynekRouteImport.update({
+  id: '/rynek',
+  path: '/rynek',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSklepRoute = AuthenticatedSklepRouteImport.update({
@@ -120,6 +115,11 @@ const AuthenticatedUmowyRoute = AuthenticatedUmowyRouteImport.update({
   path: '/umowy',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiAppVersionRoute = ApiAppVersionRouteImport.update({
+  id: '/api/app-version',
+  path: '/api/app-version',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -135,20 +135,20 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
-  '/api/app-version': typeof ApiAppVersionRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/masterki': typeof AuthenticatedMasterkiRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
+  '/masterki': typeof AuthenticatedMasterkiRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
-  '/rynek': typeof AuthenticatedRynekRoute
   '/regiony': typeof AuthenticatedRegionyRoute
+  '/rynek': typeof AuthenticatedRynekRoute
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/transfer': typeof AuthenticatedTransferRoute
   '/umowy': typeof AuthenticatedUmowyRoute
+  '/api/app-version': typeof ApiAppVersionRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
@@ -156,20 +156,20 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
-  '/api/app-version': typeof ApiAppVersionRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/masterki': typeof AuthenticatedMasterkiRoute
   '/arsenal': typeof AuthenticatedArsenalRoute
+  '/masterki': typeof AuthenticatedMasterkiRoute
   '/panstwo': typeof AuthenticatedPanstwoRoute
   '/ranking': typeof AuthenticatedRankingRoute
-  '/rynek': typeof AuthenticatedRynekRoute
   '/regiony': typeof AuthenticatedRegionyRoute
+  '/rynek': typeof AuthenticatedRynekRoute
   '/sklep': typeof AuthenticatedSklepRoute
   '/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/transfer': typeof AuthenticatedTransferRoute
   '/umowy': typeof AuthenticatedUmowyRoute
+  '/api/app-version': typeof ApiAppVersionRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
@@ -179,20 +179,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
-  '/api/app-version': typeof ApiAppVersionRoute
   '/ranking-publiczny': typeof RankingPublicznyRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/masterki': typeof AuthenticatedMasterkiRoute
   '/_authenticated/arsenal': typeof AuthenticatedArsenalRoute
+  '/_authenticated/masterki': typeof AuthenticatedMasterkiRoute
   '/_authenticated/panstwo': typeof AuthenticatedPanstwoRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
-  '/_authenticated/rynek': typeof AuthenticatedRynekRoute
   '/_authenticated/regiony': typeof AuthenticatedRegionyRoute
+  '/_authenticated/rynek': typeof AuthenticatedRynekRoute
   '/_authenticated/sklep': typeof AuthenticatedSklepRoute
   '/_authenticated/swiat': typeof AuthenticatedSwiatRouteWithChildren
   '/_authenticated/transfer': typeof AuthenticatedTransferRoute
   '/_authenticated/umowy': typeof AuthenticatedUmowyRoute
+  '/api/app-version': typeof ApiAppVersionRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/swiat/$id': typeof AuthenticatedSwiatIdRoute
 }
@@ -202,20 +202,20 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/mcp'
-    | '/api/app-version'
     | '/ranking-publiczny'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
-    | '/masterki'
     | '/arsenal'
+    | '/masterki'
     | '/panstwo'
     | '/ranking'
-    | '/rynek'
     | '/regiony'
+    | '/rynek'
     | '/sklep'
     | '/swiat'
     | '/transfer'
     | '/umowy'
+    | '/api/app-version'
     | '/.lovable/oauth/consent'
     | '/swiat/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -226,16 +226,17 @@ export interface FileRouteTypes {
     | '/ranking-publiczny'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
-    | '/masterki'
     | '/arsenal'
+    | '/masterki'
     | '/panstwo'
     | '/ranking'
-    | '/rynek'
     | '/regiony'
+    | '/rynek'
     | '/sklep'
     | '/swiat'
     | '/transfer'
     | '/umowy'
+    | '/api/app-version'
     | '/.lovable/oauth/consent'
     | '/swiat/$id'
   id:
@@ -247,16 +248,17 @@ export interface FileRouteTypes {
     | '/ranking-publiczny'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
-    | '/_authenticated/masterki'
     | '/_authenticated/arsenal'
+    | '/_authenticated/masterki'
     | '/_authenticated/panstwo'
     | '/_authenticated/ranking'
-    | '/_authenticated/rynek'
     | '/_authenticated/regiony'
+    | '/_authenticated/rynek'
     | '/_authenticated/sklep'
     | '/_authenticated/swiat'
     | '/_authenticated/transfer'
     | '/_authenticated/umowy'
+    | '/api/app-version'
     | '/.lovable/oauth/consent'
     | '/_authenticated/swiat/$id'
   fileRoutesById: FileRoutesById
@@ -266,9 +268,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   McpRoute: typeof McpRoute
-  ApiAppVersionRoute: typeof ApiAppVersionRoute
   RankingPublicznyRoute: typeof RankingPublicznyRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  ApiAppVersionRoute: typeof ApiAppVersionRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
 
@@ -293,13 +295,6 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/app-version': {
-      id: '/api/app-version'
-      path: '/api/app-version'
-      fullPath: '/api/app-version'
-      preLoaderRoute: typeof ApiAppVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -337,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedArsenalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/masterki': {
+      id: '/_authenticated/masterki'
+      path: '/masterki'
+      fullPath: '/masterki'
+      preLoaderRoute: typeof AuthenticatedMasterkiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/panstwo': {
       id: '/_authenticated/panstwo'
       path: '/panstwo'
@@ -356,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/regiony'
       fullPath: '/regiony'
       preLoaderRoute: typeof AuthenticatedRegionyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rynek': {
+      id: '/_authenticated/rynek'
+      path: '/rynek'
+      fullPath: '/rynek'
+      preLoaderRoute: typeof AuthenticatedRynekRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sklep': {
@@ -385,6 +394,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/umowy'
       preLoaderRoute: typeof AuthenticatedUmowyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/app-version': {
+      id: '/api/app-version'
+      path: '/api/app-version'
+      fullPath: '/api/app-version'
+      preLoaderRoute: typeof ApiAppVersionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
@@ -416,12 +432,12 @@ const AuthenticatedSwiatRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedMasterkiRoute: typeof AuthenticatedMasterkiRoute
   AuthenticatedArsenalRoute: typeof AuthenticatedArsenalRoute
+  AuthenticatedMasterkiRoute: typeof AuthenticatedMasterkiRoute
   AuthenticatedPanstwoRoute: typeof AuthenticatedPanstwoRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
-  AuthenticatedRynekRoute: typeof AuthenticatedRynekRoute
   AuthenticatedRegionyRoute: typeof AuthenticatedRegionyRoute
+  AuthenticatedRynekRoute: typeof AuthenticatedRynekRoute
   AuthenticatedSklepRoute: typeof AuthenticatedSklepRoute
   AuthenticatedSwiatRoute: typeof AuthenticatedSwiatRouteWithChildren
   AuthenticatedTransferRoute: typeof AuthenticatedTransferRoute
@@ -430,12 +446,12 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedMasterkiRoute: AuthenticatedMasterkiRoute,
   AuthenticatedArsenalRoute: AuthenticatedArsenalRoute,
+  AuthenticatedMasterkiRoute: AuthenticatedMasterkiRoute,
   AuthenticatedPanstwoRoute: AuthenticatedPanstwoRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
-  AuthenticatedRynekRoute: AuthenticatedRynekRoute,
   AuthenticatedRegionyRoute: AuthenticatedRegionyRoute,
+  AuthenticatedRynekRoute: AuthenticatedRynekRoute,
   AuthenticatedSklepRoute: AuthenticatedSklepRoute,
   AuthenticatedSwiatRoute: AuthenticatedSwiatRouteWithChildren,
   AuthenticatedTransferRoute: AuthenticatedTransferRoute,
@@ -450,10 +466,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   McpRoute: McpRoute,
-  ApiAppVersionRoute: ApiAppVersionRoute,
   RankingPublicznyRoute: RankingPublicznyRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  ApiAppVersionRoute: ApiAppVersionRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
 export const routeTree = rootRouteImport

@@ -63,6 +63,33 @@ export type Database = {
           },
         ]
       }
+      app_maintenance_mode: {
+        Row: {
+          enabled: boolean
+          id: number
+          message_body: string
+          message_title: string
+          pages: string[]
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id: number
+          message_body?: string
+          message_title?: string
+          pages?: string[]
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: number
+          message_body?: string
+          message_title?: string
+          pages?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bilateral_agreement_runs: {
         Row: {
           agreement_id: string
@@ -407,6 +434,7 @@ export type Database = {
           id: string
           ran_at: string
           run_date: string
+          run_number: number
           summary: Json
           triggered_by: string | null
         }
@@ -414,6 +442,7 @@ export type Database = {
           id?: string
           ran_at?: string
           run_date: string
+          run_number?: number
           summary?: Json
           triggered_by?: string | null
         }
@@ -421,10 +450,75 @@ export type Database = {
           id?: string
           ran_at?: string
           run_date?: string
+          run_number?: number
           summary?: Json
           triggered_by?: string | null
         }
         Relationships: []
+      }
+      main_admin_test_sessions: {
+        Row: {
+          active_test_country_id: string
+          original_country_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_test_country_id: string
+          original_country_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_test_country_id?: string
+          original_country_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "main_admin_test_sessions_active_test_country_id_fkey"
+            columns: ["active_test_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "main_admin_test_sessions_active_test_country_id_fkey"
+            columns: ["active_test_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "main_admin_test_sessions_active_test_country_id_fkey"
+            columns: ["active_test_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "main_admin_test_sessions_original_country_id_fkey"
+            columns: ["original_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "main_admin_test_sessions_original_country_id_fkey"
+            columns: ["original_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "main_admin_test_sessions_original_country_id_fkey"
+            columns: ["original_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+        ]
       }
       missile_strikes: {
         Row: {
@@ -646,6 +740,8 @@ export type Database = {
       region_slots: {
         Row: {
           building: Database["public"]["Enums"]["building_type"]
+          built_at: string | null
+          built_by: string | null
           created_at: string
           id: string
           region_id: string
@@ -653,6 +749,8 @@ export type Database = {
         }
         Insert: {
           building: Database["public"]["Enums"]["building_type"]
+          built_at?: string | null
+          built_by?: string | null
           created_at?: string
           id?: string
           region_id: string
@@ -660,6 +758,8 @@ export type Database = {
         }
         Update: {
           building?: Database["public"]["Enums"]["building_type"]
+          built_at?: string | null
+          built_by?: string | null
           created_at?: string
           id?: string
           region_id?: string
@@ -1021,12 +1121,12 @@ export type Database = {
       }
       admin_upsert_shop_item: { Args: { p_item: Json }; Returns: string }
       assert_can_manage: { Args: { p_country_id: string }; Returns: undefined }
-      build_in_slot: {
-        Args: { p_item_code: string; p_region_id: string; p_slot_index: number }
-        Returns: Json
-      }
       build_factories_batch: {
         Args: { p_item_code: string; p_targets: Json }
+        Returns: Json
+      }
+      build_in_slot: {
+        Args: { p_item_code: string; p_region_id: string; p_slot_index: number }
         Returns: Json
       }
       cancel_country_suggestion: { Args: { p_id: string }; Returns: undefined }
@@ -1070,6 +1170,10 @@ export type Database = {
         Returns: Json
       }
       main_admin_exists: { Args: never; Returns: boolean }
+      main_admin_switch_test_country: {
+        Args: { p_target: string }
+        Returns: Json
+      }
       my_country_id: { Args: never; Returns: string }
       purchase_aa: {
         Args: { p_country_id: string; p_qty?: number; p_region_id: string }
@@ -1077,6 +1181,10 @@ export type Database = {
       }
       purchase_unit: {
         Args: { p_country_id: string; p_item_code: string; p_qty?: number }
+        Returns: Json
+      }
+      rename_region: {
+        Args: { p_name: string; p_region_id: string }
         Returns: Json
       }
       run_bilateral_agreements: { Args: { p_run_date?: string }; Returns: Json }
@@ -1106,7 +1214,6 @@ export type Database = {
         Args: { p_item_code: string; p_region_id: string; p_slot_index: number }
         Returns: Json
       }
-      claim_device: { Args: { p_device_id: string }; Returns: boolean }
       username_taken: { Args: { p_username: string }; Returns: boolean }
     }
     Enums: {
