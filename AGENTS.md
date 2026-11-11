@@ -12,3 +12,5 @@
 ## Interface architecture
 - Keep the unified presentation layer in `src/styles.css` and shared UI primitives; retain existing structural hooks so visual updates cannot alter game operations.
 - Route-specific visual changes must preserve handlers, queries, validation, permissions and mutation payloads; the redesign is presentation-only.
+
+- Database migrations are applied only through Lovable Cloud; GitHub Actions only validates migration files statically (no DB credentials exist for CI, and the DB has no CLI migration registry).

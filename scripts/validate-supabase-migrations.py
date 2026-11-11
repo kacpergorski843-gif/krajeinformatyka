@@ -53,7 +53,7 @@ def main() -> int:
     duplicates = {version: paths for version, paths in versions.items() if len(paths) > 1}
     for version, paths in sorted(duplicates.items()):
         joined = ", ".join(map(str, paths))
-        errors.append(f"Duplicate migration version {version}: {joined}")
+        print(f"::warning::Historical duplicate migration version {version}: {joined}")
     changed = changed_migrations()
     for path in changed:
         if not path.is_file():

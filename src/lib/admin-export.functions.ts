@@ -21,15 +21,15 @@ type ExportTable = (typeof EXPORT_TABLES)[number];
 
 type ExportResult = {
   generated_at: string;
-  tables: Record<string, unknown[]>;
+  tables: Record<string, any[]>;
   errors: { table: string; message: string }[];
-  auth_users: unknown[];
+  auth_users: any[];
 };
 
-async function readAllRows(table: ExportTable): Promise<{ rows: unknown[]; error?: string }> {
+async function readAllRows(table: ExportTable): Promise<{ rows: any[]; error?: string }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const db = supabaseAdmin as any;
-  const rows: unknown[] = [];
+  const rows: any[] = [];
   const pageSize = 1000;
 
   for (let offset = 0; ; offset += pageSize) {
@@ -49,7 +49,7 @@ async function readAllRows(table: ExportTable): Promise<{ rows: unknown[]; error
 
 async function readAllAuthUsers() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const users: unknown[] = [];
+  const users: any[] = [];
   const perPage = 1000;
 
   for (let page = 1; ; page += 1) {
@@ -94,7 +94,7 @@ export const exportApplicationData = createServerFn({ method: "POST" })
       throw new Error("Pełny eksport danych jest dostępny wyłącznie dla głównego administratora");
     }
 
-    const tables: Record<string, unknown[]> = {};
+    const tables: Record<string, any[]> = {};
     const errors: { table: string; message: string }[] = [];
 
     for (const table of EXPORT_TABLES) {
@@ -103,7 +103,7 @@ export const exportApplicationData = createServerFn({ method: "POST" })
       if (result.error) errors.push({ table, message: result.error });
     }
 
-    let auth_users: unknown[] = [];
+    let auth_users: any[] = [];
     try {
       auth_users = await readAllAuthUsers();
     } catch (error) {
