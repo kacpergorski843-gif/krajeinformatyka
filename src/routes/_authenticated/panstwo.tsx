@@ -112,7 +112,7 @@ function MyCountry() {
             <Link to="/ranking" className="text-primary">ranking</Link>.
           </p>
           </Panel>
-        )}
+        ) : null}
         {!me.isMainAdmin ? <SuggestCountryPanel userId={me.userId} /> : null}
         {claimPanel}
       </AppShell>
