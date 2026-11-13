@@ -1,8 +1,46 @@
 -- Market prices are entered and displayed as totals, never as per-unit prices.
-alter table public.market_offers add column if not exists total_price_remaining numeric(30,0);
+-- Widen integer-valued economy and market fields to unconstrained NUMERIC.
+-- A quantity and a unit price can each fit numeric(30,0), while their product
+-- can exceed 30 digits. Keep values exact and let PostgreSQL hold the full total.
+ALTER TABLE public.countries
+  ALTER COLUMN balance TYPE numeric USING balance::numeric,
+  ALTER COLUMN coal TYPE numeric USING coal::numeric,
+  ALTER COLUMN oil TYPE numeric USING oil::numeric,
+  ALTER COLUMN copper TYPE numeric USING copper::numeric,
+  ALTER COLUMN iron TYPE numeric USING iron::numeric,
+  ALTER COLUMN uranium TYPE numeric USING uranium::numeric;
+
+ALTER TABLE public.transactions
+  ALTER COLUMN amount_kr TYPE numeric USING amount_kr::numeric;
+
+ALTER TABLE public.market_offers
+  ALTER COLUMN quantity_total TYPE numeric USING quantity_total::numeric,
+  ALTER COLUMN quantity_remaining TYPE numeric USING quantity_remaining::numeric,
+  ALTER COLUMN unit_price TYPE numeric USING unit_price::numeric;
+
+ALTER TABLE public.market_sales
+  ALTER COLUMN quantity TYPE numeric USING quantity::numeric,
+  ALTER COLUMN unit_price TYPE numeric USING unit_price::numeric,
+  ALTER COLUMN total_price TYPE numeric USING total_price::numeric;
+
+ALTER TABLE public.market_negotiations
+  ALTER COLUMN quantity TYPE numeric USING quantity::numeric,
+  ALTER COLUMN unit_price TYPE numeric USING unit_price::numeric;
+
+ALTER TABLE public.market_offers
+  ADD COLUMN IF NOT EXISTS total_price_remaining numeric;
+ALTER TABLE public.market_offers
+  ALTER COLUMN total_price_remaining TYPE numeric
+  USING total_price_remaining::numeric;
+
+ALTER TABLE public.market_negotiations
+  ADD COLUMN IF NOT EXISTS total_price numeric;
+ALTER TABLE public.market_negotiations
+  ALTER COLUMN total_price TYPE numeric
+  USING total_price::numeric;
+
 update public.market_offers set total_price_remaining = quantity_remaining * unit_price where total_price_remaining is null;
 alter table public.market_offers alter column total_price_remaining set not null;
-alter table public.market_negotiations add column if not exists total_price numeric(30,0);
 update public.market_negotiations set total_price = quantity * unit_price where total_price is null;
 alter table public.market_negotiations alter column total_price set not null;
 
@@ -149,3 +187,14 @@ grant execute on function public.market_update_offer_total(uuid,numeric) to auth
 grant execute on function public.market_buy_total(uuid,numeric) to authenticated;
 grant execute on function public.market_propose_total(uuid,numeric,numeric) to authenticated;
 grant execute on function public.market_respond_negotiation_total(uuid,text,numeric,numeric) to authenticated;
+
+
+-- Disable legacy per-unit-price write RPCs. The total-price RPCs above are
+-- the only supported create, update, buy and negotiation write paths.
+revoke all on function public.market_create_offer(text,numeric,numeric) from public, authenticated;
+revoke all on function public.market_update_offer_price(uuid,numeric) from public, authenticated;
+revoke all on function public.market_buy(uuid,numeric) from public, authenticated;
+revoke all on function public.market_propose(uuid,numeric,numeric) from public, authenticated;
+revoke all on function public.market_respond_negotiation(uuid,text,numeric,numeric) from public, authenticated;
+
+NOTIFY pgrst, 'reload schema';
