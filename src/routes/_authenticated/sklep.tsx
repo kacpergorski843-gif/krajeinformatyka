@@ -405,7 +405,7 @@ function Shop() {
       </div>
 
       <Dialog open={!!item} onOpenChange={(o) => !o && setItem(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogContent className="purchase-confirm-dialog max-h-[85vh] overflow-y-auto rounded-xl">
           <DialogHeader>
             <DialogTitle className="tracking-[0.14em] uppercase">
             {isFactoryUpgrade ? "Potwierdzenie ulepszenia" : "Potwierdzenie zakupu"}
