@@ -41,6 +41,7 @@ alter table public.market_negotiations alter column total_price set not null;
 create or replace view public.market_price_history as
 select resource, created_at, unit_price, quantity, total_price
 from public.market_sales;
+grant select on public.market_price_history to authenticated;
 
 create or replace function public.market_create_offer_total(p_resource text,p_quantity numeric,p_total_price numeric)
 returns uuid language plpgsql security definer set search_path=public as $$
