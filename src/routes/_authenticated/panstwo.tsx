@@ -140,8 +140,8 @@ function MyCountry() {
     { label: "Rakiety I", value: country.missile_1 },
     { label: "Rakiety II", value: country.missile_2 },
     { label: "Rakiety III", value: country.missile_3 },
-    { label: "Żołnierze", value: country.soldier_packs * 500000 },
-    { label: "Czołgi", value: country.tank_packs * 50 },
+    { label: "Żołnierze", value: (BigInt(country.soldier_packs) * 500000n).toString() },
+    { label: "Czołgi", value: (BigInt(country.tank_packs) * 50n).toString() },
   ];
 
   return (
