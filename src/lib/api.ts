@@ -17,12 +17,12 @@ export type CountryStats = {
   copper: string;
   iron: string;
   uranium: string;
-  aa_defense: number;
-  missile_1: number;
-  missile_2: number;
-  missile_3: number;
-  soldier_packs: number;
-  tank_packs: number;
+  aa_defense: string;
+  missile_1: string;
+  missile_2: string;
+  missile_3: string;
+  soldier_packs: string;
+  tank_packs: string;
   war_votes: number;
   fort_votes: number;
   total_votes: number;
@@ -37,7 +37,7 @@ export type CountryStats = {
   forts: number;
   military_value: string;
   vote_potential: number;
-  region_aa_total: number;
+  region_aa_total: string;
 };
 
 export type PublicRankingRow = {
@@ -77,9 +77,9 @@ export type MissileStrike = {
   region_name: string;
   missile_code: string;
   result: string;
-  aa_defense: number;
-  region_aa: number | null;
-  required_aa: number | null;
+  aa_defense: string;
+  region_aa: string | null;
+  required_aa: string | null;
   destroyed: { slot_index: number; building: string }[];
   created_at: string;
 };
@@ -212,7 +212,7 @@ export type RegionWithSlots = {
   id: string;
   name: string;
   country_id: string;
-  aa_defense: number;
+  aa_defense: string;
   slots: { id: string; slot_index: number; building: string }[];
 };
 
@@ -220,7 +220,7 @@ type RegionRow = {
   id: string;
   name: string;
   country_id: string;
-  aa_defense: number;
+  aa_defense: string;
   region_slots: RegionWithSlots["slots"] | null;
 };
 
@@ -229,7 +229,7 @@ export function regionAaQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["region_aa", countryId],
     enabled: !!countryId,
-    queryFn: async (): Promise<Array<{ id: string; name: string; aa_defense: number }>> => {
+    queryFn: async (): Promise<Array<{ id: string; name: string; aa_defense: string }>> => {
       const rows = await unwrap(
         supabase
           .from("regions")
@@ -240,7 +240,7 @@ export function regionAaQuery(countryId: string | null | undefined) {
       return (rows ?? []).map((region) => ({
         id: region.id,
         name: region.name,
-        aa_defense: region.aa_defense ?? 0,
+        aa_defense: String(region.aa_defense ?? 0),
       }));
     },
   });
@@ -262,7 +262,7 @@ export function regionsQuery(countryId: string | null | undefined) {
         id: r.id,
         name: r.name,
         country_id: r.country_id,
-        aa_defense: r.aa_defense ?? 0,
+        aa_defense: String(r.aa_defense ?? 0),
         slots: [...(r.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
       }));
 
@@ -274,11 +274,11 @@ export function transferRegionsQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["transfer_regions", countryId],
     enabled: !!countryId,
-    queryFn: async (): Promise<Array<{ id: string; name: string; country_id: string; aa_defense: number }>> => {
+    queryFn: async (): Promise<Array<{ id: string; name: string; country_id: string; aa_defense: string }>> => {
       const rows = await unwrap(
         supabase.from("regions").select("id,name,country_id,aa_defense").eq("country_id", countryId!).order("created_at"),
       );
-      return (rows ?? []) as Array<{ id: string; name: string; country_id: string; aa_defense: number }>;
+      return (rows ?? []).map((region) => ({ ...region, aa_defense: String(region.aa_defense ?? 0) }));
     },
   });
 }
@@ -550,7 +550,7 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
           id: row.id,
           name: row.name,
           country_id: row.country_id,
-          aa_defense: row.aa_defense ?? 0,
+          aa_defense: String(row.aa_defense ?? 0),
           slots: [...(row.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
           occupied_at: occupation.occupied_at,
           occupier_country_id: occupation.current_country_id,
@@ -691,7 +691,7 @@ export const allRegionsQuery = queryOptions({
       id: r.id,
       name: r.name,
       country_id: r.country_id,
-      aa_defense: r.aa_defense ?? 0,
+      aa_defense: String(r.aa_defense ?? 0),
       slots: [...(r.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
     }));
   },
@@ -786,12 +786,12 @@ async function readPublicCountryFallback(countryId?: string) {
     copper: row.copper,
     iron: row.iron,
     uranium: row.uranium,
-    aa_defense: row.aa_defense ?? 0,
-    missile_1: row.missile_1 ?? 0,
-    missile_2: row.missile_2 ?? 0,
-    missile_3: row.missile_3 ?? 0,
-    soldier_packs: row.soldier_packs ?? 0,
-    tank_packs: row.tank_packs ?? 0,
+    aa_defense: String(row.aa_defense ?? 0),
+    missile_1: String(row.missile_1 ?? 0),
+    missile_2: String(row.missile_2 ?? 0),
+    missile_3: String(row.missile_3 ?? 0),
+    soldier_packs: String(row.soldier_packs ?? 0),
+    tank_packs: String(row.tank_packs ?? 0),
     war_votes: 0,
     fort_votes: 0,
     total_votes: 0,
@@ -806,7 +806,7 @@ async function readPublicCountryFallback(countryId?: string) {
     forts: 0,
     military_value: "0",
     vote_potential: 0,
-    region_aa_total: 0,
+    region_aa_total: "0",
   }))) as unknown as CountryStats[];
 }
 
