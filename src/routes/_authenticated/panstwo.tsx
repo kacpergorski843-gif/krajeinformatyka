@@ -11,7 +11,7 @@ import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
 import { SuggestCountryPanel } from "@/components/CountrySuggestions";
 import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, shopQuery, transactionsQuery } from "@/lib/api";
-import { fmtKR, kr, timeToDailyCycle, units, RESOURCE_LABELS } from "@/lib/format";
+import { fmtKR, kr, timeToDailyCycle, units, RESOURCE_LABELS, toBigInt } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/panstwo")({
   head: () => ({
