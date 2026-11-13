@@ -243,7 +243,7 @@ export const shopQuery = queryOptions({
   queryKey: ["shop_items"],
   queryFn: async () =>
     (await unwrap(
-      supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").eq("active", true).order("sort_order"),
+      supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_copper,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").eq("active", true).order("sort_order"),
     )).map((row: Record<string, unknown>) => normalizeShopItem(row)),
 });
 
@@ -704,7 +704,7 @@ export const adminShopQuery = queryOptions({
   queryFn: async () =>
     (await unwrap(
       supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_copper,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").order("sort_order"),
-    )) as unknown as ShopItem[],
+    )).map((row: Record<string, unknown>) => normalizeShopItem(row)),
 });
 
 export const allRegionOptionsQuery = queryOptions({
@@ -760,7 +760,7 @@ export function strikesQuery(countryId: string | null | undefined) {
           .or(`attacker_country_id.eq.${countryId},defender_country_id.eq.${countryId}`)
           .order("created_at", { ascending: false })
           .limit(50),
-      )) as unknown as MissileStrike[],
+      )).map((row: Record<string, unknown>) => normalizeMissileStrike(row)),
   });
 }
 
