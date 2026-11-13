@@ -74,7 +74,7 @@ function displayAmount(t: TxRow) {
 
 function parseExactInteger(value: unknown): bigint {
   const raw = String(value ?? "0").trim();
-  if (/^-?\\d+$/.test(raw)) return BigInt(raw);
+  if (/^-?\d+$/.test(raw)) return BigInt(raw);
   const legacy = Number(raw);
   return Number.isFinite(legacy) ? BigInt(Math.trunc(legacy)) : 0n;
 }
