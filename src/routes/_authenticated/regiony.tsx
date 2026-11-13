@@ -1,3 +1,4 @@
+import { big } from "@/lib/format";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -219,9 +220,9 @@ function Regions() {
             const effects = (r.slots ?? []).reduce((acc, slot) => {
               const item = (shop ?? []).find((shopItem) => shopItem.building === slot.building);
               if (!item) return acc;
-              acc.kr += BigInt(item.income_kr ?? "0");
-              if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0n) + BigInt(item.produces_amount ?? "0");
-              acc.coalUpkeep += BigInt(item.upkeep_coal ?? "0");
+              acc.kr += big(item.income_kr ?? "0");
+              if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0n) + big(item.produces_amount ?? "0");
+              acc.coalUpkeep += big(item.upkeep_coal ?? "0");
               return acc;
             }, { kr: 0n, coalUpkeep: 0n, resources: {} as Record<string, bigint> });
             return (
@@ -352,7 +353,7 @@ function Regions() {
           <div className="space-y-2 overflow-y-auto px-4 pb-8">
             {buildings.map((item) => {
               const reason = buildFor ? slotBlockReason(buildFor, item) : null;
-              const tooPoor = country ? BigInt(country.balance) < BigInt(item.cost_kr) : false;
+              const tooPoor = country ? big(country.balance) < big(item.cost_kr) : false;
               const blocked = !!reason || tooPoor;
               return (
                 <button
@@ -374,7 +375,7 @@ function Regions() {
                     <p className="num text-primary shrink-0 text-xs">{fmtKR(item.cost_kr)}</p>
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">{item.description}</p>
-                  {BigInt(item.income_kr) > 0n ? (
+                  {big(item.income_kr) > 0n ? (
                     <p className="text-success mt-1 text-xs">+{fmtKR(item.income_kr)} / doba</p>
                   ) : null}
                   {item.produces ? (
@@ -383,7 +384,7 @@ function Regions() {
                       {RESOURCE_LABELS[item.produces] ?? item.produces} / doba
                     </p>
                   ) : null}
-                  {BigInt(item.cost_iron) > 0n ? (
+                  {big(item.cost_iron) > 0n ? (
                     <p className="text-muted-foreground mt-1 text-xs uppercase">
                       Żelazo: <span className="num">{units(item.cost_iron)}</span>
                     </p>

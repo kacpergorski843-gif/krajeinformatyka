@@ -1,3 +1,4 @@
+import { big } from "@/lib/format";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useMemo, useState } from "react";
@@ -32,8 +33,8 @@ const metrics: Metric[] = [
 ];
 
 function metricNumber(c: CountryStats, key: Metric["key"]) {
-  if (key === "income") return BigInt(c.gross_income || "0");
-  return BigInt(c.war_votes || 0);
+  if (key === "income") return big(c.gross_income || "0");
+  return big(c.war_votes || 0);
 }
 
 function Ranking() {

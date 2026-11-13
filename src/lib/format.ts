@@ -34,8 +34,8 @@ const SCALES: { limit: number; unit: string }[] = [
  * Number(), żeby nie tracić precyzji powyżej Number.MAX_SAFE_INTEGER.
  */
 export function fmtNum(v: string | number | null | undefined): string {
-  if (typeof v === "string" && /^\s*-?\d+\s*$/.test(v)) {
-    const value = BigInt(v.trim());
+  if (typeof v === "string" || (typeof v === "number" && Math.abs(v) >= 1e15)) {
+    const value = big(v);
     const sign = value < 0n ? "-" : "";
     const abs = value < 0n ? -value : value;
 
@@ -155,4 +155,22 @@ export function timeToDailyCycle(now: Date = new Date()): string {
   const m = Math.floor((diff % 3600) / 60);
   const s = diff % 60;
   return [h, m, s].map((x) => String(x).padStart(2, "0")).join(":");
+}
+
+/** Bezpieczna konwersja do BigInt — obsługuje liczby JS i zapis wykładniczy (np. 1e+30). */
+export function big(v: unknown): bigint {
+  if (typeof v === "bigint") return v;
+  if (v === null || v === undefined || v === "") return 0n;
+  if (typeof v === "number") return Number.isFinite(v) ? BigInt(Math.trunc(v).toLocaleString("fullwide", { useGrouping: false })) : 0n;
+  const s = String(v).trim();
+  if (/^-?\d+$/.test(s)) return BigInt(s);
+  const m = /^(-?)(\d+)(?:\.(\d*))?e\+?(\d+)$/i.exec(s);
+  if (m) {
+    const frac = m[3] ?? "";
+    const exp = Number(m[4]);
+    const digits = (m[2] + frac.padEnd(exp, "0").slice(0, exp)).replace(/^0+(?=\d)/, "");
+    return BigInt(m[1] + digits);
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? big(n) : 0n;
 }
