@@ -55,7 +55,7 @@ alter table public.market_sales enable row level security;
 alter table public.market_negotiations enable row level security;
 grant select on public.market_offers, public.market_sales, public.market_negotiations to authenticated;
 create or replace function public.market_is_offer_seller(p_offer_id uuid)
-returns boolean language sql stable security definer set search_path=public as $
+returns boolean language sql stable security definer set search_path=public as $$
  select exists(select 1 from public.market_offers where id=p_offer_id and seller_country_id=public.my_country_id());
 $;
 revoke all on function public.market_is_offer_seller(uuid) from public;
