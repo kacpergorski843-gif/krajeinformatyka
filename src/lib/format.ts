@@ -1,5 +1,29 @@
 const NBSP = "\u202F";
 
+/** Converts integer strings (including scientific notation from PostgREST) to BigInt exactly. */
+export function toBigInt(v: string | number | bigint | null | undefined): bigint {
+  if (typeof v === "bigint") return v;
+  const raw = String(v ?? "0").trim();
+  const match = raw.match(/^([+-]?)(\\d+)(?:\\.(\\d*))?(?:[eE]([+-]?\\d+))?$/);
+  if (!match) throw new TypeError(`Invalid integer value: ${raw}`);
+  const [, sign, whole, fraction = "", exponentRaw = "0"] = match;
+  const exponent = Number(exponentRaw);
+  if (!Number.isSafeInteger(exponent) || Math.abs(exponent) > 10000) throw new RangeError("Integer exponent out of range");
+  let digits = whole + fraction;
+  const scale = fraction.length - exponent;
+  if (scale > 0) {
+    const fractionalDigits = digits.slice(-scale);
+    if (fractionalDigits.length < scale || /[1-9]/.test(fractionalDigits)) {
+      throw new TypeError(`Value is not an integer: ${raw}`);
+    }
+    digits = digits.slice(0, -scale) || "0";
+  } else if (scale < 0) {
+    digits += "0".repeat(-scale);
+  }
+  const normalized = digits.replace(/^0+(?=\\d)/, "");
+  return BigInt((sign === "-" && normalized !== "0" ? "-" : "") + normalized);
+}
+
 export function toNum(v: string | number | null | undefined): number {
   if (v === null || v === undefined) return 0;
   return typeof v === "number" ? v : Number(v);
