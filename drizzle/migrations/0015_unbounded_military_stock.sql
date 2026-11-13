@@ -28,12 +28,12 @@ BEGIN
     ALTER TABLE public.countries
       ADD CONSTRAINT countries_military_counts_whole_nonnegative
       CHECK (
-        aa_defense >= 0 AND aa_defense = trunc(aa_defense)
-        AND missile_1 >= 0 AND missile_1 = trunc(missile_1)
-        AND missile_2 >= 0 AND missile_2 = trunc(missile_2)
-        AND missile_3 >= 0 AND missile_3 = trunc(missile_3)
-        AND soldier_packs >= 0 AND soldier_packs = trunc(soldier_packs)
-        AND tank_packs >= 0 AND tank_packs = trunc(tank_packs)
+        aa_defense = trunc(aa_defense)
+        AND missile_1 = trunc(missile_1)
+        AND missile_2 = trunc(missile_2)
+        AND missile_3 = trunc(missile_3)
+        AND soldier_packs = trunc(soldier_packs)
+        AND tank_packs = trunc(tank_packs)
       ) NOT VALID;
   END IF;
 
@@ -44,7 +44,7 @@ BEGIN
   ) THEN
     ALTER TABLE public.regions
       ADD CONSTRAINT regions_aa_defense_whole
-      CHECK (aa_defense >= 0 AND aa_defense = trunc(aa_defense)) NOT VALID;
+      CHECK (aa_defense = trunc(aa_defense)) NOT VALID;
   END IF;
 END;
 $constraints$;
