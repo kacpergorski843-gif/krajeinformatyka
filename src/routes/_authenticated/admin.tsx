@@ -2205,7 +2205,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
   ];
   const validNumbers = numericFields.every(({ key }) => {
     const value = String(edit[key] ?? "0").trim();
-    return value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
+    return value !== "" && parseWholeNumber(value) !== null;
   });
   const valid = !!edit.code.trim() && !!edit.name.trim() && !!edit.category.trim() && validNumbers;
   const inputClass = "h-12 text-base";
@@ -2279,7 +2279,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
               {numericFields.slice(0, 6).map(({ key, label }) => (
                 <div key={key} className={fieldClass}>
                   <Label className={labelClass}>{label}</Label>
-                  <Input className={numberClass} type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} />
+                  <Input className={numberClass} type="text" inputMode="numeric" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} />
                 </div>
               ))}
             </div>
@@ -2294,7 +2294,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
               {numericFields.slice(6, 9).map(({ key, label }) => (
                 <div key={key} className={fieldClass}>
                   <Label className={labelClass}>{label}</Label>
-                  <Input className={numberClass} type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} />
+                  <Input className={numberClass} type="text" inputMode="numeric" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} />
                 </div>
               ))}
             </div>
