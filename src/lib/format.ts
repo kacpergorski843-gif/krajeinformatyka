@@ -33,8 +33,8 @@ const SCALES: { limit: number; unit: string }[] = [
  * Wartości NUMERIC z Supabase przychodzą jako string — dla nich nie używamy
  * Number(), żeby nie tracić precyzji powyżej Number.MAX_SAFE_INTEGER.
  */
-export function fmtNum(v: string | number | null | undefined): string {
-  if (typeof v === "string" || (typeof v === "number" && Math.abs(v) >= 1e15)) {
+export function fmtNum(v: string | number | bigint | null | undefined): string {
+  if (typeof v === "string" || typeof v === "bigint" || (typeof v === "number" && Math.abs(v) >= 1e15)) {
     const value = big(v);
     const sign = value < 0n ? "-" : "";
     const abs = value < 0n ? -value : value;
@@ -76,7 +76,7 @@ export function fmtNum(v: string | number | null | undefined): string {
 }
 
 /** Globalny skrót kwoty: 1,500 bln KR / 850 mld KR */
-export function fmtKR(v: string | number | null | undefined): string {
+export function fmtKR(v: string | number | bigint | null | undefined): string {
   return `${fmtNum(v)}${NBSP}KR`;
 }
 
