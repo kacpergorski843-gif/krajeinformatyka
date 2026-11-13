@@ -2404,7 +2404,7 @@ function AuditItem({ action, country, countries }: { action: AdminActionRow; cou
 }
 
 function ChangePreview({ label, current, next, currency }: { label: string; current: string; next: string; currency: boolean }) {
-  const format = (value: string) => currency ? fmtKR(value) : fmtNum(value);
+  const format = (value: string) => currency ? fmtKR(value) : parseWholeNumber(value) !== null ? fmtNum(value) : value;
   const currentValue = parseWholeNumber(current);
   const nextValue = parseWholeNumber(next);
   const difference = currentValue !== null && nextValue !== null ? nextValue - currentValue : 0n;
