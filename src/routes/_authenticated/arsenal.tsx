@@ -494,7 +494,7 @@ function Arsenal() {
             <p className="truncate text-sm">{r.name}</p>
             <p
               className={`num flex shrink-0 items-center gap-1.5 text-sm ${
-                r.aa_defense === 0 ? "text-inactive" : "text-info"
+                r.aa_defense === "0" ? "text-inactive" : "text-info"
               }`}
             >
               <ShieldCheck className="size-3.5" strokeWidth={1.5} /> {units(r.aa_defense)} OPL
