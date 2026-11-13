@@ -171,4 +171,60 @@ BEGIN
 END;
 $military_transfer$;
 
+-- The generic resource transfer RPC must no longer move military stock
+-- directly (especially country-level AA, which is derived from regions).
+-- Preserve it for economic resources only and serialize large values as text.
+DO $resource_transfer$
+DECLARE
+  v_def text;
+BEGIN
+  v_def := pg_get_functiondef('public.transfer_resource(uuid, uuid, text, numeric)'::regprocedure);
+  v_def := replace(
+    v_def,
+    'if p_resource not in (''balance'',''coal'',''oil'',''copper'',''iron'',''uranium'',''aa_defense'',''soldier_packs'',''tank_packs'',''missile_1'',''missile_2'',''missile_3'') then',
+    'if p_resource not in (''balance'',''coal'',''oil'',''copper'',''iron'',''uranium'') then'
+  );
+  v_def := replace(
+    v_def,
+    'if p_amount is null or p_amount <= 0 then',
+    'if p_amount is null or p_amount <= 0 or p_amount <> trunc(p_amount) then'
+  );
+  v_def := replace(v_def, '''amount'',p_amount', '''amount'',p_amount::text');
+  IF v_def ~* 'p_resource not in.*aa_defense' THEN
+    RAISE EXCEPTION 'transfer_resource nadal dopuszcza transfery wojskowe';
+  END IF;
+  EXECUTE v_def;
+  REVOKE ALL ON FUNCTION public.transfer_resource(uuid, uuid, text, numeric) FROM PUBLIC;
+  GRANT EXECUTE ON FUNCTION public.transfer_resource(uuid, uuid, text, numeric) TO authenticated;
+END;
+$resource_transfer$;
+
+-- Store payout amounts in transaction JSON as decimal strings so the browser
+-- never rounds values above Number.MAX_SAFE_INTEGER while displaying history.
+DO $economy_details$
+DECLARE
+  v_def text;
+BEGIN
+  v_def := pg_get_functiondef('public.run_daily_economy(date)'::regprocedure);
+  v_def := replace(v_def, '''coal_prod'', r.coal_prod', '''coal_prod'', r.coal_prod::text');
+  v_def := replace(v_def, '''coal_upkeep'', v_upkeep', '''coal_upkeep'', v_upkeep::text');
+  v_def := replace(v_def, '''oil'', r.oil_prod', '''oil'', r.oil_prod::text');
+  v_def := replace(v_def, '''copper'', r.copper_prod', '''copper'', r.copper_prod::text');
+  v_def := replace(v_def, '''iron'', r.iron_prod', '''iron'', r.iron_prod::text');
+  v_def := replace(v_def, '''uranium'', r.uranium_prod', '''uranium'', r.uranium_prod::text');
+  v_def := replace(v_def, '''total_kr'', v_total', '''total_kr'', v_total::text');
+  IF v_def ~ '''coal_prod'', r\.coal_prod([,\)])'
+     OR v_def ~ '''coal_upkeep'', v_upkeep([,\)])'
+     OR v_def ~ '''oil'', r\.oil_prod([,\)])'
+     OR v_def ~ '''copper'', r\.copper_prod([,\)])'
+     OR v_def ~ '''iron'', r\.iron_prod([,\)])'
+     OR v_def ~ '''uranium'', r\.uranium_prod([,\)])' THEN
+    RAISE EXCEPTION 'Nie udało się zachować precyzji danych wypłaty w historii';
+  END IF;
+  EXECUTE v_def;
+  REVOKE ALL ON FUNCTION public.run_daily_economy(date) FROM PUBLIC;
+  GRANT EXECUTE ON FUNCTION public.run_daily_economy(date) TO authenticated, service_role;
+END;
+$economy_details$;
+
 NOTIFY pgrst, 'reload schema';
