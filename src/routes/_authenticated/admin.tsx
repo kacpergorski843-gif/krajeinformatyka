@@ -1644,9 +1644,9 @@ function AdjustmentField({ field, country, value, onChange }: { field: FieldKey;
 
 function ResourceAdjustment(props: Omit<Parameters<typeof AdjustmentField>[0], "field"> & { field: FieldKey }) {
   const productionKey = `${props.field}_prod` as keyof CountryStats;
-  const production = Number(props.country[productionKey] ?? 0);
-  const upkeep = props.field === "coal" ? Number(props.country.coal_upkeep) : 0;
-  return <div className="space-y-1"><AdjustmentField {...props} /><p className="px-1 text-[11px] text-muted-foreground">Produkcja: <span className="text-success">+{fmtNum(production)}</span>{upkeep ? <> · Zużycie: <span className="text-destructive">−{fmtNum(upkeep)}</span></> : null}</p></div>;
+  const production = String(props.country[productionKey] ?? "0");
+  const upkeep = props.field === "coal" ? props.country.coal_upkeep : "0";
+  return <div className="space-y-1"><AdjustmentField {...props} /><p className="px-1 text-[11px] text-muted-foreground">Produkcja: <span className="text-success">+{fmtNum(production)}</span>{upkeep !== "0" ? <> · Zużycie: <span className="text-destructive">−{fmtNum(upkeep)}</span></> : null}</p></div>;
 }
 
 function MilitaryAdjustment(props: Omit<Parameters<typeof AdjustmentField>[0], "field"> & { field: FieldKey }) {
