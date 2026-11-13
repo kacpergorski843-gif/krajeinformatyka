@@ -233,7 +233,7 @@ function Regions() {
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">TRACISZ KR</p><p className="num mt-1 text-sm text-destructive">−{fmtKR(effects.kr.toString())} / doba</p></div>
                   {Object.entries(effects.resources).map(([resource, value]) => <div key={resource} className="border border-border bg-secondary/30 p-2"><p className="label-hud">TRACISZ {RESOURCE_LABELS[resource] ?? resource}</p><p className="num mt-1 text-sm text-destructive">−{units(value.toString())} / doba</p></div>)}
-                  {effects.coalUpkeep > 0 ? <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZUŻYCIE WĘGLA</p><p className="num mt-1 text-sm text-muted-foreground">−{units(effects.coalUpkeep)} / doba</p></div> : null}
+                  {effects.coalUpkeep > 0n ? <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZUŻYCIE WĘGLA</p><p className="num mt-1 text-sm text-muted-foreground">−{units(effects.coalUpkeep.toString())} / doba</p></div> : null}
                 </div>
               </Panel>
             );
