@@ -113,6 +113,8 @@ BEGIN
   IF to_regprocedure('public.admin_set_region_aa(uuid, integer)') IS NOT NULL THEN
     v_def := pg_get_functiondef('public.admin_set_region_aa(uuid, integer)'::regprocedure);
     v_def := replace(v_def, 'p_value integer', 'p_value numeric');
+  v_def := replace(v_def, '''from'', v_region.aa_defense', '''from'', v_region.aa_defense::text');
+  v_def := replace(v_def, '''to'', p_value', '''to'', p_value::text');
     EXECUTE 'DROP FUNCTION public.admin_set_region_aa(uuid, integer)';
     EXECUTE v_def;
   ELSIF to_regprocedure('public.admin_set_region_aa(uuid, numeric)') IS NULL THEN
@@ -131,6 +133,8 @@ DECLARE
 BEGIN
   v_def := pg_get_functiondef('public.admin_adjust_country(uuid, jsonb, text)'::regprocedure);
   v_def := replace(v_def, '::int', '::numeric');
+  v_def := replace(v_def, 'jsonb_build_object(k, v_before->k)', 'jsonb_build_object(k, v_before->>k)');
+  v_def := replace(v_def, 'jsonb_build_object(k, v_after->k)', 'jsonb_build_object(k, v_after->>k)');
   EXECUTE v_def;
   REVOKE ALL ON FUNCTION public.admin_adjust_country(uuid, jsonb, text) FROM PUBLIC;
   GRANT EXECUTE ON FUNCTION public.admin_adjust_country(uuid, jsonb, text) TO authenticated;
