@@ -226,12 +226,12 @@ BEGIN
   v_def := replace(v_def, '''iron'', r.iron_prod', '''iron'', r.iron_prod::text');
   v_def := replace(v_def, '''uranium'', r.uranium_prod', '''uranium'', r.uranium_prod::text');
   v_def := replace(v_def, '''total_kr'', v_total', '''total_kr'', v_total::text');
-  IF v_def ~ '''coal_prod'', r\.coal_prod([,\)])'
-     OR v_def ~ '''coal_upkeep'', v_upkeep([,\)])'
-     OR v_def ~ '''oil'', r\.oil_prod([,\)])'
-     OR v_def ~ '''copper'', r\.copper_prod([,\)])'
-     OR v_def ~ '''iron'', r\.iron_prod([,\)])'
-     OR v_def ~ '''uranium'', r\.uranium_prod([,\)])' THEN
+  IF v_def ~ '''coal_prod'', r\.coal_prod([,)]'
+     OR v_def ~ '''coal_upkeep'', v_upkeep([,)]'
+     OR v_def ~ '''oil'', r\.oil_prod([,)]'
+     OR v_def ~ '''copper'', r\.copper_prod([,)]'
+     OR v_def ~ '''iron'', r\.iron_prod([,)]'
+     OR v_def ~ '''uranium'', r\.uranium_prod([,)]' THEN
     RAISE EXCEPTION 'Nie udało się zachować precyzji danych wypłaty w historii';
   END IF;
   EXECUTE v_def;
