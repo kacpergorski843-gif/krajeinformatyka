@@ -90,6 +90,36 @@ export type Database = {
         }
         Relationships: []
       }
+      app_update_log: {
+        Row: {
+          actor_id: string | null
+          actor_label: string
+          created_at: string
+          details: Json
+          id: string
+          source: string
+          summary: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_label?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          source?: string
+          summary: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_label?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          source?: string
+          summary?: string
+        }
+        Relationships: []
+      }
       bilateral_agreement_runs: {
         Row: {
           agreement_id: string
@@ -514,6 +544,224 @@ export type Database = {
           {
             foreignKeyName: "main_admin_test_sessions_original_country_id_fkey"
             columns: ["original_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+        ]
+      }
+      market_negotiations: {
+        Row: {
+          buyer_country_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          last_offer_by: string
+          offer_id: string
+          quantity: number
+          status: string
+          total_price: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_country_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_offer_by: string
+          offer_id: string
+          quantity: number
+          status?: string
+          total_price: number
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_country_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_offer_by?: string
+          offer_id?: string
+          quantity?: number
+          status?: string
+          total_price?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_negotiations_buyer_country_id_fkey"
+            columns: ["buyer_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_negotiations_buyer_country_id_fkey"
+            columns: ["buyer_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "market_negotiations_buyer_country_id_fkey"
+            columns: ["buyer_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "market_negotiations_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "market_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_offers: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          quantity_remaining: number
+          quantity_total: number
+          resource: string
+          seller_country_id: string
+          status: string
+          total_price_remaining: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          quantity_remaining: number
+          quantity_total: number
+          resource: string
+          seller_country_id: string
+          status?: string
+          total_price_remaining: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          quantity_remaining?: number
+          quantity_total?: number
+          resource?: string
+          seller_country_id?: string
+          status?: string
+          total_price_remaining?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_offers_seller_country_id_fkey"
+            columns: ["seller_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_offers_seller_country_id_fkey"
+            columns: ["seller_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "market_offers_seller_country_id_fkey"
+            columns: ["seller_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+        ]
+      }
+      market_sales: {
+        Row: {
+          buyer_country_id: string
+          created_at: string
+          id: string
+          offer_id: string
+          quantity: number
+          resource: string
+          seller_country_id: string
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          buyer_country_id: string
+          created_at?: string
+          id?: string
+          offer_id: string
+          quantity: number
+          resource: string
+          seller_country_id: string
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          buyer_country_id?: string
+          created_at?: string
+          id?: string
+          offer_id?: string
+          quantity?: number
+          resource?: string
+          seller_country_id?: string
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_sales_buyer_country_id_fkey"
+            columns: ["buyer_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_sales_buyer_country_id_fkey"
+            columns: ["buyer_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "market_sales_buyer_country_id_fkey"
+            columns: ["buyer_country_id"]
+            isOneToOne: false
+            referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "market_sales_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "market_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_sales_seller_country_id_fkey"
+            columns: ["seller_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_sales_seller_country_id_fkey"
+            columns: ["seller_country_id"]
+            isOneToOne: false
+            referencedRelation: "country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "market_sales_seller_country_id_fkey"
+            columns: ["seller_country_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
             referencedColumns: ["country_id"]
@@ -991,6 +1239,30 @@ export type Database = {
         }
         Relationships: []
       }
+      market_price_history: {
+        Row: {
+          created_at: string | null
+          quantity: number | null
+          resource: string | null
+          total_price: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          quantity?: number | null
+          resource?: string | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          quantity?: number | null
+          resource?: string | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Relationships: []
+      }
       public_ranking: {
         Row: {
           country_id: string | null
@@ -1093,6 +1365,7 @@ export type Database = {
       }
       admin_purge_player: { Args: { p_user_id: string }; Returns: Json }
       admin_remove_income_bonus: { Args: { p_bonus_id: string }; Returns: Json }
+      admin_reset_update_log: { Args: never; Returns: Json }
       admin_revert_region_occupation: {
         Args: { p_region_id: string }
         Returns: Json
@@ -1173,6 +1446,59 @@ export type Database = {
       main_admin_switch_test_country: {
         Args: { p_target: string }
         Returns: Json
+      }
+      market_buy: {
+        Args: { p_offer_id: string; p_quantity: number }
+        Returns: Json
+      }
+      market_buy_total: {
+        Args: { p_offer_id: string; p_quantity: number }
+        Returns: Json
+      }
+      market_cancel_offer: { Args: { p_offer_id: string }; Returns: undefined }
+      market_create_offer: {
+        Args: { p_quantity: number; p_resource: string; p_unit_price: number }
+        Returns: string
+      }
+      market_create_offer_total: {
+        Args: { p_quantity: number; p_resource: string; p_total_price: number }
+        Returns: string
+      }
+      market_expire_offers: { Args: never; Returns: number }
+      market_is_offer_seller: { Args: { p_offer_id: string }; Returns: boolean }
+      market_propose: {
+        Args: { p_offer_id: string; p_quantity: number; p_unit_price: number }
+        Returns: string
+      }
+      market_propose_total: {
+        Args: { p_offer_id: string; p_quantity: number; p_total_price: number }
+        Returns: string
+      }
+      market_respond_negotiation: {
+        Args: {
+          p_action: string
+          p_negotiation_id: string
+          p_quantity?: number
+          p_unit_price?: number
+        }
+        Returns: Json
+      }
+      market_respond_negotiation_total: {
+        Args: {
+          p_action: string
+          p_negotiation_id: string
+          p_quantity?: number
+          p_total_price?: number
+        }
+        Returns: Json
+      }
+      market_update_offer_price: {
+        Args: { p_offer_id: string; p_unit_price: number }
+        Returns: undefined
+      }
+      market_update_offer_total: {
+        Args: { p_offer_id: string; p_total_price: number }
+        Returns: undefined
       }
       my_country_id: { Args: never; Returns: string }
       purchase_aa: {
