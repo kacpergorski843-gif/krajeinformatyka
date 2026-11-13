@@ -57,7 +57,7 @@ grant select on public.market_offers, public.market_sales, public.market_negotia
 create or replace function public.market_is_offer_seller(p_offer_id uuid)
 returns boolean language sql stable security definer set search_path=public as $$
  select exists(select 1 from public.market_offers where id=p_offer_id and seller_country_id=public.my_country_id());
-$;
+$$;
 revoke all on function public.market_is_offer_seller(uuid) from public;
 grant execute on function public.market_is_offer_seller(uuid) to authenticated;
 drop policy if exists market_offers_read on public.market_offers;
