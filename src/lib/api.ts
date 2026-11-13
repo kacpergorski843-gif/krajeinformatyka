@@ -770,7 +770,7 @@ export const publicRankingQuery = queryOptions({
     (await unwrap(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase.from as any)("public_ranking").select("*"),
-    )).map((row: Record<string, unknown>) => ({ ...row, gross_income: String(row.gross_income ?? "0"), military_value: String(row.military_value ?? "0") })) as unknown as PublicRankingRow[],
+    ) as Record<string, unknown>[]).map((row: Record<string, unknown>) => ({ ...row, gross_income: String(row.gross_income ?? "0"), military_value: String(row.military_value ?? "0") })) as unknown as PublicRankingRow[],
 });
 
 const COUNTRY_STATS_SELECT =
@@ -780,7 +780,7 @@ async function readCountryStats(view: "world_country_stats" | "country_stats") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).from(view).select(COUNTRY_STATS_SELECT).order("name");
   if (error) throw error;
-  return (data ?? []).map((row: Record<string, unknown>) => normalizeCountryStats(row));
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeCountryStats(row));
 }
 
 async function readCountryStatsById(view: "world_country_stats" | "country_stats", countryId: string) {

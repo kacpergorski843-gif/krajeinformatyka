@@ -1,3 +1,4 @@
+import { big } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { ChevronRight, History } from "lucide-react";
 import { Panel, SectionTitle } from "@/components/stat";
@@ -68,15 +69,15 @@ function readableLabel(t: TxRow) {
 function displayAmount(t: TxRow) {
   const transfer = transferInfo(t);
   if (transfer && transfer.resource !== "balance") return `${transfer.direction === "in" ? "+" : "−"}${units(transfer.amount)} ${RESOURCE_NAMES[transfer.resource] ?? transfer.resource}`;
-  const amount = BigInt(t.amount_kr || "0");
+  const amount = big(t.amount_kr || "0");
   return `${amount > 0n ? "+" : ""}${fmtKR(t.amount_kr)}`;
 }
 
 function parseExactInteger(value: unknown): bigint {
   const raw = String(value ?? "0").trim();
-  if (/^-?\d+$/.test(raw)) return BigInt(raw);
+  if (/^-?\d+$/.test(raw)) return big(raw);
   const legacy = Number(raw);
-  return Number.isFinite(legacy) ? BigInt(Math.trunc(legacy)) : 0n;
+  return Number.isFinite(legacy) ? big(Math.trunc(legacy)) : 0n;
 }
 
 function payoutResources(t: TxRow) {
@@ -105,9 +106,9 @@ function payoutBreakdown(t: TxRow) {
 function purchaseInfo(t: TxRow) {
   const d = details(t);
   const qty = Math.max(1, Number(d.qty ?? 1));
-  const rawTotal = BigInt(t.amount_kr || "0");
+  const rawTotal = big(t.amount_kr || "0");
   const total = rawTotal < 0n ? -rawTotal : rawTotal;
-  return { qty, total, unit: total / BigInt(qty), item: String(d.item ?? "") };
+  return { qty, total, unit: total / big(qty), item: String(d.item ?? "") };
 }
 
 export function OperationsHistory({ rows, title = "Historia operacji" }: { rows: TxRow[] | undefined; title?: string }) {
@@ -129,7 +130,7 @@ export function OperationsHistory({ rows, title = "Historia operacji" }: { rows:
       {([["all", "Wszystko"], ["payouts", "Wypłaty"], ["purchases", "Zakupy"], ["transfers", "Transfery"]] as const).map(([key, label]) => <button key={key} type="button" onClick={() => setView(key)} className={`min-h-10 rounded-lg border px-3 py-2 text-xs font-medium transition ${view === key ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:bg-secondary/40"}`}>{label}</button>)}
     </div>
     <Panel className="overflow-hidden p-0">
-      {visible.map((t) => { const transfer = transferInfo(t); const purchase = isPurchase(t) ? purchaseInfo(t) : null; const payout = isPayout(t); const amount = BigInt(t.amount_kr || "0"); return <button key={t.id} type="button" onClick={() => setSelected(t)} className="flex min-h-[72px] w-full items-center gap-3 border-b border-border/70 px-3 py-3 text-left transition last:border-0 hover:bg-secondary/30"><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{readableLabel(t)}</p><p className="mt-0.5 text-xs text-muted-foreground">{kindName[t.kind] ?? "Operacja"} · {dateTime(t.created_at)}</p>{purchase ? <p className="mt-1 text-xs text-muted-foreground">Ilość: {units(purchase.qty)} · cena szt.: {fmtKR(purchase.unit)}</p> : null}{transfer ? <p className="mt-1 text-xs text-muted-foreground">{transfer.direction === "out" ? "Do" : "Od"}: {transfer.otherName}</p> : null}{payout ? <p className="mt-1 text-xs text-muted-foreground">Kliknij, aby zobaczyć pełne rozliczenie</p> : null}</div><div className="flex shrink-0 items-center gap-2"><span className={`text-sm font-semibold ${amount > 0n ? "text-success" : amount < 0n ? "text-destructive" : "text-muted-foreground"}`}>{displayAmount(t)}</span><ChevronRight className="size-4 text-muted-foreground" /></div></button>; })}
+      {visible.map((t) => { const transfer = transferInfo(t); const purchase = isPurchase(t) ? purchaseInfo(t) : null; const payout = isPayout(t); const amount = big(t.amount_kr || "0"); return <button key={t.id} type="button" onClick={() => setSelected(t)} className="flex min-h-[72px] w-full items-center gap-3 border-b border-border/70 px-3 py-3 text-left transition last:border-0 hover:bg-secondary/30"><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{readableLabel(t)}</p><p className="mt-0.5 text-xs text-muted-foreground">{kindName[t.kind] ?? "Operacja"} · {dateTime(t.created_at)}</p>{purchase ? <p className="mt-1 text-xs text-muted-foreground">Ilość: {units(purchase.qty)} · cena szt.: {fmtKR(purchase.unit)}</p> : null}{transfer ? <p className="mt-1 text-xs text-muted-foreground">{transfer.direction === "out" ? "Do" : "Od"}: {transfer.otherName}</p> : null}{payout ? <p className="mt-1 text-xs text-muted-foreground">Kliknij, aby zobaczyć pełne rozliczenie</p> : null}</div><div className="flex shrink-0 items-center gap-2"><span className={`text-sm font-semibold ${amount > 0n ? "text-success" : amount < 0n ? "text-destructive" : "text-muted-foreground"}`}>{displayAmount(t)}</span><ChevronRight className="size-4 text-muted-foreground" /></div></button>; })}
       {!visible.length ? <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><History className="size-4" /> Brak operacji dla wybranych filtrów.</div> : null}
     </Panel>
     {ordered.length > 5 ? <Button variant="outline" className="mt-3 w-full min-h-10" onClick={() => setFull((v) => !v)}>{full ? "Pokaż ostatnie 5" : `Pokaż pełną historię (${ordered.length})`}</Button> : null}

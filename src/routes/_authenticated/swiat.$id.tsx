@@ -1,3 +1,4 @@
+import { big } from "@/lib/format";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
@@ -80,8 +81,8 @@ function CountryDetail() {
         <Stat label="Rakiety I" value={units(c.missile_1)} />
         <Stat label="Rakiety II" value={units(c.missile_2)} />
         <Stat label="Rakiety III" value={units(c.missile_3)} />
-        <Stat label="Żołnierze" value={units((BigInt(c.soldier_packs) * 500000n).toString())} />
-        <Stat label="Czołgi" value={units((BigInt(c.tank_packs) * 50n).toString())} />
+        <Stat label="Żołnierze" value={units((big(c.soldier_packs) * 500000n).toString())} />
+        <Stat label="Czołgi" value={units((big(c.tank_packs) * 50n).toString())} />
       </div>
 
       <SectionTitle>Regiony ({regions?.length ?? 0})</SectionTitle>
