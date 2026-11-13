@@ -271,7 +271,7 @@ function MyCountry() {
           value={units(country.vote_potential)}
           tone="accent"
         />
-        <Stat label="Głosy fortyfikacji" value={units(country.fort_votes)} />
+        <Stat label="Głosy fortyfikacji" value={units(country.fort_votes)} tone="gold" />
       </div>
 
       {occupiedByMe.length ? (
