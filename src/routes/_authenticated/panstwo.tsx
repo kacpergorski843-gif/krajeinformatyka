@@ -133,15 +133,15 @@ function MyCountry() {
   ];
 
   const isTestCountry = country.name === "Testy v1" || country.name === "Testy v2";
-  const shortage = Number(country.coal_upkeep) > Number(country.coal) + Number(country.coal_prod);
+  const shortage = BigInt(country.coal_upkeep) > BigInt(country.coal) + BigInt(country.coal_prod);
 
   const military = [
     { label: "OPL (regiony)", value: country.region_aa_total },
     { label: "Rakiety I", value: country.missile_1 },
     { label: "Rakiety II", value: country.missile_2 },
     { label: "Rakiety III", value: country.missile_3 },
-    { label: "Żołnierze", value: country.soldier_packs * 500000 },
-    { label: "Czołgi", value: country.tank_packs * 50 },
+    { label: "Żołnierze", value: (BigInt(country.soldier_packs) * 500000n).toString() },
+    { label: "Czołgi", value: (BigInt(country.tank_packs) * 50n).toString() },
   ];
 
   return (
@@ -234,14 +234,14 @@ function MyCountry() {
         <h3 className="mb-4 text-lg font-semibold tracking-tight">Surowce</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
           {resources.map((r) => {
-            const zero = Number(r.value) === 0;
+            const zero = BigInt(r.value) === 0n;
             return (
               <div key={r.key} className="min-w-0 rounded-xl border border-border/80 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md sm:p-5">
                 <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">{r.label}</p>
                 <p className={`num mt-3 text-xl font-semibold tracking-tight sm:text-2xl ${zero ? "text-inactive" : "text-foreground"}`}>
                   {isTestCountry ? "∞" : units(r.value)}
                 </p>
-                <p className={`mt-2 text-xs ${Number(r.prod) > 0 ? "text-success" : "text-inactive"}`}>
+                <p className={`mt-2 text-xs ${BigInt(r.prod) > 0n ? "text-success" : "text-inactive"}`}>
                   +{units(r.prod)} <span className="text-muted-foreground">/ doba</span>
                 </p>
               </div>
@@ -258,7 +258,7 @@ function MyCountry() {
               <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                 {m.label}
               </p>
-              <p className={`num mt-3 text-lg font-semibold tracking-tight sm:text-xl ${m.value === 0 ? "text-inactive" : "text-foreground"}`}>
+              <p className={`num mt-3 text-lg font-semibold tracking-tight sm:text-xl ${BigInt(m.value) === 0n ? "text-inactive" : "text-foreground"}`}>
                 {units(m.value)}
               </p>
             </div>
@@ -284,10 +284,10 @@ function MyCountry() {
               const effects = (region.slots ?? []).reduce((acc, slot) => {
                 const item = (shop ?? []).find((shopItem) => shopItem.building === slot.building);
                 if (!item) return acc;
-                acc.kr += Number(item.income_kr ?? 0);
-                if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0) + Number(item.produces_amount ?? 0);
+                acc.kr += BigInt(item.income_kr ?? "0");
+                if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0n) + BigInt(item.produces_amount ?? "0");
                 return acc;
-              }, { kr: 0, resources: {} as Record<string, number> });
+              }, { kr: 0n, resources: {} as Record<string, bigint> });
               return (
                 <div key={occupation.id} className="border border-primary/30 bg-secondary/20 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -295,8 +295,8 @@ function MyCountry() {
                     <span className="text-xs font-semibold text-primary">OD {new Date(occupation.occupied_at).toLocaleString("pl-PL")}</span>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZYSK KR</p><p className="num mt-1 text-sm text-success">+{fmtKR(effects.kr)} / doba</p></div>
-                    {Object.entries(effects.resources).map(([resource, value]) => <div key={resource} className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZYSK {RESOURCE_LABELS[resource] ?? resource}</p><p className="num mt-1 text-sm text-success">+{units(value)} / doba</p></div>)}
+                    <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZYSK KR</p><p className="num mt-1 text-sm text-success">+{fmtKR(effects.kr.toString())} / doba</p></div>
+                    {Object.entries(effects.resources).map(([resource, value]) => <div key={resource} className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZYSK {RESOURCE_LABELS[resource] ?? resource}</p><p className="num mt-1 text-sm text-success">+{units(value.toString())} / doba</p></div>)}
                   </div>
                 </div>
               );

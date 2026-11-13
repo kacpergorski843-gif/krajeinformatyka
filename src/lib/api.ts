@@ -17,12 +17,12 @@ export type CountryStats = {
   copper: string;
   iron: string;
   uranium: string;
-  aa_defense: number;
-  missile_1: number;
-  missile_2: number;
-  missile_3: number;
-  soldier_packs: number;
-  tank_packs: number;
+  aa_defense: string;
+  missile_1: string;
+  missile_2: string;
+  missile_3: string;
+  soldier_packs: string;
+  tank_packs: string;
   war_votes: number;
   fort_votes: number;
   total_votes: number;
@@ -37,7 +37,7 @@ export type CountryStats = {
   forts: number;
   military_value: string;
   vote_potential: number;
-  region_aa_total: number;
+  region_aa_total: string;
 };
 
 export type PublicRankingRow = {
@@ -48,6 +48,45 @@ export type PublicRankingRow = {
   war_votes: number;
   regions_count: number;
 };
+
+const COUNTRY_STATS_STRING_FIELDS = [
+  "balance", "coal", "oil", "copper", "iron", "uranium",
+  "aa_defense", "missile_1", "missile_2", "missile_3", "soldier_packs", "tank_packs",
+  "gross_income", "coal_upkeep", "coal_prod", "oil_prod", "copper_prod", "iron_prod",
+  "uranium_prod", "military_value", "region_aa_total",
+] as const;
+
+function normalizeCountryStats(row: Record<string, unknown>): CountryStats {
+  const normalized = { ...row };
+  for (const field of COUNTRY_STATS_STRING_FIELDS) {
+    normalized[field] = String(row[field] ?? "0");
+  }
+  return normalized as unknown as CountryStats;
+}
+
+function normalizeMissileStrike(row: Record<string, unknown>): MissileStrike {
+  return {
+    ...row,
+    aa_defense: String(row.aa_defense ?? "0"),
+    region_aa: row.region_aa == null ? null : String(row.region_aa),
+    required_aa: row.required_aa == null ? null : String(row.required_aa),
+  } as unknown as MissileStrike;
+}
+
+function normalizeShopItem(row: Record<string, unknown>): ShopItem {
+  return {
+    ...row,
+    cost_kr: String(row.cost_kr ?? "0"),
+    cost_coal: String(row.cost_coal ?? "0"),
+    cost_oil: String(row.cost_oil ?? "0"),
+    cost_copper: String(row.cost_copper ?? "0"),
+    cost_iron: String(row.cost_iron ?? "0"),
+    cost_uranium: String(row.cost_uranium ?? "0"),
+    income_kr: String(row.income_kr ?? "0"),
+    upkeep_coal: String(row.upkeep_coal ?? "0"),
+    produces_amount: String(row.produces_amount ?? "0"),
+  } as unknown as ShopItem;
+}
 
 export type ShopItem = {
   code: string;
@@ -77,9 +116,9 @@ export type MissileStrike = {
   region_name: string;
   missile_code: string;
   result: string;
-  aa_defense: number;
-  region_aa: number | null;
-  required_aa: number | null;
+  aa_defense: string;
+  region_aa: string | null;
+  required_aa: string | null;
   destroyed: { slot_index: number; building: string }[];
   created_at: string;
 };
@@ -205,14 +244,14 @@ export const shopQuery = queryOptions({
   queryFn: async () =>
     (await unwrap(
       supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_copper,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").eq("active", true).order("sort_order"),
-    )) as unknown as ShopItem[],
+    )).map((row: Record<string, unknown>) => normalizeShopItem(row)),
 });
 
 export type RegionWithSlots = {
   id: string;
   name: string;
   country_id: string;
-  aa_defense: number;
+  aa_defense: string;
   slots: { id: string; slot_index: number; building: string }[];
 };
 
@@ -220,7 +259,7 @@ type RegionRow = {
   id: string;
   name: string;
   country_id: string;
-  aa_defense: number;
+  aa_defense: string;
   region_slots: RegionWithSlots["slots"] | null;
 };
 
@@ -229,7 +268,7 @@ export function regionAaQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["region_aa", countryId],
     enabled: !!countryId,
-    queryFn: async (): Promise<Array<{ id: string; name: string; aa_defense: number }>> => {
+    queryFn: async (): Promise<Array<{ id: string; name: string; aa_defense: string }>> => {
       const rows = await unwrap(
         supabase
           .from("regions")
@@ -240,7 +279,7 @@ export function regionAaQuery(countryId: string | null | undefined) {
       return (rows ?? []).map((region) => ({
         id: region.id,
         name: region.name,
-        aa_defense: region.aa_defense ?? 0,
+        aa_defense: String(region.aa_defense ?? 0),
       }));
     },
   });
@@ -262,7 +301,7 @@ export function regionsQuery(countryId: string | null | undefined) {
         id: r.id,
         name: r.name,
         country_id: r.country_id,
-        aa_defense: r.aa_defense ?? 0,
+        aa_defense: String(r.aa_defense ?? 0),
         slots: [...(r.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
       }));
 
@@ -274,11 +313,11 @@ export function transferRegionsQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["transfer_regions", countryId],
     enabled: !!countryId,
-    queryFn: async (): Promise<Array<{ id: string; name: string; country_id: string; aa_defense: number }>> => {
+    queryFn: async (): Promise<Array<{ id: string; name: string; country_id: string; aa_defense: string }>> => {
       const rows = await unwrap(
         supabase.from("regions").select("id,name,country_id,aa_defense").eq("country_id", countryId!).order("created_at"),
       );
-      return (rows ?? []) as Array<{ id: string; name: string; country_id: string; aa_defense: number }>;
+      return (rows ?? []).map((region) => ({ ...region, aa_defense: String(region.aa_defense ?? 0) }));
     },
   });
 }
@@ -550,7 +589,7 @@ export function occupiedRegionsQuery(countryId: string | null | undefined) {
           id: row.id,
           name: row.name,
           country_id: row.country_id,
-          aa_defense: row.aa_defense ?? 0,
+          aa_defense: String(row.aa_defense ?? 0),
           slots: [...(row.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
           occupied_at: occupation.occupied_at,
           occupier_country_id: occupation.current_country_id,
@@ -665,7 +704,7 @@ export const adminShopQuery = queryOptions({
   queryFn: async () =>
     (await unwrap(
       supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_copper,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").order("sort_order"),
-    )) as unknown as ShopItem[],
+    )).map((row: Record<string, unknown>) => normalizeShopItem(row)),
 });
 
 export const allRegionOptionsQuery = queryOptions({
@@ -691,7 +730,7 @@ export const allRegionsQuery = queryOptions({
       id: r.id,
       name: r.name,
       country_id: r.country_id,
-      aa_defense: r.aa_defense ?? 0,
+      aa_defense: String(r.aa_defense ?? 0),
       slots: [...(r.region_slots ?? [])].sort((a, b) => a.slot_index - b.slot_index),
     }));
   },
@@ -706,7 +745,7 @@ export const adminStrikesQuery = queryOptions({
         .select("id,attacker_country_id,defender_country_id,region_id,region_name,missile_code,result,aa_defense,region_aa,required_aa,destroyed,created_at")
         .order("created_at", { ascending: false })
         .limit(100),
-    )) as unknown as MissileStrike[],
+    )).map((row: Record<string, unknown>) => normalizeMissileStrike(row)),
 });
 
 export function strikesQuery(countryId: string | null | undefined) {
@@ -721,7 +760,7 @@ export function strikesQuery(countryId: string | null | undefined) {
           .or(`attacker_country_id.eq.${countryId},defender_country_id.eq.${countryId}`)
           .order("created_at", { ascending: false })
           .limit(50),
-      )) as unknown as MissileStrike[],
+      )).map((row: Record<string, unknown>) => normalizeMissileStrike(row)),
   });
 }
 
@@ -731,7 +770,7 @@ export const publicRankingQuery = queryOptions({
     (await unwrap(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase.from as any)("public_ranking").select("*"),
-    )) as unknown as PublicRankingRow[],
+    )).map((row: Record<string, unknown>) => ({ ...row, gross_income: String(row.gross_income ?? "0"), military_value: String(row.military_value ?? "0") })) as unknown as PublicRankingRow[],
 });
 
 const COUNTRY_STATS_SELECT =
@@ -741,7 +780,7 @@ async function readCountryStats(view: "world_country_stats" | "country_stats") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).from(view).select(COUNTRY_STATS_SELECT).order("name");
   if (error) throw error;
-  return (data ?? []) as unknown as CountryStats[];
+  return (data ?? []).map((row: Record<string, unknown>) => normalizeCountryStats(row));
 }
 
 async function readCountryStatsById(view: "world_country_stats" | "country_stats", countryId: string) {
@@ -752,7 +791,7 @@ async function readCountryStatsById(view: "world_country_stats" | "country_stats
     .eq("country_id", countryId)
     .maybeSingle();
   if (error) throw error;
-  return (data ?? null) as unknown as CountryStats | null;
+  return data ? normalizeCountryStats(data as Record<string, unknown>) : null;
 }
 
 async function readPublicCountryFallback(countryId?: string) {
@@ -780,18 +819,18 @@ async function readPublicCountryFallback(countryId?: string) {
     country_id: row.id,
     name: row.name,
     flag: row.flag,
-    balance: row.balance,
-    coal: row.coal,
-    oil: row.oil,
-    copper: row.copper,
-    iron: row.iron,
-    uranium: row.uranium,
-    aa_defense: row.aa_defense ?? 0,
-    missile_1: row.missile_1 ?? 0,
-    missile_2: row.missile_2 ?? 0,
-    missile_3: row.missile_3 ?? 0,
-    soldier_packs: row.soldier_packs ?? 0,
-    tank_packs: row.tank_packs ?? 0,
+    balance: String(row.balance ?? 0),
+    coal: String(row.coal ?? 0),
+    oil: String(row.oil ?? 0),
+    copper: String(row.copper ?? 0),
+    iron: String(row.iron ?? 0),
+    uranium: String(row.uranium ?? 0),
+    aa_defense: String(row.aa_defense ?? 0),
+    missile_1: String(row.missile_1 ?? 0),
+    missile_2: String(row.missile_2 ?? 0),
+    missile_3: String(row.missile_3 ?? 0),
+    soldier_packs: String(row.soldier_packs ?? 0),
+    tank_packs: String(row.tank_packs ?? 0),
     war_votes: 0,
     fort_votes: 0,
     total_votes: 0,
@@ -806,7 +845,7 @@ async function readPublicCountryFallback(countryId?: string) {
     forts: 0,
     military_value: "0",
     vote_potential: 0,
-    region_aa_total: 0,
+    region_aa_total: "0",
   }))) as unknown as CountryStats[];
 }
 

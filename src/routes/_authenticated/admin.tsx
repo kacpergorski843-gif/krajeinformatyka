@@ -179,6 +179,22 @@ const MILITARY_ICONS: Record<string, typeof Shield> = {
   missile_3: Rocket,
 };
 
+function parseWholeNumber(value: unknown): bigint | null {
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return null;
+  try {
+    return BigInt(raw);
+  } catch {
+    return null;
+  }
+}
+
+function compareWholeNumbers(a: string, b: string): number {
+  const left = parseWholeNumber(a) ?? 0n;
+  const right = parseWholeNumber(b) ?? 0n;
+  return left === right ? 0 : left > right ? 1 : -1;
+}
+
 
 type ApplicationExport = {
   generated_at: string;
@@ -1355,9 +1371,9 @@ function CountriesTab() {
     if (filter === "free") rows = rows.filter((country) => !assignedIds.has(country.country_id));
     rows.sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name, "pl");
-      if (sort === "balance") return Number(b.balance) - Number(a.balance);
-      if (sort === "military") return Number(b.military_value) - Number(a.military_value);
-      return Number(b.gross_income) - Number(a.gross_income);
+      if (sort === "balance") return compareWholeNumbers(b.balance, a.balance);
+      if (sort === "military") return compareWholeNumbers(b.military_value, a.military_value);
+      return compareWholeNumbers(b.gross_income, a.gross_income);
     });
     return rows;
   }, [assignedIds, countryQuery.data, filter, deferredSearch, sort]);
@@ -1498,7 +1514,12 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const patch = { ...identity, ...changes };
   const changedFields = Object.entries(patch).filter(([key, value]) => String(country?.[key as keyof CountryStats] ?? "") !== value);
   const hasChanges = changedFields.length > 0 || !!flagFile;
-  const destructive = changedFields.some(([key, value]) => key in FIELD_LABELS && Number(value) < Number(country?.[key as keyof CountryStats] ?? 0));
+  const destructive = changedFields.some(([key, value]) => {
+    if (!(key in FIELD_LABELS)) return false;
+    const next = parseWholeNumber(value);
+    const current = parseWholeNumber(country?.[key as keyof CountryStats]);
+    return next !== null && current !== null && next < current;
+  });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -1530,7 +1551,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const addRegion = useMutation({ mutationFn: () => country ? rpc("admin_create_region", { p_country_id: country?.country_id, p_name: regionName.trim() }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Region dodany"); setRegionName(""); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const removeRegion = useMutation({ mutationFn: (id: string) => rpc("admin_delete_region", { p_region_id: id }), onSuccess: () => { toast.success("Region usunięty"); setRegionToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const removeSlot = useMutation({ mutationFn: (id: string) => rpc("demolish_slot", { p_slot_id: id }), onSuccess: () => { toast.success("Obiekt wyburzony"); setSlotToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const setRegionAa = useMutation({ mutationFn: ({ regionId, value }: { regionId: string; value: number }) => rpc("admin_set_region_aa", { p_region_id: regionId, p_value: value }), onSuccess: () => { toast.success("OPL regionu zaktualizowane"); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
+  const setRegionAa = useMutation({ mutationFn: ({ regionId, value }: { regionId: string; value: string }) => rpc("admin_set_region_aa", { p_region_id: regionId, p_value: value }), onSuccess: () => { toast.success("OPL regionu zaktualizowane"); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const deleteCountry = useMutation({ mutationFn: () => country ? rpc("admin_delete_country", { p_country_id: country.country_id }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Państwo usunięte"); setConfirmDelete(false); onClose(); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); void queryClient.invalidateQueries({ queryKey: ["admin_users"] }); void queryClient.invalidateQueries({ queryKey: ["public_countries"] }); }, onError: (error: Error) => toast.error(error.message) });
 
   if (!country) return null;
@@ -1603,18 +1624,19 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
 }
 
 function AdjustmentField({ field, country, value, onChange }: { field: FieldKey; country: CountryStats; value: string | undefined; onChange: (value: string) => void }) {
-  const current = Number(country[field]) || 0;
-  const next = value === undefined || value === "" ? current : Math.max(0, Number(value) || 0);
+  const current = parseWholeNumber(country[field]) ?? 0n;
+  const parsedNext = value === undefined || value === "" ? current : parseWholeNumber(value);
+  const next = parsedNext ?? current;
   const delta = next - current;
-  const step = field === "balance" ? 100_000_000_000 : 1;
-  const format = (number: number) => field === "balance" ? fmtKR(number) : fmtNum(number);
+  const step = field === "balance" ? 100_000_000_000n : 1n;
+  const format = (amount: bigint) => field === "balance" ? fmtKR(amount.toString()) : fmtNum(amount.toString());
   return (
     <Panel className="min-w-0 p-3 sm:p-4">
       <Label className="label-hud">{FIELD_LABELS[field]}</Label>
       <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-end">
         <ValueBox label="Aktualna" value={format(current)} />
-        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-1.5"><Button variant="outline" size="icon" aria-label={`Zmniejsz ${FIELD_LABELS[field]}`} onClick={() => onChange(String(Math.max(0, next - step)))}>−</Button><div className="min-w-0"><span className="mb-1 block text-[10px] uppercase text-muted-foreground">Zmiana +/-</span><Input className="num min-w-0" type="number" value={value ?? String(current)} onChange={(event) => onChange(event.target.value)} /></div><Button variant="outline" size="icon" aria-label={`Zwiększ ${FIELD_LABELS[field]}`} onClick={() => onChange(String(next + step))}>+</Button></div>
-        <ValueBox label="Nowa" value={format(next)} tone={delta > 0 ? "success" : delta < 0 ? "destructive" : "muted"} hint={`${delta > 0 ? "+" : ""}${format(delta)}`} />
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-1.5"><Button variant="outline" size="icon" aria-label={`Zmniejsz ${FIELD_LABELS[field]}`} onClick={() => onChange((next > step ? next - step : 0n).toString())}>−</Button><div className="min-w-0"><span className="mb-1 block text-[10px] uppercase text-muted-foreground">Zmiana +/-</span><Input className="num min-w-0" type="text" inputMode="numeric" value={value ?? current.toString()} onChange={(event) => onChange(event.target.value)} /></div><Button variant="outline" size="icon" aria-label={`Zwiększ ${FIELD_LABELS[field]}`} onClick={() => onChange((next + step).toString())}>+</Button></div>
+        <ValueBox label="Nowa" value={format(next)} tone={delta > 0n ? "success" : delta < 0n ? "destructive" : "muted"} hint={`${delta > 0n ? "+" : ""}${format(delta)}`} />
       </div>
     </Panel>
   );
@@ -1622,9 +1644,9 @@ function AdjustmentField({ field, country, value, onChange }: { field: FieldKey;
 
 function ResourceAdjustment(props: Omit<Parameters<typeof AdjustmentField>[0], "field"> & { field: FieldKey }) {
   const productionKey = `${props.field}_prod` as keyof CountryStats;
-  const production = Number(props.country[productionKey] ?? 0);
-  const upkeep = props.field === "coal" ? Number(props.country.coal_upkeep) : 0;
-  return <div className="space-y-1"><AdjustmentField {...props} /><p className="px-1 text-[11px] text-muted-foreground">Produkcja: <span className="text-success">+{fmtNum(production)}</span>{upkeep ? <> · Zużycie: <span className="text-destructive">−{fmtNum(upkeep)}</span></> : null}</p></div>;
+  const production = String(props.country[productionKey] ?? "0");
+  const upkeep = props.field === "coal" ? props.country.coal_upkeep : "0";
+  return <div className="space-y-1"><AdjustmentField {...props} /><p className="px-1 text-[11px] text-muted-foreground">Produkcja: <span className="text-success">+{fmtNum(production)}</span>{upkeep !== "0" ? <> · Zużycie: <span className="text-destructive">−{fmtNum(upkeep)}</span></> : null}</p></div>;
 }
 
 function MilitaryAdjustment(props: Omit<Parameters<typeof AdjustmentField>[0], "field"> & { field: FieldKey }) {
@@ -1637,20 +1659,21 @@ function ValueBox({ label, value, hint, tone = "default" }: { label: string; val
   return <div className="min-w-0 border border-border/70 bg-secondary/30 p-2"><span className="block text-[10px] uppercase text-muted-foreground">{label}</span><span className={`num mt-1 block break-words text-sm ${toneClass}`}>{value}</span>{hint ? <span className={`num mt-0.5 block text-[10px] ${toneClass}`}>{hint}</span> : null}</div>;
 }
 
-function RegionAaEditor({ regions, pending, onSave }: { regions: Array<{ id: string; name: string; aa_defense: number }>; pending: boolean; onSave: (regionId: string, value: number) => void }) {
+function RegionAaEditor({ regions, pending, onSave }: { regions: Array<{ id: string; name: string; aa_defense: string }>; pending: boolean; onSave: (regionId: string, value: string) => void }) {
   const [values, setValues] = useState<Record<string, string>>({});
   if (regions.length === 0) return <EmptyLine text="To państwo nie ma regionów." />;
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       {regions.map((region) => {
         const raw = values[region.id];
-        const next = raw === undefined || raw === "" ? region.aa_defense : Math.max(0, Number(raw) || 0);
+        const parsedNext = raw === undefined || raw === "" ? parseWholeNumber(region.aa_defense) : parseWholeNumber(raw);
+        const next = parsedNext?.toString() ?? null;
         return (
           <Panel key={region.id} className="min-w-0 p-3">
             <Label className="label-hud truncate">{region.name}</Label>
             <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-              <Input className="num min-w-0" type="number" min="0" value={raw ?? String(region.aa_defense)} onChange={(event) => setValues((current) => ({ ...current, [region.id]: event.target.value }))} />
-              <Button size="sm" disabled={pending || next === region.aa_defense} onClick={() => onSave(region.id, next)}>Zapisz</Button>
+              <Input className="num min-w-0" type="text" inputMode="numeric" value={raw ?? region.aa_defense} onChange={(event) => setValues((current) => ({ ...current, [region.id]: event.target.value }))} />
+              <Button size="sm" disabled={pending || next === null || next === region.aa_defense} onClick={() => next !== null && onSave(region.id, next)}>Zapisz</Button>
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">Aktualne OPL: <span className="num text-info">{units(region.aa_defense)}</span></p>
           </Panel>
@@ -1713,15 +1736,15 @@ function RegionManagement({ country, regions, shopItems, regionName, onRegionNam
     </Panel>
     <Panel className="p-3"><div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"><Input value={regionName} onChange={(event) => onRegionName(event.target.value)} placeholder="Nazwa nowego regionu" /><Button disabled={!regionName.trim() || adding} onClick={onAdd}><PackagePlus />Dodaj region</Button></div></Panel>
     {loading ? <LoadingRows /> : regions.length === 0 ? <HudState icon={<Warehouse />} title="Brak regionów" description="Dodaj pierwszy region tego państwa." /> : <div className="space-y-3">{regions.map((region) => {
-      const income = region.slots.reduce((sum, slot) => sum + Number(itemByBuilding.get(slot.building)?.income_kr ?? 0), 0);
-      const production = region.slots.reduce<Record<string, number>>((totals, slot) => { const item = itemByBuilding.get(slot.building); if (item?.produces) totals[item.produces] = (totals[item.produces] ?? 0) + Number(item.produces_amount); return totals; }, {});
+      const income = region.slots.reduce((sum, slot) => sum + BigInt(itemByBuilding.get(slot.building)?.income_kr ?? "0"), 0n);
+      const production = region.slots.reduce<Record<string, bigint>>((totals, slot) => { const item = itemByBuilding.get(slot.building); if (item?.produces) totals[item.produces] = (totals[item.produces] ?? 0n) + BigInt(item.produces_amount); return totals; }, {});
       return <Panel key={region.id} className="min-w-0 overflow-hidden p-0">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border p-3"><div className="min-w-0"><p className="truncate font-semibold">{region.name}</p><p className="mt-1 text-xs text-muted-foreground">{region.slots.length}/9 slotów · <span className="text-success">+{fmtKR(income)} / doba</span></p></div><Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" aria-label={`Usuń region ${region.name}`} onClick={() => onRemoveRegion(region)}><Trash2 /></Button></div>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border p-3"><div className="min-w-0"><p className="truncate font-semibold">{region.name}</p><p className="mt-1 text-xs text-muted-foreground">{region.slots.length}/9 slotów · <span className="text-success">+{fmtKR(income.toString())} / doba</span></p></div><Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" aria-label={`Usuń region ${region.name}`} onClick={() => onRemoveRegion(region)}><Trash2 /></Button></div>
         <div className="grid gap-2 p-3 sm:grid-cols-3">{Array.from({ length: 9 }, (_, index) => {
           const slot = region.slots.find((entry) => entry.slot_index === index + 1);
           return slot ? <div key={index} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border border-primary/20 bg-primary/5 p-2"><span className="min-w-0"><span className="block text-[10px] text-muted-foreground">SLOT {index + 1}</span><span className="block truncate text-xs">{BUILDING_LABELS[slot.building] ?? slot.building}</span></span><Button size="icon" variant="ghost" className="size-7 text-destructive hover:text-destructive" aria-label={`Wyburz ${BUILDING_LABELS[slot.building] ?? slot.building}`} onClick={() => onRemoveSlot({ id: slot.id, building: slot.building, region: region.name })}><Trash2 className="size-3.5" /></Button></div> : <button key={index} type="button" className="border border-dashed border-border p-2 text-left text-inactive transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-foreground" onClick={() => { setBuildTarget({ regionId: region.id, regionName: region.name, slotIndex: index + 1 }); setBuilding(""); }}><span className="block text-[10px]">SLOT {index + 1}</span><span className="mt-1 flex items-center gap-1 text-xs"><PackagePlus className="size-3.5" />Dodaj budynek</span></button>;
         })}</div>
-        {Object.keys(production).length ? <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2">{Object.entries(production).map(([resource, amount]) => <Badge key={resource} variant="outline" className="border-success/30 text-success">{RESOURCE_LABELS[resource] ?? resource} +{fmtNum(amount)}</Badge>)}</div> : null}
+        {Object.keys(production).length ? <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2">{Object.entries(production).map(([resource, amount]) => <Badge key={resource} variant="outline" className="border-success/30 text-success">{RESOURCE_LABELS[resource] ?? resource} +{fmtNum(amount.toString())}</Badge>)}</div> : null}
       </Panel>;
     })}</div>}
     <Dialog open={!!buildTarget} onOpenChange={(open) => !open && setBuildTarget(null)}>
@@ -1741,9 +1764,9 @@ function RegionManagement({ country, regions, shopItems, regionName, onRegionNam
 }
 function CountryHistory({ transactions, strikes, countryId, loading }: { transactions: TransactionRow[]; strikes: MissileStrike[]; countryId: string; loading: boolean }) {
   const [showZero, setShowZero] = useState(false);
-  const visible = transactions.filter((transaction) => showZero || Number(transaction.amount_kr) !== 0);
+  const visible = transactions.filter((transaction) => showZero || BigInt(transaction.amount_kr || "0") !== 0n);
   if (loading) return <LoadingRows />;
-  return <div className="space-y-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"><SectionHeading icon={<History />} title="Historia państwa" description="Operacje ekonomiczne i rakietowe" /><div className="flex items-center gap-2"><Switch checked={showZero} onCheckedChange={setShowZero} /><span className="text-xs text-muted-foreground">Pokaż 0 KR</span></div></div><Panel className="divide-y divide-border p-0">{visible.map((transaction) => <TransactionItem key={transaction.id} transaction={transaction} country={undefined} />)}{visible.length === 0 ? <EmptyLine text="Brak operacji ekonomicznych." /> : null}</Panel><SectionTitle>Operacje rakietowe</SectionTitle><Panel className="divide-y divide-border p-0">{strikes.map((strike) => <div key={strike.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{strike.attacker_country_id === countryId ? "Atak" : "Obrona"}: {MISSILE_LABELS[strike.missile_code] ?? strike.missile_code} · {strike.region_name}</p><p className="text-xs text-muted-foreground">{dateTime(strike.created_at)} · OPL {strike.aa_defense}</p></div><Badge variant={strike.result === "PRZECHWYCONA" ? "outline" : "destructive"} className={strike.result === "PRZECHWYCONA" ? "border-success/40 text-success" : ""}>{strike.result}</Badge></div>)}{strikes.length === 0 ? <EmptyLine text="Brak operacji rakietowych." /> : null}</Panel></div>;
+  return <div className="space-y-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"><SectionHeading icon={<History />} title="Historia państwa" description="Operacje ekonomiczne i rakietowe" /><div className="flex items-center gap-2"><Switch checked={showZero} onCheckedChange={setShowZero} /><span className="text-xs text-muted-foreground">Pokaż 0 KR</span></div></div><Panel className="divide-y divide-border p-0">{visible.map((transaction) => <TransactionItem key={transaction.id} transaction={transaction} country={undefined} />)}{visible.length === 0 ? <EmptyLine text="Brak operacji ekonomicznych." /> : null}</Panel><SectionTitle>Operacje rakietowe</SectionTitle><Panel className="divide-y divide-border p-0">{strikes.map((strike) => <div key={strike.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{strike.attacker_country_id === countryId ? "Atak" : "Obrona"}: {MISSILE_LABELS[strike.missile_code] ?? strike.missile_code} · {strike.region_name}</p><p className="text-xs text-muted-foreground">{dateTime(strike.created_at)} · OPL {units(strike.aa_defense)}</p></div><Badge variant={strike.result === "PRZECHWYCONA" ? "outline" : "destructive"} className={strike.result === "PRZECHWYCONA" ? "border-success/40 text-success" : ""}>{strike.result}</Badge></div>)}{strikes.length === 0 ? <EmptyLine text="Brak operacji rakietowych." /> : null}</Panel></div>;
 }
 
 function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
@@ -2151,7 +2174,7 @@ function ShopTab() {
                 </div>
                 <div className="rounded-lg bg-secondary/50 p-3">
                   <p className="text-sm text-muted-foreground">Dzienny efekt</p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-success">{Number(item.income_kr) ? `+${fmtKR(item.income_kr)} KR` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "Brak"}</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums text-success">{BigInt(item.income_kr) !== 0n ? `+${fmtKR(item.income_kr)} KR` : item.produces ? `+${fmtNum(item.produces_amount)} ${RESOURCE_LABELS[item.produces] ?? item.produces}` : "Brak"}</p>
                 </div>
               </div>
               <Button variant="outline" className="mt-4 h-11 w-full" onClick={() => setEdit(toForm(item))}>Edytuj produkt</Button>
@@ -2182,7 +2205,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
   ];
   const validNumbers = numericFields.every(({ key }) => {
     const value = String(edit[key] ?? "0").trim();
-    return value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
+    return value !== "" && parseWholeNumber(value) !== null;
   });
   const valid = !!edit.code.trim() && !!edit.name.trim() && !!edit.category.trim() && validNumbers;
   const inputClass = "h-12 text-base";
@@ -2256,7 +2279,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
               {numericFields.slice(0, 6).map(({ key, label }) => (
                 <div key={key} className={fieldClass}>
                   <Label className={labelClass}>{label}</Label>
-                  <Input className={numberClass} type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} />
+                  <Input className={numberClass} type="text" inputMode="numeric" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} />
                 </div>
               ))}
             </div>
@@ -2271,7 +2294,7 @@ function ProductDialog({ edit, items, onEdit, onSave, pending }: { edit: Record<
               {numericFields.slice(6, 9).map(({ key, label }) => (
                 <div key={key} className={fieldClass}>
                   <Label className={labelClass}>{label}</Label>
-                  <Input className={numberClass} type="number" inputMode="decimal" min="0" step="any" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} />
+                  <Input className={numberClass} type="text" inputMode="numeric" value={edit[key] ?? "0"} onChange={(event) => update(key, event.target.value)} />
                 </div>
               ))}
             </div>
@@ -2314,13 +2337,13 @@ function EconomyTab() {
   const queryClient = useQueryClient();
   const [confirm, setConfirm] = useState(false);
   const runs = (runQuery.data ?? []) as unknown as EconomyRun[];
-  const totals = (countryQuery.data ?? []).reduce((sum, country) => ({ income: sum.income + Number(country.gross_income), coal: sum.coal + Number(country.coal_prod), oil: sum.oil + Number(country.oil_prod), copper: sum.copper + Number(country.copper_prod), iron: sum.iron + Number(country.iron_prod), uranium: sum.uranium + Number(country.uranium_prod), upkeep: sum.upkeep + Number(country.coal_upkeep) }), { income: 0, coal: 0, oil: 0, copper: 0, iron: 0, uranium: 0, upkeep: 0 });
+  const totals = (countryQuery.data ?? []).reduce((sum, country) => ({ income: sum.income + BigInt(country.gross_income), coal: sum.coal + BigInt(country.coal_prod), oil: sum.oil + BigInt(country.oil_prod), copper: sum.copper + BigInt(country.copper_prod), iron: sum.iron + BigInt(country.iron_prod), uranium: sum.uranium + BigInt(country.uranium_prod), upkeep: sum.upkeep + BigInt(country.coal_upkeep) }), { income: 0n, coal: 0n, oil: 0n, copper: 0n, iron: 0n, uranium: 0n, upkeep: 0n });
   const run = useMutation({ mutationFn: () => rpc<{ ok: boolean; reason?: string }>("run_daily_economy", {}), onSuccess: (result) => { result?.ok ? toast.success("Cykl dobowy rozliczony") : toast.info("Dzisiejszy cykl został już rozliczony"); setConfirm(false);
         void queryClient.invalidateQueries({ queryKey: ["economy_runs"] });
         void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
         void queryClient.invalidateQueries({ queryKey: ["countries"] });
         void queryClient.invalidateQueries({ queryKey: ["transactions"] }); }, onError: (error: Error) => toast.error(error.message) });
-  return <div className="space-y-4"><div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"><Panel className="p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div><p className="label-hud">Następny automatyczny cykl</p><p className="num mt-2 text-3xl text-primary sm:text-4xl"><CycleCountdown /></p><p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p></div><CalendarClock className="size-7 text-primary" /></div><Button className="mt-5 w-full sm:w-auto" onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button></Panel><Panel className="p-4"><p className="label-hud">Prognoza kolejnego cyklu</p><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Przychód KR" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep)}`} tone="destructive" />{[["Węgiel",totals.coal],["Ropa",totals.oil],["Miedź",totals.copper],["Żelazo",totals.iron],["Uran",totals.uranium]].map(([label,value]) => <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(Number(value))}`} tone="success" />)}</div></Panel></div><SectionTitle>Ostatnie rozliczenia</SectionTitle><Panel className="divide-y divide-border p-0">{runs.filter((entry) => Number(entry.summary?.["total_kr"] ?? 0) !== 0).map((entry) => <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="text-sm">Cykl {entry.run_date}</p><p className="text-xs text-muted-foreground">{dateTime(entry.ran_at)}</p></div><p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.["total_kr"] ?? 0))}</p></div>)}{runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}</Panel><ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Uruchomić cykl dobowy?" description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`} confirmLabel="Uruchom cykl" destructive pending={run.isPending} onConfirm={() => run.mutate()}><div className="grid grid-cols-2 gap-2"><ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income)}`} tone="success" /><ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep)} węgla`} tone="destructive" /></div></ConfirmDialog></div>;
+  return <div className="space-y-4"><div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"><Panel className="p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div><p className="label-hud">Następny automatyczny cykl</p><p className="num mt-2 text-3xl text-primary sm:text-4xl"><CycleCountdown /></p><p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p></div><CalendarClock className="size-7 text-primary" /></div><Button className="mt-5 w-full sm:w-auto" onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button></Panel><Panel className="p-4"><p className="label-hud">Prognoza kolejnego cyklu</p><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Przychód KR" value={`+${fmtKR(totals.income.toString())}`} tone="success" /><ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep.toString())}`} tone="destructive" />{[["Węgiel",totals.coal],["Ropa",totals.oil],["Miedź",totals.copper],["Żelazo",totals.iron],["Uran",totals.uranium]].map(([label,value]) => <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(value.toString())}`} tone="success" />)}</div></Panel></div><SectionTitle>Ostatnie rozliczenia</SectionTitle><Panel className="divide-y divide-border p-0">{runs.filter((entry) => BigInt(String(entry.summary?.["total_kr"] ?? 0)) !== 0n).map((entry) => <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="text-sm">Cykl {entry.run_date}</p><p className="text-xs text-muted-foreground">{dateTime(entry.ran_at)}</p></div><p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.["total_kr"] ?? 0))}</p></div>)}{runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}</Panel><ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Uruchomić cykl dobowy?" description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`} confirmLabel="Uruchom cykl" destructive pending={run.isPending} onConfirm={() => run.mutate()}><div className="grid grid-cols-2 gap-2"><ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income.toString())}`} tone="success" /><ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep.toString())} węgla`} tone="destructive" /></div></ConfirmDialog></div>;
 }
 
 type HistoryFilter = "all" | "adjustments" | "build" | "cycles" | "military" | "missiles";
@@ -2341,7 +2364,7 @@ function HistoryTab() {
   const countryQuery = useQuery(countriesQuery);
   const [hideZero, setHideZero] = useState(true);
   const countries = useMemo(() => new Map((countryQuery.data ?? []).map((country) => [country.country_id, country.name])), [countryQuery.data]);
-  const transactions = useMemo(() => ((txQuery.data ?? []) as unknown as TransactionRow[]).filter((transaction) => (!hideZero || Number(transaction.amount_kr) !== 0) && (filter === "all" || classifyTransaction(transaction) === filter)), [txQuery.data, hideZero, filter]);
+  const transactions = useMemo(() => ((txQuery.data ?? []) as unknown as TransactionRow[]).filter((transaction) => (!hideZero || BigInt(transaction.amount_kr || "0") !== 0n) && (filter === "all" || classifyTransaction(transaction) === filter)), [txQuery.data, hideZero, filter]);
   const actions = useMemo(() => ((actionQuery.data ?? []) as unknown as AdminActionRow[]).filter(() => filter === "all" || filter === "adjustments"), [actionQuery.data, filter]);
   const strikes = useMemo(() => (strikeQuery.data ?? []).filter(() => filter === "all" || filter === "missiles"), [strikeQuery.data, filter]);
   const loading = txQuery.isLoading || actionQuery.isLoading || strikeQuery.isLoading;
@@ -2358,8 +2381,8 @@ function classifyTransaction(transaction: TransactionRow): HistoryFilter {
 }
 
 function TransactionItem({ transaction, country }: { transaction: TransactionRow; country: string | undefined }) {
-  const amount = Number(transaction.amount_kr);
-  return <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{transaction.label}</p><p className="truncate text-xs text-muted-foreground">{country ? `${country} · ` : ""}{dateTime(transaction.created_at)}</p></div><p className={`num shrink-0 text-sm ${amount > 0 ? "text-success" : amount < 0 ? "text-destructive" : "text-inactive"}`}>{amount > 0 ? "+" : ""}{fmtKR(transaction.amount_kr)}</p></div>;
+  const amount = BigInt(transaction.amount_kr || "0");
+  return <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{transaction.label}</p><p className="truncate text-xs text-muted-foreground">{country ? `${country} · ` : ""}{dateTime(transaction.created_at)}</p></div><p className={`num shrink-0 text-sm ${amount > 0n ? "text-success" : amount < 0n ? "text-destructive" : "text-inactive"}`}>{amount > 0n ? "+" : ""}{fmtKR(transaction.amount_kr)}</p></div>;
 }
 
 function AuditItem({ action, country, countries }: { action: AdminActionRow; country: string | undefined; countries: Map<string, string> }) {
@@ -2381,9 +2404,11 @@ function AuditItem({ action, country, countries }: { action: AdminActionRow; cou
 }
 
 function ChangePreview({ label, current, next, currency }: { label: string; current: string; next: string; currency: boolean }) {
-  const format = (value: string) => currency ? fmtKR(value) : value;
-  const difference = Number(next) - Number(current);
-  return <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border border-border bg-secondary/30 p-2"><span className="truncate text-xs text-muted-foreground">{label}</span><span className="num text-right text-xs"><span className="text-inactive">{format(current)}</span><span className="mx-2">→</span><span className={difference < 0 ? "text-destructive" : difference > 0 ? "text-success" : "text-foreground"}>{format(next)}</span></span></div>;
+  const format = (value: string) => currency ? fmtKR(value) : parseWholeNumber(value) !== null ? fmtNum(value) : value;
+  const currentValue = parseWholeNumber(current);
+  const nextValue = parseWholeNumber(next);
+  const difference = currentValue !== null && nextValue !== null ? nextValue - currentValue : 0n;
+  return <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border border-border bg-secondary/30 p-2"><span className="truncate text-xs text-muted-foreground">{label}</span><span className="num text-right text-xs"><span className="text-inactive">{format(current)}</span><span className="mx-2">→</span><span className={difference < 0n ? "text-destructive" : difference > 0n ? "text-success" : "text-foreground"}>{format(next)}</span></span></div>;
 }
 
 function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel, destructive = false, pending = false, disabled = false, onConfirm, children }: { open: boolean; onOpenChange: (open: boolean) => void; title: string; description: string; confirmLabel: string; destructive?: boolean; pending?: boolean; disabled?: boolean; onConfirm: () => void; children?: ReactNode }) {

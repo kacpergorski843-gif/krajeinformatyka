@@ -219,11 +219,11 @@ function Regions() {
             const effects = (r.slots ?? []).reduce((acc, slot) => {
               const item = (shop ?? []).find((shopItem) => shopItem.building === slot.building);
               if (!item) return acc;
-              acc.kr += Number(item.income_kr ?? 0);
-              if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0) + Number(item.produces_amount ?? 0);
-              acc.coalUpkeep += Number(item.upkeep_coal ?? 0);
+              acc.kr += BigInt(item.income_kr ?? "0");
+              if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0n) + BigInt(item.produces_amount ?? "0");
+              acc.coalUpkeep += BigInt(item.upkeep_coal ?? "0");
               return acc;
-            }, { kr: 0, coalUpkeep: 0, resources: {} as Record<string, number> });
+            }, { kr: 0n, coalUpkeep: 0n, resources: {} as Record<string, bigint> });
             return (
               <Panel key={r.id} className="border-destructive/40 bg-destructive/5 p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -231,9 +231,9 @@ function Regions() {
                   <span className="text-xs font-semibold text-destructive">NIE JEST POD TWOJĄ KONTROLĄ</span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">TRACISZ KR</p><p className="num mt-1 text-sm text-destructive">−{fmtKR(effects.kr)} / doba</p></div>
-                  {Object.entries(effects.resources).map(([resource, value]) => <div key={resource} className="border border-border bg-secondary/30 p-2"><p className="label-hud">TRACISZ {RESOURCE_LABELS[resource] ?? resource}</p><p className="num mt-1 text-sm text-destructive">−{units(value)} / doba</p></div>)}
-                  {effects.coalUpkeep > 0 ? <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZUŻYCIE WĘGLA</p><p className="num mt-1 text-sm text-muted-foreground">−{units(effects.coalUpkeep)} / doba</p></div> : null}
+                  <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">TRACISZ KR</p><p className="num mt-1 text-sm text-destructive">−{fmtKR(effects.kr.toString())} / doba</p></div>
+                  {Object.entries(effects.resources).map(([resource, value]) => <div key={resource} className="border border-border bg-secondary/30 p-2"><p className="label-hud">TRACISZ {RESOURCE_LABELS[resource] ?? resource}</p><p className="num mt-1 text-sm text-destructive">−{units(value.toString())} / doba</p></div>)}
+                  {effects.coalUpkeep > 0n ? <div className="border border-border bg-secondary/30 p-2"><p className="label-hud">ZUŻYCIE WĘGLA</p><p className="num mt-1 text-sm text-muted-foreground">−{units(effects.coalUpkeep.toString())} / doba</p></div> : null}
                 </div>
               </Panel>
             );
@@ -269,7 +269,7 @@ function Regions() {
                     SLOTY {r.slots.length}/9
                   </span>
                   <span
-                    className={`num block text-[11px] ${r.aa_defense === 0 ? "text-inactive" : "text-info"}`}
+                    className={`num block text-[11px] ${r.aa_defense === "0" ? "text-inactive" : "text-info"}`}
                   >
                     {units(r.aa_defense)} OPL
                   </span>
@@ -352,7 +352,7 @@ function Regions() {
           <div className="space-y-2 overflow-y-auto px-4 pb-8">
             {buildings.map((item) => {
               const reason = buildFor ? slotBlockReason(buildFor, item) : null;
-              const tooPoor = country ? Number(country.balance) < Number(item.cost_kr) : false;
+              const tooPoor = country ? BigInt(country.balance) < BigInt(item.cost_kr) : false;
               const blocked = !!reason || tooPoor;
               return (
                 <button
@@ -374,7 +374,7 @@ function Regions() {
                     <p className="num text-primary shrink-0 text-xs">{fmtKR(item.cost_kr)}</p>
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">{item.description}</p>
-                  {Number(item.income_kr) > 0 ? (
+                  {BigInt(item.income_kr) > 0n ? (
                     <p className="text-success mt-1 text-xs">+{fmtKR(item.income_kr)} / doba</p>
                   ) : null}
                   {item.produces ? (
@@ -383,7 +383,7 @@ function Regions() {
                       {RESOURCE_LABELS[item.produces] ?? item.produces} / doba
                     </p>
                   ) : null}
-                  {Number(item.cost_iron) > 0 ? (
+                  {BigInt(item.cost_iron) > 0n ? (
                     <p className="text-muted-foreground mt-1 text-xs uppercase">
                       Żelazo: <span className="num">{units(item.cost_iron)}</span>
                     </p>
