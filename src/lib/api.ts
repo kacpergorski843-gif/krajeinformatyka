@@ -49,6 +49,45 @@ export type PublicRankingRow = {
   regions_count: number;
 };
 
+const COUNTRY_STATS_STRING_FIELDS = [
+  "balance", "coal", "oil", "copper", "iron", "uranium",
+  "aa_defense", "missile_1", "missile_2", "missile_3", "soldier_packs", "tank_packs",
+  "gross_income", "coal_upkeep", "coal_prod", "oil_prod", "copper_prod", "iron_prod",
+  "uranium_prod", "military_value", "region_aa_total",
+] as const;
+
+function normalizeCountryStats(row: Record<string, unknown>): CountryStats {
+  const normalized = { ...row };
+  for (const field of COUNTRY_STATS_STRING_FIELDS) {
+    normalized[field] = String(row[field] ?? "0");
+  }
+  return normalized as unknown as CountryStats;
+}
+
+function normalizeMissileStrike(row: Record<string, unknown>): MissileStrike {
+  return {
+    ...row,
+    aa_defense: String(row.aa_defense ?? "0"),
+    region_aa: row.region_aa == null ? null : String(row.region_aa),
+    required_aa: row.required_aa == null ? null : String(row.required_aa),
+  } as unknown as MissileStrike;
+}
+
+function normalizeShopItem(row: Record<string, unknown>): ShopItem {
+  return {
+    ...row,
+    cost_kr: String(row.cost_kr ?? "0"),
+    cost_coal: String(row.cost_coal ?? "0"),
+    cost_oil: String(row.cost_oil ?? "0"),
+    cost_copper: String(row.cost_copper ?? "0"),
+    cost_iron: String(row.cost_iron ?? "0"),
+    cost_uranium: String(row.cost_uranium ?? "0"),
+    income_kr: String(row.income_kr ?? "0"),
+    upkeep_coal: String(row.upkeep_coal ?? "0"),
+    produces_amount: String(row.produces_amount ?? "0"),
+  } as unknown as ShopItem;
+}
+
 export type ShopItem = {
   code: string;
   name: string;
@@ -204,8 +243,8 @@ export const shopQuery = queryOptions({
   queryKey: ["shop_items"],
   queryFn: async () =>
     (await unwrap(
-      supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_copper,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").eq("active", true).order("sort_order"),
-    )) as unknown as ShopItem[],
+      supabase.from("shop_items").select("code,name,category,description,building,cost_kr,cost_coal,cost_oil,cost_iron,cost_uranium,income_kr,upkeep_coal,produces,produces_amount,sort_order,active").eq("active", true).order("sort_order"),
+    )).map((row: Record<string, unknown>) => normalizeShopItem(row)),
 });
 
 export type RegionWithSlots = {
@@ -706,7 +745,7 @@ export const adminStrikesQuery = queryOptions({
         .select("id,attacker_country_id,defender_country_id,region_id,region_name,missile_code,result,aa_defense,region_aa,required_aa,destroyed,created_at")
         .order("created_at", { ascending: false })
         .limit(100),
-    )) as unknown as MissileStrike[],
+    )).map((row: Record<string, unknown>) => normalizeMissileStrike(row)),
 });
 
 export function strikesQuery(countryId: string | null | undefined) {
@@ -731,7 +770,7 @@ export const publicRankingQuery = queryOptions({
     (await unwrap(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase.from as any)("public_ranking").select("*"),
-    )) as unknown as PublicRankingRow[],
+    )).map((row: Record<string, unknown>) => ({ ...row, gross_income: String(row.gross_income ?? "0"), military_value: String(row.military_value ?? "0") })) as unknown as PublicRankingRow[],
 });
 
 const COUNTRY_STATS_SELECT =
@@ -741,7 +780,7 @@ async function readCountryStats(view: "world_country_stats" | "country_stats") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).from(view).select(COUNTRY_STATS_SELECT).order("name");
   if (error) throw error;
-  return (data ?? []) as unknown as CountryStats[];
+  return (data ?? []).map((row: Record<string, unknown>) => normalizeCountryStats(row));
 }
 
 async function readCountryStatsById(view: "world_country_stats" | "country_stats", countryId: string) {
@@ -752,7 +791,7 @@ async function readCountryStatsById(view: "world_country_stats" | "country_stats
     .eq("country_id", countryId)
     .maybeSingle();
   if (error) throw error;
-  return (data ?? null) as unknown as CountryStats | null;
+  return data ? normalizeCountryStats(data as Record<string, unknown>) : null;
 }
 
 async function readPublicCountryFallback(countryId?: string) {
@@ -780,12 +819,12 @@ async function readPublicCountryFallback(countryId?: string) {
     country_id: row.id,
     name: row.name,
     flag: row.flag,
-    balance: row.balance,
-    coal: row.coal,
-    oil: row.oil,
-    copper: row.copper,
-    iron: row.iron,
-    uranium: row.uranium,
+    balance: String(row.balance ?? 0),
+    coal: String(row.coal ?? 0),
+    oil: String(row.oil ?? 0),
+    copper: String(row.copper ?? 0),
+    iron: String(row.iron ?? 0),
+    uranium: String(row.uranium ?? 0),
     aa_defense: String(row.aa_defense ?? 0),
     missile_1: String(row.missile_1 ?? 0),
     missile_2: String(row.missile_2 ?? 0),
