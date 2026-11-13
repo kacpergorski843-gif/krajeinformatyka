@@ -5,7 +5,7 @@ export function toBigInt(v: string | number | bigint | null | undefined): bigint
   if (typeof v === "bigint") return v;
   const raw = String(v ?? "0").trim();
   const match = raw.match(/^([+-]?)(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/);
-  if (!match) throw new TypeError(`Invalid integer value: \${raw}`);
+  if (!match) throw new TypeError(`Invalid integer value: ${raw}`);
   const [, sign, whole, fraction = "", exponentRaw = "0"] = match;
   const exponent = Number(exponentRaw);
   if (!Number.isSafeInteger(exponent) || Math.abs(exponent) > 10000) throw new RangeError("Integer exponent out of range");
@@ -14,7 +14,7 @@ export function toBigInt(v: string | number | bigint | null | undefined): bigint
   if (scale > 0) {
     const fractionalDigits = digits.slice(-scale);
     if (fractionalDigits.length < scale || /[1-9]/.test(fractionalDigits)) {
-      throw new TypeError(`Value is not an integer: \${raw}`);
+      throw new TypeError(`Value is not an integer: ${raw}`);
     }
     digits = digits.slice(0, -scale) || "0";
   } else if (scale < 0) {
