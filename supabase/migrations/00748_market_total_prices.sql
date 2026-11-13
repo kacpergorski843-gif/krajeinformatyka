@@ -2,14 +2,6 @@
 -- Widen integer-valued economy and market fields to unconstrained NUMERIC.
 -- A quantity and a unit price can each fit numeric(30,0), while their product
 -- can exceed 30 digits. Keep values exact and let PostgreSQL hold the full total.
-ALTER TABLE public.countries
-  ALTER COLUMN balance TYPE numeric USING balance::numeric,
-  ALTER COLUMN coal TYPE numeric USING coal::numeric,
-  ALTER COLUMN oil TYPE numeric USING oil::numeric,
-  ALTER COLUMN copper TYPE numeric USING copper::numeric,
-  ALTER COLUMN iron TYPE numeric USING iron::numeric,
-  ALTER COLUMN uranium TYPE numeric USING uranium::numeric;
-
 ALTER TABLE public.transactions
   ALTER COLUMN amount_kr TYPE numeric USING amount_kr::numeric;
 
@@ -17,6 +9,8 @@ ALTER TABLE public.market_offers
   ALTER COLUMN quantity_total TYPE numeric USING quantity_total::numeric,
   ALTER COLUMN quantity_remaining TYPE numeric USING quantity_remaining::numeric,
   ALTER COLUMN unit_price TYPE numeric USING unit_price::numeric;
+
+DROP VIEW IF EXISTS public.market_price_history;
 
 ALTER TABLE public.market_sales
   ALTER COLUMN quantity TYPE numeric USING quantity::numeric,
