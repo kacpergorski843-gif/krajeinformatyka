@@ -178,24 +178,26 @@ DO $resource_transfer$
 DECLARE
   v_def text;
 BEGIN
-  v_def := pg_get_functiondef('public.transfer_resource(uuid, uuid, text, numeric)'::regprocedure);
-  v_def := replace(
-    v_def,
-    'if p_resource not in (''balance'',''coal'',''oil'',''copper'',''iron'',''uranium'',''aa_defense'',''soldier_packs'',''tank_packs'',''missile_1'',''missile_2'',''missile_3'') then',
-    'if p_resource not in (''balance'',''coal'',''oil'',''copper'',''iron'',''uranium'') then'
-  );
-  v_def := replace(
-    v_def,
-    'if p_amount is null or p_amount <= 0 then',
-    'if p_amount is null or p_amount <= 0 or p_amount <> trunc(p_amount) then'
-  );
-  v_def := replace(v_def, '''amount'',p_amount', '''amount'',p_amount::text');
-  IF v_def ~* 'p_resource not in.*aa_defense' THEN
-    RAISE EXCEPTION 'transfer_resource nadal dopuszcza transfery wojskowe';
+  IF to_regprocedure('public.transfer_resource(uuid, uuid, text, numeric)') IS NOT NULL THEN
+    v_def := pg_get_functiondef('public.transfer_resource(uuid, uuid, text, numeric)'::regprocedure);
+    v_def := replace(
+      v_def,
+      'if p_resource not in (''balance'',''coal'',''oil'',''copper'',''iron'',''uranium'',''aa_defense'',''soldier_packs'',''tank_packs'',''missile_1'',''missile_2'',''missile_3'') then',
+      'if p_resource not in (''balance'',''coal'',''oil'',''copper'',''iron'',''uranium'') then'
+    );
+    v_def := replace(
+      v_def,
+      'if p_amount is null or p_amount <= 0 then',
+      'if p_amount is null or p_amount <= 0 or p_amount <> trunc(p_amount) then'
+    );
+    v_def := replace(v_def, '''amount'',p_amount', '''amount'',p_amount::text');
+    IF v_def ~* 'p_resource not in.*aa_defense' THEN
+      RAISE EXCEPTION 'transfer_resource nadal dopuszcza transfery wojskowe';
+    END IF;
+    EXECUTE v_def;
+    REVOKE ALL ON FUNCTION public.transfer_resource(uuid, uuid, text, numeric) FROM PUBLIC;
+    GRANT EXECUTE ON FUNCTION public.transfer_resource(uuid, uuid, text, numeric) TO authenticated;
   END IF;
-  EXECUTE v_def;
-  REVOKE ALL ON FUNCTION public.transfer_resource(uuid, uuid, text, numeric) FROM PUBLIC;
-  GRANT EXECUTE ON FUNCTION public.transfer_resource(uuid, uuid, text, numeric) TO authenticated;
 END;
 $resource_transfer$;
 
