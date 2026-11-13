@@ -4,7 +4,7 @@ const NBSP = "\u202F";
 export function toBigInt(v: string | number | bigint | null | undefined): bigint {
   if (typeof v === "bigint") return v;
   const raw = String(v ?? "0").trim();
-  const match = raw.match(/^([+-]?)(\d+)(?:\\.(\d*))?(?:[eE]([+-]?\d+))?$/);
+  const match = raw.match(/^([+-]?)(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/);
   if (!match) throw new TypeError(`Invalid integer value: ${raw}`);
   const [, sign, whole, fraction = "", exponentRaw = "0"] = match;
   const exponent = Number(exponentRaw);
@@ -32,15 +32,15 @@ export function toNum(v: string | number | null | undefined): number {
 /** 1500000000000 -> "1 500 000 000 000" */
 export function groupDigits(v: string | number | null | undefined): string {
   const raw = String(v ?? 0).trim();
-  if (/^[+-]?\\d+(?:\\.\\d*)?[eE][+-]?\\d+$/.test(raw)) {
+  if (/^[+-]?\d+(?:\.\d*)?[eE][+-]?\d+$/.test(raw)) {
     const exact = toBigInt(raw);
     const sign = exact < 0n ? "-" : "";
     const digits = (exact < 0n ? -exact : exact).toString();
-    return sign + digits.replace(/\\B(?=(\\d{3})+(?!\\d))/g, NBSP);
+    return sign + digits.replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
   }
   const neg = raw.startsWith("-");
-  const digits = raw.replace(/[^0-9]/g, "").replace(/^0+(?=\\d)/, "");
-  const grouped = (digits || "0").replace(/\\B(?=(\\d{3})+(?!\\d))/g, NBSP);
+  const digits = raw.replace(/[^0-9]/g, "").replace(/^0+(?=\d)/, "");
+  const grouped = (digits || "0").replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
   return (neg ? "-" : "") + grouped;
 }
 
