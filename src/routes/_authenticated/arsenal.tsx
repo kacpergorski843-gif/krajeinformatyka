@@ -326,7 +326,7 @@ function Arsenal() {
                   </span>
                   <span
                     className={`num shrink-0 text-xs ${
-                      r.aa_defense === 0 ? "text-inactive" : "text-info"
+                      r.aa_defense === "0" ? "text-inactive" : "text-info"
                     }`}
                   >
                     {units(r.aa_defense)} OPL
