@@ -48,32 +48,34 @@ function Transfers() {
   const { data: targetRegions } = useQuery(transferRegionsQuery(target || null));
   const sourceRegionData = sourceRegions?.find((r) => r.id === sourceRegion);
   const targetRegionData = targetRegions?.find((r) => r.id === targetRegion);
-  const amountNumber = Math.max(0, Number(amount) || 0);
+  const amountIsInteger = /^\d+$/.test(amount.trim());
+  const amountBigInt = amountIsInteger ? BigInt(amount.trim()) : 0n;
   const isMoney = resource === "balance";
   const isAa = resource === "aa_defense";
   const isMilitary = ["soldier_packs","tank_packs","missile_1","missile_2","missile_3","aa_defense"].includes(resource);
-  const validMilitaryAmount = !isMilitary || Number.isInteger(amountNumber);
-  const validMoneyAmount = !isMoney || (amountNumber >= 1_000_000_000 && amountNumber % 1_000_000_000 === 0);
-  const available = isAa ? Number(sourceRegionData?.aa_defense ?? 0) : mine ? Number(mine[resource as keyof typeof mine] ?? 0) : 0;
-  const remaining = Math.max(0, available - amountNumber);
-  const canSend = !!mine && !!recipient && amountNumber > 0 && amountNumber <= available && validMoneyAmount && validMilitaryAmount && (!isAa || (!!sourceRegionData && !!targetRegionData));
+  const validMilitaryAmount = !isMilitary || amountIsInteger;
+  const validMoneyAmount = !isMoney || (amountIsInteger && amountBigInt >= 1_000_000_000n && amountBigInt % 1_000_000_000n === 0n);
+  const availableRaw = isAa ? sourceRegionData?.aa_defense ?? "0" : mine ? String(mine[resource as keyof typeof mine] ?? "0") : "0";
+  const availableBigInt = /^\d+$/.test(availableRaw) ? BigInt(availableRaw) : 0n;
+  const remainingBigInt = availableBigInt > amountBigInt ? availableBigInt - amountBigInt : 0n;
+  const canSend = !!mine && !!recipient && amountIsInteger && amountBigInt > 0n && amountBigInt <= availableBigInt && validMoneyAmount && validMilitaryAmount && (!isAa || (!!sourceRegionData && !!targetRegionData));
 
   const transfer = useMutation({
     mutationFn: () => isMilitary ? rpc("transfer_military", {
       p_from_country_id: mine!.country_id,
       p_to_country_id: recipient!.country_id,
       p_resource: resource,
-      p_amount: amountNumber,
+      p_amount: amountBigInt.toString(),
       p_from_region_id: isAa ? sourceRegionData!.id : null,
       p_to_region_id: isAa ? targetRegionData!.id : null,
     }) : rpc("transfer_resource", {
       p_from_country_id: mine!.country_id,
       p_to_country_id: recipient!.country_id,
       p_resource: resource,
-      p_amount: amountNumber,
+      p_amount: amountBigInt.toString(),
     }),
     onSuccess: () => {
-      toast.success("Transfer zrealizowany", { description: `${fmtNum(amountNumber)} ${resources.find((x) => x[0] === resource)?.[1]} → ${recipient?.name}` });
+      toast.success("Transfer zrealizowany", { description: `${fmtNum(amountBigInt.toString())} ${resources.find((x) => x[0] === resource)?.[1]} → ${recipient?.name}` });
       setAmount("");
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
       void queryClient.invalidateQueries({ queryKey: ["regions"] });
@@ -119,7 +121,7 @@ function Transfers() {
               {resources.map(([key,label,I]) => <button key={key} type="button" onClick={() => setResource(key)} className={`flex min-h-12 items-center gap-2 rounded-lg border p-3 text-left text-sm transition-all ${resource===key ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"}`} aria-pressed={resource === key}><I className="size-4"/>{label}</button>)}
             </div>
           </div>
-          <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="numeric" type="number" min={isMoney ? "1000000000" : "0"} step={isMoney ? "1000000000" : isMilitary ? "1" : "any"} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={isMoney ? "1 000 000 000" : "0"} aria-describedby="transfer-amount-help" /><p id="transfer-amount-help" className="mt-2 text-xs text-muted-foreground">Dostępne: <span className="num">{units(available)}</span>{isMoney ? " · przelewy KR muszą być wielokrotnością 1 mld" : isAa ? " · OPL jest przypisane do wybranego regionu" : isMilitary ? " · jednostki przesyłasz w całych pakietach" : ""}</p></div>
+          <div><p className="label-hud mb-2">3. Podaj ilość</p><Input className="num text-lg" inputMode="numeric" type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={isMoney ? "1 000 000 000" : "0"} aria-describedby="transfer-amount-help" /><p id="transfer-amount-help" className="mt-2 text-xs text-muted-foreground">Dostępne: <span className="num">{units(availableRaw)}</span>{isMoney ? " · przelewy KR muszą być wielokrotnością 1 mld" : isAa ? " · OPL jest przypisane do wybranego regionu" : isMilitary ? " · jednostki przesyłasz w całych pakietach" : ""}</p></div>
           {isAa ? <div className="grid gap-4 sm:grid-cols-2"><div><p className="label-hud mb-2">4. Region źródłowy</p><Select value={sourceRegion} onValueChange={setSourceRegion}><SelectTrigger><SelectValue placeholder="Wybierz region źródłowy"/></SelectTrigger><SelectContent>{(sourceRegions ?? []).map((r) => <SelectItem key={r.id} value={r.id}>{r.name} · OPL {units(r.aa_defense)}</SelectItem>)}</SelectContent></Select></div><div><p className="label-hud mb-2">5. Region docelowy</p><Select value={targetRegion} onValueChange={setTargetRegion}><SelectTrigger><SelectValue placeholder="Wybierz region docelowy"/></SelectTrigger><SelectContent>{(targetRegions ?? []).map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select></div></div> : null}
         </div>
       </Panel>
@@ -127,12 +129,12 @@ function Transfers() {
       <Panel className="h-fit">
         <SectionTitle>Podsumowanie</SectionTitle>
         <div className="rounded-xl border border-border bg-secondary/30 p-4" aria-live="polite">
-          <div className="flex items-center gap-3"><Icon className="size-5 text-primary"/><div><p className="text-xs text-muted-foreground uppercase">Wysyłasz</p><p className="num text-xl font-semibold">{fmtNum(amountNumber)} {resources.find(x=>x[0]===resource)?.[1]}</p></div></div>
+          <div className="flex items-center gap-3"><Icon className="size-5 text-primary"/><div><p className="text-xs text-muted-foreground uppercase">Wysyłasz</p><p className="num text-xl font-semibold">{fmtNum(amountBigInt.toString())} {resources.find(x=>x[0]===resource)?.[1]}</p></div></div>
           <div className="my-5 border-l border-dashed border-primary/40 pl-4"><p className="text-xs text-muted-foreground uppercase">Do</p><p className="font-semibold">{recipient?.name ?? "Nie wybrano państwa"}</p></div>
-          <div className="border-t border-border pt-4"><p className="text-xs text-muted-foreground uppercase">Pozostanie u nadawcy</p><p className={`num mt-1 text-xl font-semibold ${canSend ? "text-success" : "text-foreground"}`}>{fmtNum(remaining)}</p></div>
+          <div className="border-t border-border pt-4"><p className="text-xs text-muted-foreground uppercase">Pozostanie u nadawcy</p><p className={`num mt-1 text-xl font-semibold ${canSend ? "text-success" : "text-foreground"}`}>{fmtNum(remainingBigInt.toString())}</p></div>
         </div>
         <Button className="mt-4 min-h-12 w-full" disabled={!canSend || transfer.isPending} onClick={() => transfer.mutate()}>{transfer.isPending ? "Wysyłam transfer…" : "Wyślij transfer"}</Button>
-        {!canSend && amountNumber > 0 && recipient && !transfer.isPending ? <p className="mt-3 text-center text-xs text-destructive">{amountNumber > available ? "Ilość przekracza dostępne zasoby." : !validMoneyAmount ? "Kwota KR musi być wielokrotnością 1 mld." : !validMilitaryAmount ? "Jednostki wojskowe muszą być przesyłane w całych pakietach." : isAa && (!sourceRegionData || !targetRegionData) ? "Wybierz region źródłowy i docelowy." : "Uzupełnij odbiorcę i popraw ilość."}</p> : null}
+        {!canSend && amount.trim() !== "" && recipient && !transfer.isPending ? <p className="mt-3 text-center text-xs text-destructive">{!amountIsInteger ? "Podaj całkowitą ilość." : amountBigInt > availableBigInt ? "Ilość przekracza dostępne zasoby." : !validMoneyAmount ? "Kwota KR musi być wielokrotnością 1 mld." : !validMilitaryAmount ? "Jednostki wojskowe muszą być przesyłane w całych pakietach." : isAa && (!sourceRegionData || !targetRegionData) ? "Wybierz region źródłowy i docelowy." : "Uzupełnij odbiorcę i popraw ilość."}</p> : null}
       </Panel>
     </div> : null}
   </AppShell>;
