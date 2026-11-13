@@ -10,7 +10,7 @@ import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { OperationsHistory, type TxRow } from "@/components/OperationsHistory";
 import { SuggestCountryPanel } from "@/components/CountrySuggestions";
 import { countriesQuery, economyBonusQuery, meQuery, regionsQuery, regionOccupationsQuery, rpc, shopQuery, transactionsQuery } from "@/lib/api";
-import { fmtKR, kr, timeToDailyCycle, units, RESOURCE_LABELS } from "@/lib/format";
+import { fmtKR, kr, timeToDailyCycle, units, RESOURCE_LABELS, toBigInt } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/panstwo")({
   head: () => ({
@@ -133,15 +133,15 @@ function MyCountry() {
   ];
 
   const isTestCountry = country.name === "Testy v1" || country.name === "Testy v2";
-  const shortage = BigInt(country.coal_upkeep) > BigInt(country.coal) + BigInt(country.coal_prod);
+  const shortage = toBigInt(country.coal_upkeep) > toBigInt(country.coal) + toBigInt(country.coal_prod);
 
   const military = [
     { label: "OPL (regiony)", value: country.region_aa_total },
     { label: "Rakiety I", value: country.missile_1 },
     { label: "Rakiety II", value: country.missile_2 },
     { label: "Rakiety III", value: country.missile_3 },
-    { label: "Żołnierze", value: (BigInt(country.soldier_packs) * 500000n).toString() },
-    { label: "Czołgi", value: (BigInt(country.tank_packs) * 50n).toString() },
+    { label: "Żołnierze", value: (toBigInt(country.soldier_packs) * 500000n).toString() },
+    { label: "Czołgi", value: (toBigInt(country.tank_packs) * 50n).toString() },
   ];
 
   return (
@@ -234,14 +234,14 @@ function MyCountry() {
         <h3 className="mb-4 text-lg font-semibold tracking-tight">Surowce</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
           {resources.map((r) => {
-            const zero = BigInt(r.value) === 0n;
+            const zero = toBigInt(r.value) === 0n;
             return (
               <div key={r.key} className="min-w-0 rounded-xl border border-border/80 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md sm:p-5">
                 <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">{r.label}</p>
                 <p className={`num mt-3 text-xl font-semibold tracking-tight sm:text-2xl ${zero ? "text-inactive" : "text-foreground"}`}>
                   {isTestCountry ? "∞" : units(r.value)}
                 </p>
-                <p className={`mt-2 text-xs ${BigInt(r.prod) > 0n ? "text-success" : "text-inactive"}`}>
+                <p className={`mt-2 text-xs ${toBigInt(r.prod) > 0n ? "text-success" : "text-inactive"}`}>
                   +{units(r.prod)} <span className="text-muted-foreground">/ doba</span>
                 </p>
               </div>
@@ -258,7 +258,7 @@ function MyCountry() {
               <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                 {m.label}
               </p>
-              <p className={`num mt-3 text-lg font-semibold tracking-tight sm:text-xl ${BigInt(m.value) === 0n ? "text-inactive" : "text-foreground"}`}>
+              <p className={`num mt-3 text-lg font-semibold tracking-tight sm:text-xl ${toBigInt(m.value) === 0n ? "text-inactive" : "text-foreground"}`}>
                 {units(m.value)}
               </p>
             </div>
@@ -284,8 +284,8 @@ function MyCountry() {
               const effects = (region.slots ?? []).reduce((acc, slot) => {
                 const item = (shop ?? []).find((shopItem) => shopItem.building === slot.building);
                 if (!item) return acc;
-                acc.kr += BigInt(item.income_kr ?? "0");
-                if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0n) + BigInt(item.produces_amount ?? "0");
+                acc.kr += toBigInt(item.income_kr ?? "0");
+                if (item.produces) acc.resources[item.produces] = (acc.resources[item.produces] ?? 0n) + toBigInt(item.produces_amount ?? "0");
                 return acc;
               }, { kr: 0n, resources: {} as Record<string, bigint> });
               return (
