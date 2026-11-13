@@ -179,6 +179,22 @@ const MILITARY_ICONS: Record<string, typeof Shield> = {
   missile_3: Rocket,
 };
 
+function parseWholeNumber(value: unknown): bigint | null {
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return null;
+  try {
+    return BigInt(raw);
+  } catch {
+    return null;
+  }
+}
+
+function compareWholeNumbers(a: string, b: string): number {
+  const left = parseWholeNumber(a) ?? 0n;
+  const right = parseWholeNumber(b) ?? 0n;
+  return left === right ? 0 : left > right ? 1 : -1;
+}
+
 
 type ApplicationExport = {
   generated_at: string;
@@ -1356,7 +1372,7 @@ function CountriesTab() {
     rows.sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name, "pl");
       if (sort === "balance") return Number(b.balance) - Number(a.balance);
-      if (sort === "military") return Number(b.military_value) - Number(a.military_value);
+      if (sort === "military") return compareWholeNumbers(b.military_value, a.military_value);
       return Number(b.gross_income) - Number(a.gross_income);
     });
     return rows;
@@ -1498,7 +1514,12 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const patch = { ...identity, ...changes };
   const changedFields = Object.entries(patch).filter(([key, value]) => String(country?.[key as keyof CountryStats] ?? "") !== value);
   const hasChanges = changedFields.length > 0 || !!flagFile;
-  const destructive = changedFields.some(([key, value]) => key in FIELD_LABELS && Number(value) < Number(country?.[key as keyof CountryStats] ?? 0));
+  const destructive = changedFields.some(([key, value]) => {
+    if (!(key in FIELD_LABELS)) return false;
+    const next = parseWholeNumber(value);
+    const current = parseWholeNumber(country?.[key as keyof CountryStats]);
+    return next !== null && current !== null && next < current;
+  });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -1530,7 +1551,7 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
   const addRegion = useMutation({ mutationFn: () => country ? rpc("admin_create_region", { p_country_id: country?.country_id, p_name: regionName.trim() }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Region dodany"); setRegionName(""); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const removeRegion = useMutation({ mutationFn: (id: string) => rpc("admin_delete_region", { p_region_id: id }), onSuccess: () => { toast.success("Region usunięty"); setRegionToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const removeSlot = useMutation({ mutationFn: (id: string) => rpc("demolish_slot", { p_slot_id: id }), onSuccess: () => { toast.success("Obiekt wyburzony"); setSlotToRemove(null); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
-  const setRegionAa = useMutation({ mutationFn: ({ regionId, value }: { regionId: string; value: number }) => rpc("admin_set_region_aa", { p_region_id: regionId, p_value: value }), onSuccess: () => { toast.success("OPL regionu zaktualizowane"); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
+  const setRegionAa = useMutation({ mutationFn: ({ regionId, value }: { regionId: string; value: string }) => rpc("admin_set_region_aa", { p_region_id: regionId, p_value: value }), onSuccess: () => { toast.success("OPL regionu zaktualizowane"); void queryClient.invalidateQueries({ queryKey: ["regions", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["region_aa", country?.country_id] }); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); }, onError: (error: Error) => toast.error(error.message) });
   const deleteCountry = useMutation({ mutationFn: () => country ? rpc("admin_delete_country", { p_country_id: country.country_id }) : Promise.reject(new Error("Nie wybrano państwa")), onSuccess: () => { toast.success("Państwo usunięte"); setConfirmDelete(false); onClose(); void queryClient.invalidateQueries({ queryKey: ["country_stats"] }); void queryClient.invalidateQueries({ queryKey: ["admin_users"] }); void queryClient.invalidateQueries({ queryKey: ["public_countries"] }); }, onError: (error: Error) => toast.error(error.message) });
 
   if (!country) return null;
@@ -1603,18 +1624,19 @@ function CountryDashboard({ country, users, onClose }: { country: CountryStats |
 }
 
 function AdjustmentField({ field, country, value, onChange }: { field: FieldKey; country: CountryStats; value: string | undefined; onChange: (value: string) => void }) {
-  const current = Number(country[field]) || 0;
-  const next = value === undefined || value === "" ? current : Math.max(0, Number(value) || 0);
+  const current = parseWholeNumber(country[field]) ?? 0n;
+  const parsedNext = value === undefined || value === "" ? current : parseWholeNumber(value);
+  const next = parsedNext ?? current;
   const delta = next - current;
-  const step = field === "balance" ? 100_000_000_000 : 1;
-  const format = (number: number) => field === "balance" ? fmtKR(number) : fmtNum(number);
+  const step = field === "balance" ? 100_000_000_000n : 1n;
+  const format = (amount: bigint) => field === "balance" ? fmtKR(amount.toString()) : fmtNum(amount.toString());
   return (
     <Panel className="min-w-0 p-3 sm:p-4">
       <Label className="label-hud">{FIELD_LABELS[field]}</Label>
       <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-end">
         <ValueBox label="Aktualna" value={format(current)} />
-        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-1.5"><Button variant="outline" size="icon" aria-label={`Zmniejsz ${FIELD_LABELS[field]}`} onClick={() => onChange(String(Math.max(0, next - step)))}>−</Button><div className="min-w-0"><span className="mb-1 block text-[10px] uppercase text-muted-foreground">Zmiana +/-</span><Input className="num min-w-0" type="number" value={value ?? String(current)} onChange={(event) => onChange(event.target.value)} /></div><Button variant="outline" size="icon" aria-label={`Zwiększ ${FIELD_LABELS[field]}`} onClick={() => onChange(String(next + step))}>+</Button></div>
-        <ValueBox label="Nowa" value={format(next)} tone={delta > 0 ? "success" : delta < 0 ? "destructive" : "muted"} hint={`${delta > 0 ? "+" : ""}${format(delta)}`} />
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-1.5"><Button variant="outline" size="icon" aria-label={`Zmniejsz ${FIELD_LABELS[field]}`} onClick={() => onChange((next > step ? next - step : 0n).toString())}>−</Button><div className="min-w-0"><span className="mb-1 block text-[10px] uppercase text-muted-foreground">Zmiana +/-</span><Input className="num min-w-0" type="text" inputMode="numeric" value={value ?? current.toString()} onChange={(event) => onChange(event.target.value)} /></div><Button variant="outline" size="icon" aria-label={`Zwiększ ${FIELD_LABELS[field]}`} onClick={() => onChange((next + step).toString())}>+</Button></div>
+        <ValueBox label="Nowa" value={format(next)} tone={delta > 0n ? "success" : delta < 0n ? "destructive" : "muted"} hint={`${delta > 0n ? "+" : ""}${format(delta)}`} />
       </div>
     </Panel>
   );
@@ -1637,20 +1659,21 @@ function ValueBox({ label, value, hint, tone = "default" }: { label: string; val
   return <div className="min-w-0 border border-border/70 bg-secondary/30 p-2"><span className="block text-[10px] uppercase text-muted-foreground">{label}</span><span className={`num mt-1 block break-words text-sm ${toneClass}`}>{value}</span>{hint ? <span className={`num mt-0.5 block text-[10px] ${toneClass}`}>{hint}</span> : null}</div>;
 }
 
-function RegionAaEditor({ regions, pending, onSave }: { regions: Array<{ id: string; name: string; aa_defense: number }>; pending: boolean; onSave: (regionId: string, value: number) => void }) {
+function RegionAaEditor({ regions, pending, onSave }: { regions: Array<{ id: string; name: string; aa_defense: string }>; pending: boolean; onSave: (regionId: string, value: string) => void }) {
   const [values, setValues] = useState<Record<string, string>>({});
   if (regions.length === 0) return <EmptyLine text="To państwo nie ma regionów." />;
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       {regions.map((region) => {
         const raw = values[region.id];
-        const next = raw === undefined || raw === "" ? region.aa_defense : Math.max(0, Number(raw) || 0);
+        const parsedNext = raw === undefined || raw === "" ? parseWholeNumber(region.aa_defense) : parseWholeNumber(raw);
+        const next = parsedNext?.toString() ?? null;
         return (
           <Panel key={region.id} className="min-w-0 p-3">
             <Label className="label-hud truncate">{region.name}</Label>
             <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-              <Input className="num min-w-0" type="number" min="0" value={raw ?? String(region.aa_defense)} onChange={(event) => setValues((current) => ({ ...current, [region.id]: event.target.value }))} />
-              <Button size="sm" disabled={pending || next === region.aa_defense} onClick={() => onSave(region.id, next)}>Zapisz</Button>
+              <Input className="num min-w-0" type="text" inputMode="numeric" value={raw ?? region.aa_defense} onChange={(event) => setValues((current) => ({ ...current, [region.id]: event.target.value }))} />
+              <Button size="sm" disabled={pending || next === null || next === region.aa_defense} onClick={() => next !== null && onSave(region.id, next)}>Zapisz</Button>
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">Aktualne OPL: <span className="num text-info">{units(region.aa_defense)}</span></p>
           </Panel>
@@ -1743,7 +1766,7 @@ function CountryHistory({ transactions, strikes, countryId, loading }: { transac
   const [showZero, setShowZero] = useState(false);
   const visible = transactions.filter((transaction) => showZero || Number(transaction.amount_kr) !== 0);
   if (loading) return <LoadingRows />;
-  return <div className="space-y-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"><SectionHeading icon={<History />} title="Historia państwa" description="Operacje ekonomiczne i rakietowe" /><div className="flex items-center gap-2"><Switch checked={showZero} onCheckedChange={setShowZero} /><span className="text-xs text-muted-foreground">Pokaż 0 KR</span></div></div><Panel className="divide-y divide-border p-0">{visible.map((transaction) => <TransactionItem key={transaction.id} transaction={transaction} country={undefined} />)}{visible.length === 0 ? <EmptyLine text="Brak operacji ekonomicznych." /> : null}</Panel><SectionTitle>Operacje rakietowe</SectionTitle><Panel className="divide-y divide-border p-0">{strikes.map((strike) => <div key={strike.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{strike.attacker_country_id === countryId ? "Atak" : "Obrona"}: {MISSILE_LABELS[strike.missile_code] ?? strike.missile_code} · {strike.region_name}</p><p className="text-xs text-muted-foreground">{dateTime(strike.created_at)} · OPL {strike.aa_defense}</p></div><Badge variant={strike.result === "PRZECHWYCONA" ? "outline" : "destructive"} className={strike.result === "PRZECHWYCONA" ? "border-success/40 text-success" : ""}>{strike.result}</Badge></div>)}{strikes.length === 0 ? <EmptyLine text="Brak operacji rakietowych." /> : null}</Panel></div>;
+  return <div className="space-y-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"><SectionHeading icon={<History />} title="Historia państwa" description="Operacje ekonomiczne i rakietowe" /><div className="flex items-center gap-2"><Switch checked={showZero} onCheckedChange={setShowZero} /><span className="text-xs text-muted-foreground">Pokaż 0 KR</span></div></div><Panel className="divide-y divide-border p-0">{visible.map((transaction) => <TransactionItem key={transaction.id} transaction={transaction} country={undefined} />)}{visible.length === 0 ? <EmptyLine text="Brak operacji ekonomicznych." /> : null}</Panel><SectionTitle>Operacje rakietowe</SectionTitle><Panel className="divide-y divide-border p-0">{strikes.map((strike) => <div key={strike.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm">{strike.attacker_country_id === countryId ? "Atak" : "Obrona"}: {MISSILE_LABELS[strike.missile_code] ?? strike.missile_code} · {strike.region_name}</p><p className="text-xs text-muted-foreground">{dateTime(strike.created_at)} · OPL {units(strike.aa_defense)}</p></div><Badge variant={strike.result === "PRZECHWYCONA" ? "outline" : "destructive"} className={strike.result === "PRZECHWYCONA" ? "border-success/40 text-success" : ""}>{strike.result}</Badge></div>)}{strikes.length === 0 ? <EmptyLine text="Brak operacji rakietowych." /> : null}</Panel></div>;
 }
 
 function UsersTab({ isMainAdmin }: { isMainAdmin: boolean }) {
@@ -2381,9 +2404,11 @@ function AuditItem({ action, country, countries }: { action: AdminActionRow; cou
 }
 
 function ChangePreview({ label, current, next, currency }: { label: string; current: string; next: string; currency: boolean }) {
-  const format = (value: string) => currency ? fmtKR(value) : value;
-  const difference = Number(next) - Number(current);
-  return <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border border-border bg-secondary/30 p-2"><span className="truncate text-xs text-muted-foreground">{label}</span><span className="num text-right text-xs"><span className="text-inactive">{format(current)}</span><span className="mx-2">→</span><span className={difference < 0 ? "text-destructive" : difference > 0 ? "text-success" : "text-foreground"}>{format(next)}</span></span></div>;
+  const format = (value: string) => currency ? fmtKR(value) : fmtNum(value);
+  const currentValue = parseWholeNumber(current);
+  const nextValue = parseWholeNumber(next);
+  const difference = currentValue !== null && nextValue !== null ? nextValue - currentValue : 0n;
+  return <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border border-border bg-secondary/30 p-2"><span className="truncate text-xs text-muted-foreground">{label}</span><span className="num text-right text-xs"><span className="text-inactive">{format(current)}</span><span className="mx-2">→</span><span className={difference < 0n ? "text-destructive" : difference > 0n ? "text-success" : "text-foreground"}>{format(next)}</span></span></div>;
 }
 
 function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel, destructive = false, pending = false, disabled = false, onConfirm, children }: { open: boolean; onOpenChange: (open: boolean) => void; title: string; description: string; confirmLabel: string; destructive?: boolean; pending?: boolean; disabled?: boolean; onConfirm: () => void; children?: ReactNode }) {
