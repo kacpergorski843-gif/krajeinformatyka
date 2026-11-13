@@ -1,5 +1,5 @@
 -- Replace PostgreSQL INTEGER ceilings on military inventories with exact,
--- unbounded NUMERIC values. All counts remain whole, non-negative units.
+-- unbounded NUMERIC values. All counts remain whole units.
 
 ALTER TABLE public.countries
   ALTER COLUMN aa_defense TYPE numeric USING aa_defense::numeric,
@@ -17,13 +17,13 @@ ALTER TABLE public.missile_strikes
   ALTER COLUMN region_aa TYPE numeric USING region_aa::numeric,
   ALTER COLUMN required_aa TYPE numeric USING required_aa::numeric;
 
--- Keep military inventories integral and non-negative after removing INTEGER.
+-- Keep military inventories integral after removing INTEGER.
 DO $constraints$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conrelid = 'public.countries'::regclass
-      AND conname = 'countries_military_counts_whole_nonnegative'
+      AND conname = 'countries_military_counts_whole'
   ) THEN
     ALTER TABLE public.countries
       ADD CONSTRAINT countries_military_counts_whole_nonnegative
@@ -110,10 +110,14 @@ DO $admin_region_aa$
 DECLARE
   v_def text;
 BEGIN
-  v_def := pg_get_functiondef('public.admin_set_region_aa(uuid, integer)'::regprocedure);
-  v_def := replace(v_def, 'p_value integer', 'p_value numeric');
-  EXECUTE 'DROP FUNCTION public.admin_set_region_aa(uuid, integer)';
-  EXECUTE v_def;
+  IF to_regprocedure('public.admin_set_region_aa(uuid, integer)') IS NOT NULL THEN
+    v_def := pg_get_functiondef('public.admin_set_region_aa(uuid, integer)'::regprocedure);
+    v_def := replace(v_def, 'p_value integer', 'p_value numeric');
+    EXECUTE 'DROP FUNCTION public.admin_set_region_aa(uuid, integer)';
+    EXECUTE v_def;
+  ELSIF to_regprocedure('public.admin_set_region_aa(uuid, numeric)') IS NULL THEN
+    RAISE EXCEPTION 'Brak funkcji admin_set_region_aa';
+  END IF;
   REVOKE ALL ON FUNCTION public.admin_set_region_aa(uuid, numeric) FROM PUBLIC;
   GRANT EXECUTE ON FUNCTION public.admin_set_region_aa(uuid, numeric) TO authenticated;
 END;
@@ -155,17 +159,20 @@ DO $military_transfer$
 DECLARE
   v_def text;
 BEGIN
-  v_def := pg_get_functiondef('public.transfer_military(uuid, uuid, text, integer, uuid, uuid)'::regprocedure);
-  v_def := replace(v_def, 'p_amount integer', 'p_amount numeric');
-  v_def := replace(v_def, 'v_available integer;', 'v_available numeric;');
-  v_def := replace(v_def, 'if p_amount is null or p_amount < 1 then', 'if p_amount is null or p_amount < 1 or p_amount <> trunc(p_amount) then');
-  v_def := replace(v_def, '''amount'',p_amount', '''amount'',p_amount::text');
-  IF v_def ~* 'p_amount[[:space:]]+integer' OR v_def ~* 'v_available[[:space:]]+integer' THEN
-    RAISE EXCEPTION 'Nie udało się poszerzyć transfer_military do NUMERIC';
+  IF to_regprocedure('public.transfer_military(uuid, uuid, text, integer, uuid, uuid)') IS NOT NULL THEN
+    v_def := pg_get_functiondef('public.transfer_military(uuid, uuid, text, integer, uuid, uuid)'::regprocedure);
+    v_def := replace(v_def, 'p_amount integer', 'p_amount numeric');
+    v_def := replace(v_def, 'v_available integer;', 'v_available numeric;');
+    v_def := replace(v_def, 'if p_amount is null or p_amount < 1 then', 'if p_amount is null or p_amount < 1 or p_amount <> trunc(p_amount) then');
+    v_def := replace(v_def, '''amount'',p_amount', '''amount'',p_amount::text');
+    IF v_def ~* 'p_amount[[:space:]]+integer' OR v_def ~* 'v_available[[:space:]]+integer' THEN
+      RAISE EXCEPTION 'Nie udało się poszerzyć transfer_military do NUMERIC';
+    END IF;
+    EXECUTE 'DROP FUNCTION public.transfer_military(uuid, uuid, text, integer, uuid, uuid)';
+    EXECUTE v_def;
+  ELSIF to_regprocedure('public.transfer_military(uuid, uuid, text, numeric, uuid, uuid)') IS NULL THEN
+    RAISE EXCEPTION 'Brak funkcji transfer_military';
   END IF;
-
-  EXECUTE 'DROP FUNCTION public.transfer_military(uuid, uuid, text, integer, uuid, uuid)';
-  EXECUTE v_def;
   REVOKE ALL ON FUNCTION public.transfer_military(uuid, uuid, text, numeric, uuid, uuid) FROM PUBLIC;
   GRANT EXECUTE ON FUNCTION public.transfer_military(uuid, uuid, text, numeric, uuid, uuid) TO authenticated, service_role;
 END;
