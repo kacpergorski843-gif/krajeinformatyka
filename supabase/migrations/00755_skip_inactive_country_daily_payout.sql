@@ -30,16 +30,8 @@ DECLARE
       continue;
     end if;
 $replacement$;
-  v_old_summary text := $old$
-  update public.economy_runs set summary = jsonb_build_object(
-    'countries', v_processed, 'total_kr', v_total::text, 'run_number', v_run_number
-  ) where id = v_run_id;
-$old$;
-  v_old_summary_numeric text := $old$
-  update public.economy_runs set summary = jsonb_build_object(
-    'countries', v_processed, 'total_kr', v_total, 'run_number', v_run_number
-  ) where id = v_run_id;
-$old$;
+  v_summary_pattern text := 'update[[:space:]]+public[.]economy_runs[[:space:]]+set[[:space:]]+summary[[:space:]]*=[[:space:]]*jsonb_build_object[[:space:]]*[(][[:space:]]*''countries''[[:space:]]*,[[:space:]]*v_processed[[:space:]]*,[[:space:]]*''total_kr''[[:space:]]*,[[:space:]]*v_total(::text)?[[:space:]]*,[[:space:]]*''run_number''[[:space:]]*,[[:space:]]*v_run_number[[:space:]]*[)][[:space:]]*where[[:space:]]+id[[:space:]]*=[[:space:]]*v_run_id[[:space:]]*;';
+  v_return_pattern text := 'return[[:space:]]+jsonb_build_object[[:space:]]*[(][[:space:]]*''ok''[[:space:]]*,[[:space:]]*true[[:space:]]*,[[:space:]]*''countries''[[:space:]]*,[[:space:]]*v_processed[[:space:]]*,[[:space:]]*''total_kr''[[:space:]]*,[[:space:]]*v_total(::text)?[[:space:]]*,[[:space:]]*''run_date''[[:space:]]*,[[:space:]]*p_run_date[[:space:]]*,[[:space:]]*''run_number''[[:space:]]*,[[:space:]]*v_run_number[[:space:]]*[)][[:space:]]*;';
   v_new_summary text := $new$
   update public.economy_runs set summary = jsonb_build_object(
     'countries', v_processed,
@@ -48,14 +40,6 @@ $old$;
     'inactive_skipped', v_skipped_inactive
   ) where id = v_run_id;
 $new$;
-  v_old_return text := $old$
-  return jsonb_build_object('ok', true, 'countries', v_processed,
-    'total_kr', v_total::text, 'run_date', p_run_date, 'run_number', v_run_number);
-$old$;
-  v_old_return_numeric text := $old$
-  return jsonb_build_object('ok', true, 'countries', v_processed,
-    'total_kr', v_total, 'run_date', p_run_date, 'run_number', v_run_number);
-$old$;
   v_new_return text := $new$
   return jsonb_build_object('ok', true, 'countries', v_processed,
     'total_kr', v_total::text, 'run_date', p_run_date,
@@ -78,21 +62,15 @@ BEGIN
   END IF;
   v_def := regexp_replace(v_def, v_loop_pattern, v_new_loop, 'i');
 
-  IF position(v_old_summary in v_def) > 0 THEN
-    v_def := replace(v_def, v_old_summary, v_new_summary);
-  ELSIF position(v_old_summary_numeric in v_def) > 0 THEN
-    v_def := replace(v_def, v_old_summary_numeric, v_new_summary);
-  ELSE
+  IF v_def !~* v_summary_pattern THEN
     RAISE EXCEPTION 'Nie znaleziono oczekiwanego zapisu podsumowania economy_runs';
   END IF;
+  v_def := regexp_replace(v_def, v_summary_pattern, v_new_summary, 'is');
 
-  IF position(v_old_return in v_def) > 0 THEN
-    v_def := replace(v_def, v_old_return, v_new_return);
-  ELSIF position(v_old_return_numeric in v_def) > 0 THEN
-    v_def := replace(v_def, v_old_return_numeric, v_new_return);
-  ELSE
+  IF v_def !~* v_return_pattern THEN
     RAISE EXCEPTION 'Nie znaleziono oczekiwanego wyniku run_daily_economy';
   END IF;
+  v_def := regexp_replace(v_def, v_return_pattern, v_new_return, 'is');
 
   EXECUTE v_def;
 
