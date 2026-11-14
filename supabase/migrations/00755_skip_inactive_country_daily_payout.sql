@@ -9,7 +9,7 @@ DECLARE
   v_def text;
   -- pg_get_functiondef preserves the installed function body, whose spacing
   -- and keyword casing may differ between database versions.
-  v_loop_pattern text := 'for[[:space:]]+r[[:space:]]+in[[:space:]]+select[[:space:]]+\\*[[:space:]]+from[[:space:]]+public\\.country_stats[[:space:]]+loop';
+  v_loop_pattern text := 'for[[:space:]]+r[[:space:]]+in[[:space:]]+select[[:space:]]+[*][[:space:]]+from[[:space:]]+public[.]country_stats[[:space:]]+loop';
   v_new_loop text := $replacement$
   for r in
     select cs.*, activity.last_activity_at
