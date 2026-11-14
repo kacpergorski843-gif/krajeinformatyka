@@ -557,7 +557,20 @@ function Arsenal() {
                 <div className="launch-flight-target"><Target /></div>
                 <div className="launch-flight-trail" />
                 <div className="launch-flight-rocket"><Rocket strokeWidth={1.1} /><span className="launch-flight-flame" /></div>
-                {missile === "missile_3" ? <div className="launch-flight-afterburner" /> : null}
+                {missile === "missile_3" ? (
+                  <>
+                    <div className="launch-flight-afterburner" />
+                    <div className="launch-flight-shake-light" />
+                    <div className="launch-flight-shockwave" />
+                    <div className="launch-flight-shockwave launch-shockwave-b" />
+                    <div className="launch-flight-flash" />
+                  </>
+                ) : (
+                  <>
+                    <div className="launch-flight-smoke" />
+                    <div className="launch-flight-ping" />
+                  </>
+                )}
               </div>
               <div className="launch-flight-telemetry">
                 <div><span>WEAPON</span><strong>{missile?.toUpperCase()}</strong></div>
