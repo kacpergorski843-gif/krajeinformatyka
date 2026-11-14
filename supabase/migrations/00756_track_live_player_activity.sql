@@ -25,6 +25,13 @@ create policy "Players can update their own activity"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+-- Preserve a sensible initial inactivity baseline for existing accounts.
+-- A currently open game tab will replace this value with its live heartbeat.
+insert into public.player_activity (user_id, last_seen_at)
+select id, coalesce(last_sign_in_at, created_at)
+from auth.users
+on conflict (user_id) do nothing;
+
 create index if not exists player_activity_last_seen_idx
   on public.player_activity (last_seen_at);
 
