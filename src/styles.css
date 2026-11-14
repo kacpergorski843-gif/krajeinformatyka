@@ -1665,3 +1665,94 @@
 @media (prefers-reduced-motion:reduce) {
   .missile-select-missile_1 .missile-card-icon,.missile-select-missile_2 .missile-card-icon,.missile-select-missile_3 .missile-card-art::after,.launch-flight-smoke,.launch-flight-ping,.launch-flight-shockwave,.launch-flight-flash,.launch-flight-shake-light,.launch-flight-heavy .launch-flight-visual { animation:none!important; }
 }
+
+
+/* Rocket launch polish: align each projectile with the target and keep its
+   nose pointed along a single, believable ascent path. */
+.launch-flight-visual-missile_1 .launch-flight-rocket,
+.launch-flight-visual-missile_2 .launch-flight-rocket {
+  animation: flight-rocket-clean 4s cubic-bezier(.2,.68,.24,1) forwards;
+  transform-origin: center;
+}
+.launch-flight-heavy .launch-flight-rocket {
+  animation: flight-rocket-heavy-clean 5.2s cubic-bezier(.16,.7,.2,1) forwards;
+  transform-origin: center;
+}
+@keyframes flight-rocket-clean {
+  0% { left:5%; bottom:14%; opacity:0; transform:rotate(45deg) scale(.82); }
+  8% { opacity:1; }
+  22% { left:17%; bottom:23%; transform:rotate(45deg) scale(1); }
+  58% { left:43%; bottom:39%; transform:rotate(45deg) scale(1); }
+  88% { left:calc(92% - 89px); bottom:calc(50% - 23px); opacity:1; transform:rotate(45deg) scale(.96); }
+  100% { left:calc(92% - 89px); bottom:calc(50% - 23px); opacity:0; transform:rotate(45deg) scale(.9); }
+}
+@keyframes flight-rocket-heavy-clean {
+  0% { left:3%; bottom:10%; opacity:0; transform:rotate(45deg) scale(.78); }
+  9% { opacity:1; }
+  24% { left:18%; bottom:22%; transform:rotate(45deg) scale(1); }
+  62% { left:45%; bottom:40%; transform:rotate(45deg) scale(1); }
+  88% { left:calc(92% - 98px); bottom:calc(50% - 32px); opacity:1; transform:rotate(45deg) scale(1); }
+  100% { left:calc(92% - 98px); bottom:calc(50% - 32px); opacity:0; transform:rotate(45deg) scale(.94); }
+}
+
+/* Levels I–II use a restrained confirmation control; only level III keeps
+   the oversized emergency-red launch lever. */
+.launch-red-button-lightweight {
+  display:inline-flex;
+  width:auto;
+  max-width:100%;
+  margin-top:1rem;
+  padding:3px;
+  border:1px solid color-mix(in oklab,var(--color-primary) 48%,var(--color-border));
+  border-radius:.55rem;
+  background:color-mix(in oklab,var(--color-primary) 9%,var(--color-card));
+  box-shadow:0 3px 12px color-mix(in oklab,var(--color-background) 35%,transparent);
+  color:var(--color-primary);
+}
+.launch-red-button-lightweight:hover {
+  filter:brightness(1.12);
+  border-color:var(--color-primary);
+  box-shadow:0 5px 18px color-mix(in oklab,var(--color-primary) 14%,transparent);
+}
+.launch-red-button-lightweight:active {
+  transform:translateY(1px);
+  box-shadow:inset 0 2px 5px color-mix(in oklab,var(--color-background) 35%,transparent);
+}
+.launch-red-button-lightweight .launch-red-button-inner {
+  min-height:42px;
+  padding:.45rem .9rem;
+  gap:.55rem;
+  border:0;
+  border-radius:.35rem;
+  background:transparent;
+  box-shadow:none;
+  color:inherit;
+  font-size:.76rem;
+  font-weight:800;
+  letter-spacing:.055em;
+  text-shadow:none;
+}
+.launch-red-button-lightweight .launch-red-button-key,
+.launch-red-button-lightweight .launch-red-button-light { display:none; }
+.launch-red-button-lightweight:disabled { opacity:.6; }
+@media (max-width:640px) {
+  .launch-red-button-lightweight { width:100%; justify-content:center; }
+  .launch-red-button-lightweight .launch-red-button-inner { min-height:44px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .launch-flight-visual-missile_1 .launch-flight-rocket,
+  .launch-flight-visual-missile_2 .launch-flight-rocket {
+    animation:none!important;
+    left:calc(92% - 89px)!important;
+    bottom:calc(50% - 23px)!important;
+    opacity:1!important;
+    transform:rotate(45deg)!important;
+  }
+  .launch-flight-heavy .launch-flight-rocket {
+    animation:none!important;
+    left:calc(92% - 98px)!important;
+    bottom:calc(50% - 32px)!important;
+    opacity:1!important;
+    transform:rotate(45deg)!important;
+  }
+}
