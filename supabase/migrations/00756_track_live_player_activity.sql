@@ -29,7 +29,7 @@ create index if not exists player_activity_last_seen_idx
 do $$
 declare
   v_def text;
-  v_pattern text := 'max\\(coalesce\\(u\\.last_sign_in_at, u\\.created_at\\)\\)[[:space:]]+as last_activity_at[[:space:]]+from public\\.profiles p[[:space:]]+join auth\\.users u on u\\.id = p\\.id[[:space:]]+where p\\.country_id is not null[[:space:]]+group by p\\.country_id';
+  v_pattern text := 'max\(coalesce\(u\.last_sign_in_at, u\.created_at\)\)[[:space:]]+as last_activity_at[[:space:]]+from public\.profiles p[[:space:]]+join auth\.users u on u\.id = p\.id[[:space:]]+where p\.country_id is not null[[:space:]]+group by p\.country_id';
   v_replacement text := 'max(pa.last_seen_at) as last_activity_at
       from public.profiles p
       join public.player_activity pa on pa.user_id = p.id
