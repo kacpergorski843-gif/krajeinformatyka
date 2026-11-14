@@ -120,6 +120,13 @@
       "when": 1794592703794,
       "tag": "0016_market_buy_compat_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794674388815,
+      "tag": "0017_indestructible_test_buildings",
+      "breakpoints": true
     }
   ]
 }
