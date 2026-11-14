@@ -7,7 +7,9 @@
 DO $inactive_country_payout$
 DECLARE
   v_def text;
-  v_old_loop text := '  for r in select * from public.country_stats loop';
+  -- pg_get_functiondef preserves the installed function body, whose spacing
+  -- and keyword casing may differ between database versions.
+  v_loop_pattern text := 'for[[:space:]]+r[[:space:]]+in[[:space:]]+select[[:space:]]+\\*[[:space:]]+from[[:space:]]+public\\.country_stats[[:space:]]+loop';
   v_new_loop text := $replacement$
   for r in
     select cs.*, activity.last_activity_at
@@ -62,10 +64,10 @@ BEGIN
     '  v_total numeric := 0;' || E'\n  v_skipped_inactive integer := 0;'
   );
 
-  IF position(v_old_loop in v_def) = 0 THEN
-    RAISE EXCEPTION 'Nie znaleziono oczekiwanej pętli country_stats w run_daily_economy';
+  IF v_def !~* v_loop_pattern THEN
+    RAISE EXCEPTION 'Nie znaleziono pętli odczytującej public.country_stats w run_daily_economy';
   END IF;
-  v_def := replace(v_def, v_old_loop, v_new_loop);
+  v_def := regexp_replace(v_def, v_loop_pattern, v_new_loop, 'i');
 
   IF position(v_old_summary in v_def) = 0 THEN
     RAISE EXCEPTION 'Nie znaleziono oczekiwanego zapisu podsumowania economy_runs';
