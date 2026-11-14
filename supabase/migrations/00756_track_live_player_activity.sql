@@ -7,7 +7,12 @@ create table if not exists public.player_activity (
 
 alter table public.player_activity enable row level security;
 revoke all on public.player_activity from public, anon;
-grant insert, update on public.player_activity to authenticated;
+grant select, insert, update on public.player_activity to authenticated;
+
+drop policy if exists "Players can read their own activity" on public.player_activity;
+create policy "Players can read their own activity"
+  on public.player_activity for select to authenticated
+  using (auth.uid() = user_id);
 
 drop policy if exists "Players can insert their own activity" on public.player_activity;
 create policy "Players can insert their own activity"
