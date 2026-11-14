@@ -61,6 +61,13 @@ export type Database = {
             referencedRelation: "public_ranking"
             referencedColumns: ["country_id"]
           },
+          {
+            foreignKeyName: "admin_actions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
         ]
       }
       app_maintenance_mode: {
@@ -263,6 +270,13 @@ export type Database = {
             referencedColumns: ["country_id"]
           },
           {
+            foreignKeyName: "bilateral_agreements_country_a_id_fkey"
+            columns: ["country_a_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
             foreignKeyName: "bilateral_agreements_country_b_id_fkey"
             columns: ["country_b_id"]
             isOneToOne: false
@@ -281,6 +295,13 @@ export type Database = {
             columns: ["country_b_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "bilateral_agreements_country_b_id_fkey"
+            columns: ["country_b_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
             referencedColumns: ["country_id"]
           },
         ]
@@ -399,6 +420,13 @@ export type Database = {
             referencedColumns: ["country_id"]
           },
           {
+            foreignKeyName: "country_suggestions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
             foreignKeyName: "country_suggestions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -455,6 +483,13 @@ export type Database = {
             columns: ["country_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "economy_bonuses_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
             referencedColumns: ["country_id"]
           },
         ]
@@ -528,6 +563,13 @@ export type Database = {
             referencedColumns: ["country_id"]
           },
           {
+            foreignKeyName: "main_admin_test_sessions_active_test_country_id_fkey"
+            columns: ["active_test_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
             foreignKeyName: "main_admin_test_sessions_original_country_id_fkey"
             columns: ["original_country_id"]
             isOneToOne: false
@@ -546,6 +588,13 @@ export type Database = {
             columns: ["original_country_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "main_admin_test_sessions_original_country_id_fkey"
+            columns: ["original_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
             referencedColumns: ["country_id"]
           },
         ]
@@ -610,6 +659,13 @@ export type Database = {
             columns: ["buyer_country_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "market_negotiations_buyer_country_id_fkey"
+            columns: ["buyer_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
             referencedColumns: ["country_id"]
           },
           {
@@ -680,6 +736,13 @@ export type Database = {
             referencedRelation: "public_ranking"
             referencedColumns: ["country_id"]
           },
+          {
+            foreignKeyName: "market_offers_seller_country_id_fkey"
+            columns: ["seller_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
         ]
       }
       market_sales: {
@@ -739,6 +802,13 @@ export type Database = {
             referencedColumns: ["country_id"]
           },
           {
+            foreignKeyName: "market_sales_buyer_country_id_fkey"
+            columns: ["buyer_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
             foreignKeyName: "market_sales_offer_id_fkey"
             columns: ["offer_id"]
             isOneToOne: false
@@ -764,6 +834,13 @@ export type Database = {
             columns: ["seller_country_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "market_sales_seller_country_id_fkey"
+            columns: ["seller_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
             referencedColumns: ["country_id"]
           },
         ]
@@ -840,6 +917,13 @@ export type Database = {
             referencedColumns: ["country_id"]
           },
           {
+            foreignKeyName: "missile_strikes_attacker_country_id_fkey"
+            columns: ["attacker_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
             foreignKeyName: "missile_strikes_defender_country_id_fkey"
             columns: ["defender_country_id"]
             isOneToOne: false
@@ -858,6 +942,13 @@ export type Database = {
             columns: ["defender_country_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "missile_strikes_defender_country_id_fkey"
+            columns: ["defender_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
             referencedColumns: ["country_id"]
           },
         ]
@@ -909,6 +1000,13 @@ export type Database = {
             referencedRelation: "public_ranking"
             referencedColumns: ["country_id"]
           },
+          {
+            foreignKeyName: "profiles_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
         ]
       }
       region_occupations: {
@@ -956,6 +1054,13 @@ export type Database = {
             referencedColumns: ["country_id"]
           },
           {
+            foreignKeyName: "region_occupations_current_country_id_fkey"
+            columns: ["current_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
+          {
             foreignKeyName: "region_occupations_previous_country_id_fkey"
             columns: ["previous_country_id"]
             isOneToOne: false
@@ -974,6 +1079,13 @@ export type Database = {
             columns: ["previous_country_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "region_occupations_previous_country_id_fkey"
+            columns: ["previous_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
             referencedColumns: ["country_id"]
           },
           {
@@ -1065,6 +1177,13 @@ export type Database = {
             columns: ["country_id"]
             isOneToOne: false
             referencedRelation: "public_ranking"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "regions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
             referencedColumns: ["country_id"]
           },
         ]
@@ -1182,6 +1301,13 @@ export type Database = {
             referencedRelation: "public_ranking"
             referencedColumns: ["country_id"]
           },
+          {
+            foreignKeyName: "transactions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "world_country_stats"
+            referencedColumns: ["country_id"]
+          },
         ]
       }
       user_roles: {
@@ -1268,11 +1394,45 @@ export type Database = {
           country_id: string | null
           flag: string | null
           gross_income: number | null
+          military_value: number | null
           name: string | null
+          regions_count: number | null
+          war_votes: number | null
+        }
+        Relationships: []
+      }
+      world_country_stats: {
+        Row: {
+          aa_defense: number | null
+          balance: number | null
+          coal: number | null
+          coal_prod: number | null
+          coal_upkeep: number | null
+          copper: number | null
+          copper_prod: number | null
+          country_id: string | null
+          flag: string | null
+          fort_votes: number | null
+          forts: number | null
+          gross_income: number | null
+          iron: number | null
+          iron_prod: number | null
+          military_value: number | null
+          missile_1: number | null
+          missile_2: number | null
+          missile_3: number | null
+          name: string | null
+          oil: number | null
+          oil_prod: number | null
+          region_aa_total: number | null
           regions_count: number | null
           soldier_packs: number | null
           tank_packs: number | null
+          total_votes: number | null
+          uranium: number | null
+          uranium_prod: number | null
           vote_potential: number | null
+          war_votes: number | null
         }
         Relationships: []
       }
