@@ -457,21 +457,21 @@ function Arsenal() {
               </div>
               <button
                 type="button"
-                className="launch-red-button"
+                className={missile === "missile_3" ? "launch-red-button" : "launch-red-button launch-red-button-lightweight"}
                 disabled={launch.isPending}
                 onClick={() => {
-                  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(45);
+                  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(missile === "missile_3" ? 45 : 18);
                   launch.mutate();
                 }}
               >
                 <span className="launch-red-button-inner">
-                  <span className="launch-red-button-light" />
-                  <Target className="size-5" />
-                  <span>{launch.isPending ? "PRZEKAZYWANIE ROZKAZU…" : "URUCHOM PROCEDURĘ STARTU"}</span>
-                  <span className="launch-red-button-key">EXECUTE</span>
+                  {missile === "missile_3" ? <span className="launch-red-button-light" /> : null}
+                  <Target className={missile === "missile_3" ? "size-5" : "size-4"} />
+                  <span>{launch.isPending ? "PRZEKAZYWANIE ROZKAZU…" : missile === "missile_3" ? "URUCHOM PROCEDURĘ STARTU" : "POTWIERDŹ I WYSTRZEL"}</span>
+                  {missile === "missile_3" ? <span className="launch-red-button-key">EXECUTE</span> : null}
                 </span>
               </button>
-              <p className="launch-footnote">Naciśnięcie przycisku natychmiast przekazuje rozkaz do centrum dowodzenia.</p>
+              <p className="launch-footnote">{missile === "missile_3" ? "Rozkaz strategiczny zostanie przekazany do centrum dowodzenia." : "Po zatwierdzeniu rakieta zostanie wystrzelona, a wynik operacji pojawi się w raporcie."}</p>
             </div>
           ) : null}
 
