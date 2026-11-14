@@ -1012,6 +1012,21 @@ export type Database = {
           },
         ]
       }
+      player_activity: {
+        Row: {
+          user_id: string
+          last_seen_at: string
+        }
+        Insert: {
+          user_id: string
+          last_seen_at?: string
+        }
+        Update: {
+          user_id?: string
+          last_seen_at?: string
+        }
+        Relationships: []
+      }
       region_occupations: {
         Row: {
           current_country_id: string

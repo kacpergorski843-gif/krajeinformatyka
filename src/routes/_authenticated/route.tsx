@@ -87,6 +87,37 @@ function AuthenticatedLayout() {
     };
   }, [me.data?.userId, queryClient]);
 
+  useEffect(() => {
+    const userId = me.data?.userId;
+    if (!userId) return;
+
+    let disposed = false;
+    const recordActivity = () => {
+      if (disposed || document.visibilityState !== "visible") return;
+
+      void supabase
+        .from("player_activity")
+        .upsert(
+          { user_id: userId, last_seen_at: new Date().toISOString() },
+          { onConflict: "user_id" },
+        )
+        .then(({ error }) => {
+          if (error) console.warn("Nie udało się zapisać aktywności gracza", error);
+        });
+    };
+
+    // Record immediately, then keep the session alive while the game tab is visible.
+    recordActivity();
+    const intervalId = window.setInterval(recordActivity, 60_000);
+    document.addEventListener("visibilitychange", recordActivity);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", recordActivity);
+    };
+  }, [me.data?.userId]);
+
   const maintenancePath = location.pathname.startsWith("/swiat/")
     ? "/swiat/$id"
     : location.pathname;
