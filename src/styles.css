@@ -1639,3 +1639,29 @@
   .missile-card-orbit,.missile-select-missile_3 .missile-card-icon,.launch-schematic-missile_3,.launch-flight-radar,.launch-flight-trail,.launch-flight-rocket,.launch-flight-afterburner,.launch-flight-flame,.launch-flight-live span,.launch-ready span,.arsenal-live span,.launch-warning-light { animation:none!important; }
   .launch-flight-rocket { left:78%; bottom:68%; opacity:1; }
 }
+
+/* Missile animations v2 */
+.missile-select-missile_1 .missile-card-icon { animation:missile-bob-light 3.6s ease-in-out infinite; }
+.missile-select-missile_2 .missile-card-icon { animation:missile-bob-light 2.8s ease-in-out infinite; filter:drop-shadow(0 0 14px color-mix(in oklab,var(--color-accent) 50%,transparent)); color:var(--color-accent); }
+.missile-select-missile_1:hover .missile-card-icon,.missile-select-missile_2:hover .missile-card-icon { animation-duration:1.4s; }
+.missile-select-missile_3 .missile-card-art::after { content:""; position:absolute; width:140px; height:140px; border-radius:50%; background:conic-gradient(from 0deg,transparent 0 80%,color-mix(in oklab,var(--color-destructive) 40%,transparent)); animation:orbit-spin 3s linear infinite; mask:radial-gradient(circle,transparent 48%,black 50%); }
+.launch-flight-visual-missile_1 .launch-flight-rocket,.launch-flight-visual-missile_2 .launch-flight-rocket { animation:flight-rocket-arc 4s cubic-bezier(.3,.6,.3,1) forwards; }
+.launch-flight-visual-missile_2 .launch-flight-trail { height:4px; background:linear-gradient(90deg,transparent,#f5b544,#fff3c4); }
+.launch-flight-smoke { position:absolute; z-index:1; left:3%; bottom:14%; width:70px; height:40px; border-radius:50%; background:radial-gradient(#ffffff40,transparent 70%); filter:blur(8px); animation:smoke-puff 2.4s ease-out forwards; }
+.launch-flight-ping { position:absolute; z-index:2; right:calc(8% + 36px); top:calc(50% - 30px); width:60px; height:60px; border:2px solid #ff5a67; border-radius:50%; opacity:0; animation:target-ping 1s ease-out 3.3s 2; }
+.launch-flight-shockwave { position:absolute; z-index:4; right:calc(8% + 66px); top:50%; width:10px; height:10px; border:3px solid #ffd08a; border-radius:50%; opacity:0; transform:translate(50%,-50%); animation:shockwave 1.4s ease-out 4.1s forwards; }
+.launch-shockwave-b { animation-delay:4.35s; border-color:#ff5a3d; }
+.launch-flight-flash { position:absolute; inset:0; z-index:5; background:radial-gradient(circle at 78% 50%,#fff6d8,#ff8a3d88 25%,transparent 60%); opacity:0; animation:impact-flash 1.2s ease-out 4.05s forwards; }
+.launch-flight-shake-light { position:absolute; inset:0; z-index:0; background:radial-gradient(ellipse at 10% 100%,#ff6b3d55,transparent 50%); animation:launch-glow 1.6s ease-out forwards; }
+.launch-flight-heavy .launch-flight-visual { animation:heavy-shake .5s ease-in-out 2,heavy-shake .4s ease-in-out 4.1s 2; }
+@keyframes missile-bob-light { 0%,100% { transform:rotate(-45deg) translate(0,0); } 50% { transform:rotate(-45deg) translate(3px,-4px); } }
+@keyframes flight-rocket-arc { 0% { left:5%; bottom:20%; opacity:0; transform:rotate(30deg); } 10% { opacity:1; } 55% { left:45%; bottom:62%; transform:rotate(60deg); } 100% { left:76%; bottom:50%; opacity:1; transform:rotate(100deg); } }
+@keyframes smoke-puff { 0% { opacity:0; transform:scale(.4); } 25% { opacity:1; } 100% { opacity:0; transform:scale(2.4) translate(10px,-8px); } }
+@keyframes target-ping { 0% { opacity:.9; transform:scale(.3); } 100% { opacity:0; transform:scale(1.6); } }
+@keyframes shockwave { 0% { opacity:1; width:10px; height:10px; } 100% { opacity:0; width:260px; height:260px; } }
+@keyframes impact-flash { 0% { opacity:0; } 15% { opacity:1; } 100% { opacity:0; } }
+@keyframes launch-glow { 0% { opacity:1; } 100% { opacity:.2; } }
+@keyframes heavy-shake { 0%,100% { transform:translate(0,0); } 25% { transform:translate(-2px,1px); } 50% { transform:translate(2px,-1px); } 75% { transform:translate(-1px,-2px); } }
+@media (prefers-reduced-motion:reduce) {
+  .missile-select-missile_1 .missile-card-icon,.missile-select-missile_2 .missile-card-icon,.missile-select-missile_3 .missile-card-art::after,.launch-flight-smoke,.launch-flight-ping,.launch-flight-shockwave,.launch-flight-flash,.launch-flight-shake-light,.launch-flight-heavy .launch-flight-visual { animation:none!important; }
+}
