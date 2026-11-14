@@ -315,6 +315,7 @@ export type Database = {
           created_at: string
           flag: string
           id: string
+          indestructible_buildings: boolean
           iron: number
           missile_1: number
           missile_2: number
@@ -333,6 +334,7 @@ export type Database = {
           created_at?: string
           flag?: string
           id?: string
+          indestructible_buildings?: boolean
           iron?: number
           missile_1?: number
           missile_2?: number
@@ -351,6 +353,7 @@ export type Database = {
           created_at?: string
           flag?: string
           id?: string
+          indestructible_buildings?: boolean
           iron?: number
           missile_1?: number
           missile_2?: number
