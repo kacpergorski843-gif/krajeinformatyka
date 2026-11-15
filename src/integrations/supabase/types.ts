@@ -1693,6 +1693,7 @@ export type Database = {
       }
       run_bilateral_agreements: { Args: { p_run_date?: string }; Returns: Json }
       run_daily_economy: { Args: { p_run_date?: string }; Returns: Json }
+      reverse_last_daily_economy: { Args: Record<PropertyKey, never>; Returns: Json }
       set_user_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
