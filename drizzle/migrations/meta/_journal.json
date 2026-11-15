@@ -127,6 +127,13 @@
       "when": 1794674388815,
       "tag": "0017_indestructible_test_buildings",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794734880114,
+      "tag": "0018_heartbeat_only_activity_daily_payouts",
+      "breakpoints": true
     }
   ]
 }

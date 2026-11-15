@@ -7,6 +7,7 @@ import { meQuery } from "@/lib/api";
 import { getMaintenanceMode } from "@/lib/admin.functions";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { startPlayerActivity } from "@/lib/player-activity";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  const { user } = Route.useRouteContext();
   const me = useQuery(meQuery);
   const location = useLocation();
   const router = useRouter();
@@ -88,62 +90,15 @@ function AuthenticatedLayout() {
   }, [me.data?.userId, queryClient]);
 
   useEffect(() => {
-    let disposed = false;
-    let userId: string | null = null;
-
-    const recordActivity = () => {
-      if (disposed || !userId || document.visibilityState !== "visible") return;
-
-      // This activity table is not included in the generated schema yet.
-      const activityClient = supabase as unknown as {
-        from(table: "player_activity"): {
-          upsert(row: { user_id: string; last_seen_at: string }, options: { onConflict: string }):
-            PromiseLike<{ error: { message: string } | null }>;
-        };
-      };
-      void Promise.resolve(activityClient
-        .from("player_activity")
-        .upsert(
-          { user_id: userId, last_seen_at: new Date().toISOString() },
-          { onConflict: "user_id" },
-        ))
-        .then(({ error }) => {
-          if (error) console.warn("Nie udało się zapisać aktywności gracza", error);
-        })
-        .catch((error) => {
-          console.warn("Nie udało się zapisać aktywności gracza", error);
-        });
-    };
-
-    const setActiveUser = (nextUserId: string | null) => {
-      userId = nextUserId;
-      if (userId) recordActivity();
-    };
-
-    // Activity tracking must not depend on profile/role queries finishing successfully.
-    void supabase.auth.getUser().then(({ data, error }) => {
-      // Do not overwrite a newer auth-state event with a stale/null initial read.
-      if (!disposed && !error && data.user) setActiveUser(data.user.id);
+    // The existing route guard already validated this user, even on a hard reload.
+    // No second session read/listener can race a sign-out or deadlock auth refresh.
+    return startPlayerActivity({
+      record: () => supabase.rpc("record_player_activity"),
+      document,
+      window,
+      onError: (error) => console.warn("Nie udało się zapisać aktywności gracza", error),
     });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setActiveUser(session?.user.id ?? null);
-    });
-
-    const intervalId = window.setInterval(recordActivity, 10_000);
-    document.addEventListener("visibilitychange", recordActivity);
-    window.addEventListener("focus", recordActivity);
-    window.addEventListener("pageshow", recordActivity);
-
-    return () => {
-      disposed = true;
-      window.clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", recordActivity);
-      window.removeEventListener("focus", recordActivity);
-      window.removeEventListener("pageshow", recordActivity);
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+  }, [user.id]);
 
   const maintenancePath = location.pathname.startsWith("/swiat/")
     ? "/swiat/$id"

@@ -956,6 +956,21 @@ export type Database = {
           },
         ]
       }
+      player_activity: {
+        Row: {
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country_id: string | null
@@ -1672,6 +1687,7 @@ export type Database = {
         Args: { p_country_id: string; p_item_code: string; p_qty?: number }
         Returns: Json
       }
+      record_player_activity: { Args: never; Returns: string }
       rename_region: {
         Args: { p_name: string; p_region_id: string }
         Returns: Json
