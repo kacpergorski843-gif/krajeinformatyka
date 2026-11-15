@@ -1,27 +1,38 @@
-name: Validate Supabase migrations (no secrets)
-
-# Database changes are applied by Lovable Cloud (it holds the only database credentials).
-# This workflow only runs static checks; it never connects to or changes the database.
-
+name: Validate application and Supabase migrations
 on:
   push:
     branches: [main]
-    paths:
-      - "supabase/migrations/**"
-      - ".github/workflows/supabase-migrations.yml"
-      - "scripts/validate-supabase-migrations.py"
   pull_request:
-    paths:
-      - "supabase/migrations/**"
-      - ".github/workflows/supabase-migrations.yml"
-      - "scripts/validate-supabase-migrations.py"
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
-  validate:
+  app-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+  economy-payout-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql
+      - name: Test current all-country payout migration
+        run: python3 scripts/test_activity_economy.py
+  migration-validation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
