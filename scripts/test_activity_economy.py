@@ -46,15 +46,18 @@ class EconomyTests(unittest.TestCase):
         cls.prefix = ["runuser", "-u", "nobody", "--"] if os.geteuid() == 0 else []
         cls.env = {k:v for k,v in os.environ.items() if not k.startswith("PG")}
         cls.env.update(PGHOST=str(cls.socket), PGPORT="55439", PGUSER="postgres", PGDATABASE="postgres")
-        subprocess.run(cls.prefix+["initdb","-D",str(cls.temp/"data"),"-U","postgres","-A","trust"],env=cls.env,check=True,stdout=subprocess.DEVNULL)
-        subprocess.run(cls.prefix+["pg_ctl","-D",str(cls.temp/"data"),"-l",str(cls.temp/"server.log"),"-o",f"-k {cls.socket} -p 55439 -h ''", "start"],env=cls.env,check=True,stdout=subprocess.DEVNULL)
+        cls.initdb = shutil.which("initdb")
+        cls.pgctl = shutil.which("pg_ctl")
+        if not cls.initdb or not cls.pgctl: raise RuntimeError("PostgreSQL tools are required")
+        subprocess.run(cls.prefix+[cls.initdb,"-D",str(cls.temp/"data"),"-U","postgres","-A","trust"],env=cls.env,check=True,stdout=subprocess.DEVNULL)
+        subprocess.run(cls.prefix+[cls.pgctl,"-D",str(cls.temp/"data"),"-l",str(cls.temp/"server.log"),"-o",f"-k {cls.socket} -p 55439 -h ''", "start"],env=cls.env,check=True,stdout=subprocess.DEVNULL)
         cls.sql(FIXTURE)
         cls.sql(MIGRATION.read_text())
         cls.sql(MIGRATION.read_text())  # Rerunnable DDL.
 
     @classmethod
     def tearDownClass(cls):
-        subprocess.run(cls.prefix+["pg_ctl","-D",str(cls.temp/"data"),"stop","-m","immediate"],env=cls.env,check=True,stdout=subprocess.DEVNULL)
+        subprocess.run(cls.prefix+[cls.pgctl,"-D",str(cls.temp/"data"),"stop","-m","immediate"],env=cls.env,check=True,stdout=subprocess.DEVNULL)
         shutil.rmtree(cls.temp)
 
     @classmethod
