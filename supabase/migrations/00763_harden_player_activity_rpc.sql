@@ -1,0 +1,31 @@
+-- Make the authenticated heartbeat RPC independent of client-side table grants/RLS.
+-- The caller can only write the row belonging to auth.uid(); the browser never
+-- supplies a user id or timestamp.
+create or replace function public.record_player_activity()
+returns timestamptz
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_user_id uuid := auth.uid();
+  v_seen timestamptz;
+begin
+  if v_user_id is null then
+    raise exception 'Brak autoryzacji';
+  end if;
+
+  insert into public.player_activity (user_id, last_seen_at)
+  values (v_user_id, statement_timestamp())
+  on conflict (user_id)
+  do update set last_seen_at = excluded.last_seen_at
+  returning last_seen_at into v_seen;
+
+  return v_seen;
+end;
+$function$;
+
+revoke all on function public.record_player_activity() from public, anon;
+grant execute on function public.record_player_activity() to authenticated;
+
+notify pgrst, 'reload schema';
