@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Rocket, ShieldCheck, Crosshair, Target, ChevronLeft, Activity, CheckCircle2, XCircle } from "lucide-react";
+import { Rocket, ShieldCheck, Crosshair, Target, ChevronLeft, ChevronRight, LoaderCircle, Search, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { MissileFlight } from "@/components/MissileFlight";
 import { Panel, SectionTitle, Stat } from "@/components/stat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +93,7 @@ function Arsenal() {
   const [countText, setCountText] = useState("1");
   const [phase, setPhase] = useState<Phase>("wizard");
   const [result, setResult] = useState<SalvoResult | null>(null);
+  const [countrySearch, setCountrySearch] = useState("");
 
   const { data: me } = useQuery(meQuery);
   const { data: countries } = useQuery(countriesQuery);
@@ -126,6 +128,7 @@ function Arsenal() {
   }
 
   const launch = useMutation({
+    onMutate: () => setPhase("processing"),
     mutationFn: () =>
       rpc<SalvoResult>("launch_salvo", {
         p_country_id: me?.countryId,
@@ -189,20 +192,20 @@ function Arsenal() {
         <Stat label="Rakiety III" value={units(country?.missile_3 ?? 0)} tone="primary" />
       </div>
 
-      <div className="arsenal-heading"><div><p className="label-hud">Strategic weapons command</p><SectionTitle>Procedura odpalenia</SectionTitle><p className="text-muted-foreground -mt-2 text-xs">Wybierz uzbrojenie, wyznacz cel i zatwierdź rozkaz startu.</p></div><div className="arsenal-live"><span /> SYSTEM GOTOWY</div></div>
+      <div className="arsenal-heading"><div><p className="label-hud">Operacje rakietowe</p><SectionTitle>Nowy wystrzał</SectionTitle></div><div className="arsenal-live"><span /> Arsenał gotowy</div></div>
       <Panel className={"hud-frame arsenal-wizard p-5 " + (missile === "missile_3" ? "arsenal-wizard-heavy" : "")}>
         <div className="flex items-center justify-between gap-3">
           <p className="label-hud">
             Krok {step}/6 — {STEP_TITLES[step - 1]}
           </p>
           {step > 1 ? (
-            <button
+            <Button variant="ghost"
               type="button"
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs"
+              className="text-muted-foreground flex items-center gap-1 text-xs"
               onClick={() => setStep(step - 1)}
             >
               <ChevronLeft className="size-3.5" strokeWidth={1.5} /> Wstecz
-            </button>
+            </Button>
           ) : null}
         </div>
         <div className="bg-secondary mt-3 h-1 w-full overflow-hidden rounded-full">
@@ -217,18 +220,19 @@ function Arsenal() {
             <>
               <div className="grid gap-4 sm:grid-cols-3">
                 {MISSILES.map((m) => (
-                  <button
+                  <Button variant="ghost"
                     key={m.code}
                     type="button"
                     onClick={() => {
                       setMissile(m.code);
                       setSlotIds([]);
                     }}
-                    className={`panel missile-select-card missile-select-${m.code} p-4 text-left ${missile === m.code ? "missile-select-active" : ""}`}
+                    aria-pressed={missile === m.code}
+                    className={`missile-select-card missile-select-${m.code} p-4 text-left ${missile === m.code ? "missile-select-active" : ""}`}
                   >
                     <div className="missile-card-top">
-                      <span className="label-hud">WEAPON / {m.code.slice(-1)}</span>
-                      <span className="missile-card-status">{missile === m.code ? "WYBRANA" : "GOTOWA"}</span>
+                      <span className="label-hud">RAKIETA / {m.code.slice(-1)}</span>
+                      <span className="missile-card-status">{missile === m.code ? "WYBRANA" : "DOSTĘPNA"}</span>
                     </div>
                     <div className="missile-card-art">
                       <Rocket className="missile-card-icon" strokeWidth={1.25} />
@@ -236,7 +240,7 @@ function Arsenal() {
                     </div>
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <p className="truncate text-sm font-semibold">{MISSILE_LABELS[m.code]}</p>
-                      <span className="missile-level">LVL {m.code.slice(-1)}</span>
+                      <span className="missile-level">POZIOM {m.code.slice(-1)}</span>
                     </div>
                     <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
                       {m.effect}
@@ -249,7 +253,7 @@ function Arsenal() {
                     >
                       W arsenale: {units(country?.[m.code] ?? 0)}
                     </p>
-                  </button>
+                  </Button>
                 ))}
               </div>
               <div className="max-w-xs space-y-2">
@@ -275,17 +279,19 @@ function Arsenal() {
           ) : null}
 
           {step === 2 ? (
-            <div className="divide-border divide-y">
-              {enemyCountries.map((c) => (
-                <button
+            <div className="space-y-2">
+              <div className="relative"><Search className="text-muted-foreground absolute left-3 top-3 size-4" /><Input aria-label="Szukaj państwa" placeholder="Szukaj państwa…" value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="pl-9" /></div>
+              {enemyCountries.filter((c) => c.name.toLocaleLowerCase("pl").includes(countrySearch.toLocaleLowerCase("pl"))).map((c) => (
+                <Button variant="ghost"
                   key={c.country_id}
+                  aria-pressed={targetCountry === c.country_id}
                   type="button"
                   onClick={() => {
                     setTargetCountry(c.country_id);
                     setRegionId(null);
                     setSlotIds([]);
                   }}
-                  className={`hover:bg-secondary/50 grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-1 py-3 text-left ${
+                  className={`arsenal-choice hover:bg-secondary/50 grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-1 py-3 text-left ${
                     targetCountry === c.country_id ? "bg-secondary" : ""
                   }`}
                 >
@@ -296,7 +302,7 @@ function Arsenal() {
                     </span>
                   </span>
                   <Crosshair className="text-inactive size-4 shrink-0" strokeWidth={1.5} />
-                </button>
+                </Button>
               ))}
               {enemyCountries.length === 0 ? (
                 <p className="text-muted-foreground py-3 text-sm">Brak innych państw.</p>
@@ -307,14 +313,15 @@ function Arsenal() {
           {step === 3 ? (
             <div className="divide-border divide-y">
               {enemyRegions.map((r) => (
-                <button
+                <Button variant="ghost"
                   key={r.id}
+                  aria-pressed={regionId === r.id}
                   type="button"
                   onClick={() => {
                     setRegionId(r.id);
                     setSlotIds([]);
                   }}
-                  className={`hover:bg-secondary/50 grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-1 py-3 text-left ${
+                  className={`arsenal-choice hover:bg-secondary/50 grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-1 py-3 text-left ${
                     regionId === r.id ? "bg-secondary" : ""
                   }`}
                 >
@@ -331,7 +338,7 @@ function Arsenal() {
                   >
                     {units(r.aa_defense)} OPL
                   </span>
-                </button>
+                </Button>
               ))}
               {allRegionsPending ? (
                 <p className="text-muted-foreground py-3 text-sm">Wczytywanie regionów…</p>
@@ -350,8 +357,9 @@ function Arsenal() {
                     ["mines", "Wszystkie zakłady surowcowe"],
                   ] as const
                 ).map(([key, label]) => (
-                  <button
+                  <Button variant="ghost"
                     key={key}
+                    aria-pressed={mode === key}
                     type="button"
                     onClick={() => setMode(key)}
                     className={`rounded-sm border px-4 py-3 text-xs tracking-[0.1em] uppercase ${
@@ -364,7 +372,7 @@ function Arsenal() {
                     <span className="num text-inactive mt-1 block">
                       {modeSlots(region).length} obiektów
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             ) : (
@@ -376,8 +384,9 @@ function Arsenal() {
                 {region.slots.map((s) => {
                   const picked = slotIds.includes(s.id);
                   return (
-                    <button
+                    <Button variant="ghost"
                       key={s.id}
+                      aria-pressed={picked}
                       type="button"
                       onClick={() =>
                         setSlotIds((prev) =>
@@ -388,7 +397,7 @@ function Arsenal() {
                               : [...prev, s.id],
                         )
                       }
-                      className={`hover:bg-secondary/50 grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-1 py-3 text-left ${
+                      className={`arsenal-choice hover:bg-secondary/50 grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-1 py-3 text-left ${
                         picked ? "bg-secondary" : ""
                       }`}
                     >
@@ -398,7 +407,7 @@ function Arsenal() {
                         className={`size-4 shrink-0 ${picked ? "text-destructive" : "text-inactive"}`}
                         strokeWidth={1.5}
                       />
-                    </button>
+                    </Button>
                   );
                 })}
                 {region.slots.length === 0 ? (
@@ -409,7 +418,7 @@ function Arsenal() {
           ) : null}
 
           {step === 5 ? (
-            <div className="panel space-y-2 p-4 text-xs">
+            <div className="launch-summary space-y-3 text-sm">
               <Row k="Rakieta" v={missile ? (MISSILE_LABELS[missile] ?? missile) : ""} />
               <Row k="Ilość" v={units(count)} />
               <Row k="Państwo" v={targetCountryName} />
@@ -424,10 +433,10 @@ function Arsenal() {
             <div className={`launch-console ${missile === "missile_3" ? "launch-console-heavy" : ""}`}>
               <div className="launch-console-header">
                 <div>
-                  <p className="label-hud">Final authorization / step 06</p>
-                  <p className="launch-console-title">Stanowisko odpalania</p>
+                  <p className="label-hud">Ostatnie potwierdzenie</p>
+                  <p className="launch-console-title">Potwierdź wystrzał</p>
                 </div>
-                <span className="launch-ready"><span /> GOTOWOŚĆ BOJOWA</span>
+                <span className="launch-ready"><span /> GOTOWA DO STARTU</span>
               </div>
               <div className="launch-console-body">
                 <div className="launch-schematic-wrap">
@@ -453,35 +462,36 @@ function Arsenal() {
               </div>
               <div className="launch-warning">
                 <span className="launch-warning-light" />
-                <span>ROZKAZ NIEODWRACALNY — AMUNICJA ZOSTANIE ZUŻYTA PO ZATWIERDZENIU</span>
+                <span>Nieodwracalne — wystrzelone rakiety zostaną zużyte, także po przechwyceniu.</span>
               </div>
-              <button
+              <Button
+                variant={missile === "missile_3" ? "destructive" : "default"}
                 type="button"
-                className={missile === "missile_3" ? "launch-red-button" : "launch-red-button launch-red-button-lightweight"}
+                className={missile === "missile_3" ? "launch-confirm launch-confirm-heavy" : "launch-confirm"}
                 disabled={launch.isPending}
                 onClick={() => {
                   if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(missile === "missile_3" ? 45 : 18);
                   launch.mutate();
                 }}
               >
-                <span className="launch-red-button-inner">
-                  {missile === "missile_3" ? <span className="launch-red-button-light" /> : null}
+                <span className="launch-confirm-inner">
+                  
                   <Target className={missile === "missile_3" ? "size-5" : "size-4"} />
                   <span>{launch.isPending ? "PRZEKAZYWANIE ROZKAZU…" : missile === "missile_3" ? "URUCHOM PROCEDURĘ STARTU" : "POTWIERDŹ I WYSTRZEL"}</span>
-                  {missile === "missile_3" ? <span className="launch-red-button-key">EXECUTE</span> : null}
+                  
                 </span>
-              </button>
-              <p className="launch-footnote">{missile === "missile_3" ? "Rozkaz strategiczny zostanie przekazany do centrum dowodzenia." : "Po zatwierdzeniu rakieta zostanie wystrzelona, a wynik operacji pojawi się w raporcie."}</p>
+              </Button>
+              
             </div>
           ) : null}
 
           {step < 6 ? (
             <Button
-              className="w-full sm:w-48"
+              className="arsenal-next w-full sm:w-48"
               disabled={!canGoNext}
               onClick={() => setStep(step + 1)}
             >
-              Dalej
+              {step === 5 ? "Przejdź do potwierdzenia" : "Dalej"} <ChevronRight />
             </Button>
           ) : null}
         </div>
@@ -538,50 +548,18 @@ function Arsenal() {
       >
         <DialogContent className="admin-dialog max-h-[85vh] overflow-y-auto">
           {phase === "processing" ? (
-            <div className={`launch-flight-stage ${missile === "missile_3" ? "launch-flight-heavy" : ""}`}>
-              <div className="launch-flight-topline">
-                <span className="label-hud">STRATEGIC COMMAND / LIVE OPERATION</span>
-                <span className="launch-flight-live"><span /> TRANSMISJA</span>
-              </div>
+            <div className="launch-flight-stage">
               <DialogHeader className="launch-flight-heading">
-                <DialogTitle className="tracking-[0.12em] uppercase">
-                  {missile === "missile_3" ? "START RAKIETY STRATEGICZNEJ" : "ROZPOCZĘTO PROCEDURĘ STARTU"}
-                </DialogTitle>
-                <DialogDescription>{region?.name} / {targetCountryName}</DialogDescription>
+                <DialogTitle>{result ? "Rakieta w locie" : "Przekazywanie rozkazu…"}</DialogTitle>
+                <DialogDescription>{targetCountryName} · {region?.name}</DialogDescription>
               </DialogHeader>
-              <div className={`launch-flight-visual launch-flight-visual-${missile ?? "missile_1"}`}>
-                <div className="launch-flight-stars" />
-                <div className="launch-flight-radar launch-radar-a" />
-                <div className="launch-flight-radar launch-radar-b" />
-                <div className="launch-flight-horizon" />
-                <div className="launch-flight-target"><Target /></div>
-                <div className="launch-flight-trail" />
-                <div className="launch-flight-rocket"><Rocket strokeWidth={1.1} /><span className="launch-flight-flame" /></div>
-                {missile === "missile_3" ? (
-                  <>
-                    <div className="launch-flight-afterburner" />
-                    <div className="launch-flight-shake-light" />
-                    <div className="launch-flight-shockwave" />
-                    <div className="launch-flight-shockwave launch-shockwave-b" />
-                    <div className="launch-flight-flash" />
-                  </>
-                ) : (
-                  <>
-                    <div className="launch-flight-smoke" />
-                    <div className="launch-flight-ping" />
-                  </>
-                )}
-              </div>
+              {result ? <MissileFlight heavy={missile === "missile_3"} intercepted={(result.impacts ?? 0) === 0 && (result.intercepted ?? 0) > 0} /> : <div className="launch-sending" role="status"><LoaderCircle className="size-8 animate-spin" /><span>Oczekiwanie na potwierdzenie wystrzału</span></div>}
               <div className="launch-flight-telemetry">
-                <div><span>WEAPON</span><strong>{missile?.toUpperCase()}</strong></div>
-                <div><span>PAYLOAD</span><strong>{units(result?.launched ?? count)} / {units(count)}</strong></div>
-                <div><span>DESTINATION</span><strong>{region?.name ?? "—"}</strong></div>
+                <div><span>Rakieta</span><strong>{missile ? MISSILE_LABELS[missile] : "—"}</strong></div>
+                <div><span>Liczba</span><strong>{units(result?.launched ?? count)} szt.</strong></div>
+                <div><span>Cel</span><strong title={region?.name}>{region?.name ?? "—"}</strong></div>
               </div>
-              <div className="launch-flight-status">
-                <Activity className="size-4" />
-                <span>{missile === "missile_3" ? "RAKIETA STRATEGICZNA W LOCIE" : "RAKIETA W LOCIE"}</span>
-                <span className="launch-flight-status-dots">•••</span>
-              </div>
+              <p className="launch-flight-status" role="status">{result ? "Trwa lot · przygotowywanie raportu" : "Rozkaz jest przetwarzany"}</p>
             </div>
           ) : null}
 
@@ -606,7 +584,7 @@ function Arsenal() {
                   <strong>{(result.impacts ?? 0) > 0 ? "CEL TRAFIONY" : "RAKIETA PRZECHWYCONA"}</strong>
                 </div>
               </div>
-              <div className="panel space-y-2 p-4 text-sm">
+              <div className="launch-summary space-y-3 text-sm">
                 <Row k="Użyta rakieta" v={`${missile ? (MISSILE_LABELS[missile] ?? missile) : ""} x${units(result.launched ?? count)}`} />
                 <Row k="Wystrzelono" v={units(result.launched ?? count)} />
                 <Row k="Przechwycono" v={units(result.intercepted ?? 0)} />
@@ -625,8 +603,8 @@ function Arsenal() {
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex justify-between gap-3">
-      <span className="text-muted-foreground uppercase">{k}</span>
+    <div className="launch-detail-row">
+      <span className="text-muted-foreground">{k}</span>
       <span className="num text-foreground text-right">{v}</span>
     </div>
   );
