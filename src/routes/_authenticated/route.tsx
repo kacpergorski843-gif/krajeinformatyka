@@ -115,7 +115,8 @@ function AuthenticatedLayout() {
 
     // Activity tracking must not depend on profile/role queries finishing successfully.
     void supabase.auth.getUser().then(({ data, error }) => {
-      if (!disposed && !error) setActiveUser(data.user?.id ?? null);
+      // Do not overwrite a newer auth-state event with a stale/null initial read.
+      if (!disposed && !error && data.user) setActiveUser(data.user.id);
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -124,11 +125,15 @@ function AuthenticatedLayout() {
 
     const intervalId = window.setInterval(recordActivity, 10_000);
     document.addEventListener("visibilitychange", recordActivity);
+    window.addEventListener("focus", recordActivity);
+    window.addEventListener("pageshow", recordActivity);
 
     return () => {
       disposed = true;
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", recordActivity);
+      window.removeEventListener("focus", recordActivity);
+      window.removeEventListener("pageshow", recordActivity);
       authListener.subscription.unsubscribe();
     };
   }, []);
