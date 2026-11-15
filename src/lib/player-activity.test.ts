@@ -6,10 +6,11 @@ function setup(record = vi.fn(async () => ({ error: null as unknown }))) {
   const doc = new EventTarget();
   const win = new EventTarget();
   let visible = "visible";
+  Object.defineProperty(doc, "visibilityState", { get: () => visible });
   const onError = vi.fn();
   const stop = startPlayerActivity({
     record, onError,
-    document: Object.assign(doc, { get visibilityState() { return visible; } }) as Document,
+    document: doc as Document,
     window: Object.assign(win, { setInterval: globalThis.setInterval, clearInterval: globalThis.clearInterval }) as unknown as Window,
   });
   return { record, stop, doc, win, onError, hide: () => { visible = "hidden"; }, show: () => { visible = "visible"; } };
