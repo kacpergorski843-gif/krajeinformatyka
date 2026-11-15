@@ -88,12 +88,11 @@ function AuthenticatedLayout() {
   }, [me.data?.userId, queryClient]);
 
   useEffect(() => {
-    const userId = me.data?.userId;
-    if (!userId) return;
-
     let disposed = false;
+    let userId: string | null = null;
+
     const recordActivity = () => {
-      if (disposed || document.visibilityState !== "visible") return;
+      if (disposed || !userId || document.visibilityState !== "visible") return;
 
       void supabase
         .from("player_activity")
@@ -103,11 +102,26 @@ function AuthenticatedLayout() {
         )
         .then(({ error }) => {
           if (error) console.warn("Nie udało się zapisać aktywności gracza", error);
+        })
+        .catch((error) => {
+          console.warn("Nie udało się zapisać aktywności gracza", error);
         });
     };
 
-    // Record immediately, then keep the session alive while the game tab is visible.
-    recordActivity();
+    const setActiveUser = (nextUserId: string | null) => {
+      userId = nextUserId;
+      if (userId) recordActivity();
+    };
+
+    // Activity tracking must not depend on profile/role queries finishing successfully.
+    void supabase.auth.getUser().then(({ data, error }) => {
+      if (!disposed && !error) setActiveUser(data.user?.id ?? null);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setActiveUser(session?.user.id ?? null);
+    });
+
     const intervalId = window.setInterval(recordActivity, 10_000);
     document.addEventListener("visibilitychange", recordActivity);
 
@@ -115,8 +129,9 @@ function AuthenticatedLayout() {
       disposed = true;
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", recordActivity);
+      authListener.subscription.unsubscribe();
     };
-  }, [me.data?.userId]);
+  }, []);
 
   const maintenancePath = location.pathname.startsWith("/swiat/")
     ? "/swiat/$id"
