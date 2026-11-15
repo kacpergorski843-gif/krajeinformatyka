@@ -2336,14 +2336,138 @@ function EconomyTab() {
   const countryQuery = useQuery(countriesQuery);
   const queryClient = useQueryClient();
   const [confirm, setConfirm] = useState(false);
+  const [reverseConfirm, setReverseConfirm] = useState(false);
   const runs = (runQuery.data ?? []) as unknown as EconomyRun[];
-  const totals = (countryQuery.data ?? []).reduce((sum, country) => ({ income: sum.income + BigInt(country.gross_income), coal: sum.coal + BigInt(country.coal_prod), oil: sum.oil + BigInt(country.oil_prod), copper: sum.copper + BigInt(country.copper_prod), iron: sum.iron + BigInt(country.iron_prod), uranium: sum.uranium + BigInt(country.uranium_prod), upkeep: sum.upkeep + BigInt(country.coal_upkeep) }), { income: 0n, coal: 0n, oil: 0n, copper: 0n, iron: 0n, uranium: 0n, upkeep: 0n });
-  const run = useMutation({ mutationFn: () => rpc<{ ok: boolean; reason?: string }>("run_daily_economy", {}), onSuccess: (result) => { result?.ok ? toast.success("Cykl dobowy rozliczony") : toast.info("Dzisiejszy cykl został już rozliczony"); setConfirm(false);
-        void queryClient.invalidateQueries({ queryKey: ["economy_runs"] });
-        void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
-        void queryClient.invalidateQueries({ queryKey: ["countries"] });
-        void queryClient.invalidateQueries({ queryKey: ["transactions"] }); }, onError: (error: Error) => toast.error(error.message) });
-  return <div className="space-y-4"><div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"><Panel className="p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div><p className="label-hud">Następny automatyczny cykl</p><p className="num mt-2 text-3xl text-primary sm:text-4xl"><CycleCountdown /></p><p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p></div><CalendarClock className="size-7 text-primary" /></div><Button className="mt-5 w-full sm:w-auto" onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button></Panel><Panel className="p-4"><p className="label-hud">Prognoza kolejnego cyklu</p><div className="mt-3 grid grid-cols-2 gap-2"><ValueBox label="Przychód KR" value={`+${fmtKR(totals.income.toString())}`} tone="success" /><ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep.toString())}`} tone="destructive" />{[["Węgiel",totals.coal],["Ropa",totals.oil],["Miedź",totals.copper],["Żelazo",totals.iron],["Uran",totals.uranium]].map(([label,value]) => <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(value.toString())}`} tone="success" />)}</div></Panel></div><SectionTitle>Ostatnie rozliczenia</SectionTitle><Panel className="divide-y divide-border p-0">{runs.filter((entry) => BigInt(String(entry.summary?.["total_kr"] ?? 0)) !== 0n).map((entry) => <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3"><div className="min-w-0"><p className="text-sm">Cykl {entry.run_date}</p><p className="text-xs text-muted-foreground">{dateTime(entry.ran_at)}</p></div><p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.["total_kr"] ?? 0))}</p></div>)}{runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}</Panel><ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Uruchomić cykl dobowy?" description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`} confirmLabel="Uruchom cykl" destructive pending={run.isPending} onConfirm={() => run.mutate()}><div className="grid grid-cols-2 gap-2"><ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income.toString())}`} tone="success" /><ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep.toString())} węgla`} tone="destructive" /></div></ConfirmDialog></div>;
+  const latestActiveRun = runs.find((entry) => !entry.summary?.["reversed_at"]);
+  const totals = (countryQuery.data ?? []).reduce((sum, country) => ({
+    income: sum.income + BigInt(country.gross_income),
+    coal: sum.coal + BigInt(country.coal_prod),
+    oil: sum.oil + BigInt(country.oil_prod),
+    copper: sum.copper + BigInt(country.copper_prod),
+    iron: sum.iron + BigInt(country.iron_prod),
+    uranium: sum.uranium + BigInt(country.uranium_prod),
+    upkeep: sum.upkeep + BigInt(country.coal_upkeep),
+  }), { income: 0n, coal: 0n, oil: 0n, copper: 0n, iron: 0n, uranium: 0n, upkeep: 0n });
+
+  const invalidateEconomy = () => {
+    void queryClient.invalidateQueries({ queryKey: ["economy_runs"] });
+    void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
+    void queryClient.invalidateQueries({ queryKey: ["countries"] });
+    void queryClient.invalidateQueries({ queryKey: ["transactions"] });
+  };
+
+  const run = useMutation({
+    mutationFn: () => rpc<{ ok: boolean; reason?: string }>("run_daily_economy", {}),
+    onSuccess: (result) => {
+      result?.ok ? toast.success("Cykl dobowy rozliczony") : toast.info("Dzisiejszy cykl został już rozliczony");
+      setConfirm(false);
+      invalidateEconomy();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const reverse = useMutation({
+    mutationFn: () => rpc<{ ok: boolean; reason?: string; run_date?: string; countries?: number }>("reverse_last_daily_economy", {}),
+    onSuccess: (result) => {
+      if (result?.ok) {
+        toast.success(`Cofnięto cykl wypłat z ${result.run_date} dla ${result.countries ?? 0} państw`);
+      } else {
+        toast.info("Brak aktywnego cyklu wypłat do cofnięcia");
+      }
+      setReverseConfirm(false);
+      invalidateEconomy();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <Panel className="p-5">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
+            <div>
+              <p className="label-hud">Następny automatyczny cykl</p>
+              <p className="num mt-2 text-3xl text-primary sm:text-4xl"><CycleCountdown /></p>
+              <p className="mt-2 text-xs text-muted-foreground">Codziennie o 20:00 czasu polskiego</p>
+            </div>
+            <CalendarClock className="size-7 text-primary" />
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button onClick={() => setConfirm(true)}>Uruchom cykl teraz</Button>
+            <Button variant="outline" onClick={() => setReverseConfirm(true)} disabled={reverse.isPending}>
+              <RotateCcw className="mr-2 size-4" />
+              Cofnij ostatni cykl
+            </Button>
+          </div>
+        </Panel>
+        <Panel className="p-4">
+          <p className="label-hud">Prognoza kolejnego cyklu</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <ValueBox label="Przychód KR" value={`+${fmtKR(totals.income.toString())}`} tone="success" />
+            <ValueBox label="Zużycie węgla" value={`−${fmtNum(totals.upkeep.toString())}`} tone="destructive" />
+            {[
+              ["Węgiel", totals.coal],
+              ["Ropa", totals.oil],
+              ["Miedź", totals.copper],
+              ["Żelazo", totals.iron],
+              ["Uran", totals.uranium],
+            ].map(([label, value]) => (
+              <ValueBox key={String(label)} label={String(label)} value={`+${fmtNum(value.toString())}`} tone="success" />
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <SectionTitle>Ostatnie rozliczenia</SectionTitle>
+      <Panel className="divide-y divide-border p-0">
+        {runs.filter((entry) => BigInt(String(entry.summary?.["total_kr"] ?? 0)) !== 0n).map((entry) => (
+          <div key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3">
+            <div className="min-w-0">
+              <p className="text-sm">Cykl {entry.run_date}</p>
+              <p className="text-xs text-muted-foreground">
+                {entry.summary?.["reversed_at"]
+                  ? `Cofnięto ${dateTime(String(entry.summary["reversed_at"]))}`
+                  : dateTime(entry.ran_at)}
+              </p>
+            </div>
+            {entry.summary?.["reversed_at"]
+              ? <Badge variant="outline">Cofnięty</Badge>
+              : <p className="num shrink-0 text-sm text-success">+{fmtKR(String(entry.summary?.["total_kr"] ?? 0))}</p>}
+          </div>
+        ))}
+        {runs.length === 0 ? <EmptyLine text="Brak rozliczonych cykli." /> : null}
+      </Panel>
+
+      <ConfirmDialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title="Uruchomić cykl dobowy?"
+        description={`Operacja obejmie ${countryQuery.data?.length ?? 0} państw. Zostaną naliczone dochody i produkcja oraz pobrany węgiel. Dzisiejszego cyklu nie można naliczyć dwukrotnie.`}
+        confirmLabel="Uruchom cykl"
+        destructive
+        pending={run.isPending}
+        onConfirm={() => run.mutate()}
+      >
+        <div className="grid grid-cols-2 gap-2">
+          <ValueBox label="Prognozowany przychód" value={`+${fmtKR(totals.income.toString())}`} tone="success" />
+          <ValueBox label="Prognozowane zużycie" value={`−${fmtNum(totals.upkeep.toString())} węgla`} tone="destructive" />
+        </div>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={reverseConfirm}
+        onOpenChange={setReverseConfirm}
+        title="Cofnąć ostatni cykl wypłat?"
+        description={latestActiveRun
+          ? `Zostaną cofnięte dochody i produkcja z cyklu ${latestActiveRun.run_date}. Operacja obejmie wszystkie państwa z tego rozliczenia i zostanie zapisana w historii. Późniejsze działania graczy nie zostaną usunięte.`
+          : "System cofnie najnowszy cykl, który nie został jeszcze cofnięty. Operacja zostanie zapisana w historii."}
+        confirmLabel="Cofnij wypłaty"
+        destructive
+        pending={reverse.isPending}
+        onConfirm={() => reverse.mutate()}
+      />
+    </div>
+  );
 }
 
 type HistoryFilter = "all" | "adjustments" | "build" | "cycles" | "military" | "missiles";
