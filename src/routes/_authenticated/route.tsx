@@ -108,7 +108,7 @@ function AuthenticatedLayout() {
 
     // Record immediately, then keep the session alive while the game tab is visible.
     recordActivity();
-    const intervalId = window.setInterval(recordActivity, 60_000);
+    const intervalId = window.setInterval(recordActivity, 10_000);
     document.addEventListener("visibilitychange", recordActivity);
 
     return () => {
