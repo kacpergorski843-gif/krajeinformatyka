@@ -94,12 +94,19 @@ function AuthenticatedLayout() {
     const recordActivity = () => {
       if (disposed || !userId || document.visibilityState !== "visible") return;
 
-      void supabase
+      // This activity table is not included in the generated schema yet.
+      const activityClient = supabase as unknown as {
+        from(table: "player_activity"): {
+          upsert(row: { user_id: string; last_seen_at: string }, options: { onConflict: string }):
+            PromiseLike<{ error: { message: string } | null }>;
+        };
+      };
+      void Promise.resolve(activityClient
         .from("player_activity")
         .upsert(
           { user_id: userId, last_seen_at: new Date().toISOString() },
           { onConflict: "user_id" },
-        )
+        ))
         .then(({ error }) => {
           if (error) console.warn("Nie udało się zapisać aktywności gracza", error);
         })
