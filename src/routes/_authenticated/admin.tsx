@@ -2459,7 +2459,7 @@ function EconomyTab() {
         onOpenChange={setReverseConfirm}
         title="Cofnąć ostatni cykl wypłat?"
         description={latestActiveRun
-          ? `Zostaną cofnięte dochody i produkcja z cyklu ${latestActiveRun.run_date}. Operacja obejmie wszystkie państwa z tego rozliczenia i zostanie zapisana w historii. Późniejsze działania graczy nie zostaną usunięte.`
+          ? `Zostaną cofnięte dochody i produkcja z cyklu ${latestActiveRun.run_date}. Operacja obejmie wszystkie państwa z tego rozliczenia i zostanie zapisana w historii. Jeśli gracze zdążyli wydać wypłacone środki lub zużyć zasoby, ich stany mogą spaść poniżej zera.`
           : "System cofnie najnowszy cykl, który nie został jeszcze cofnięty. Operacja zostanie zapisana w historii."}
         confirmLabel="Cofnij wypłaty"
         destructive
