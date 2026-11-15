@@ -1012,21 +1012,6 @@ export type Database = {
           },
         ]
       }
-      player_activity: {
-        Row: {
-          user_id: string
-          last_seen_at: string
-        }
-        Insert: {
-          user_id: string
-          last_seen_at?: string
-        }
-        Update: {
-          user_id?: string
-          last_seen_at?: string
-        }
-        Relationships: []
-      }
       region_occupations: {
         Row: {
           current_country_id: string
@@ -1693,7 +1678,6 @@ export type Database = {
       }
       run_bilateral_agreements: { Args: { p_run_date?: string }; Returns: Json }
       run_daily_economy: { Args: { p_run_date?: string }; Returns: Json }
-      reverse_last_daily_economy: { Args: never; Returns: Json }
       set_user_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
