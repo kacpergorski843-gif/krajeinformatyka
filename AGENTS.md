@@ -15,3 +15,4 @@
 - Missile flight presentation uses one SVG coordinate system and shared trajectory for projectile, trail and target to prevent responsive alignment drift.
 
 - Database migrations are applied only through Lovable Cloud; GitHub Actions only validates migration files statically (no DB credentials exist for CI, and the DB has no CLI migration registry).
+- Keep player activity in one authenticated-layout controller using the guard's validated identity and a server-stamped, owner-scoped SQL heartbeat; this avoids session-read races and device-clock spoofing.
