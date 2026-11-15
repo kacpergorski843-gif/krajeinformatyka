@@ -1,5 +1,11 @@
 # Roadmap
 
+## Current request: real player activity and daily payouts
+- [ ] Audit all activity writers, legacy migrations, live economy function, RLS and scheduling.
+- [ ] Apply heartbeat-only activity and once-per-day country payout eligibility to the shared production database.
+- [ ] Fix the single visible-app heartbeat without login/profile dependencies or competing listeners.
+- [ ] Run heartbeat, security, eligibility and repeat-cycle tests; report deployment and any verification blockers.
+
 ## Current request: missile launch presentation
 - [x] Align missile, exhaust and impact along one responsive flight path; all three endpoints verified at 1280px and 390px without browser errors.
 - [x] Simplify level I–II launch controls and clarify selection, confirmation and reporting without changing game rules.
