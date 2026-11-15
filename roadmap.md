@@ -1,5 +1,10 @@
 # Roadmap
 
+## Current request: missile launch presentation
+- [ ] Align missile, exhaust and impact along one responsive flight path.
+- [ ] Simplify level I–II launch controls and clarify selection, confirmation and reporting without changing game rules.
+- [ ] Check desktop/mobile launch presentation and available authenticated flow.
+
 ## Current request: complete visual redesign
 - [x] Rebuild the shared visual system and navigation without changing game functions.
 - [x] Unify every screen, forms, tables, dialogs and mobile layouts.
