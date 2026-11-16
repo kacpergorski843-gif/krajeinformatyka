@@ -1,10 +1,14 @@
 # Roadmap
 
 ## Current request: real player activity and daily payouts
-- [ ] Audit all activity writers, legacy migrations, live economy function, RLS and scheduling.
-- [ ] Apply heartbeat-only activity and once-per-day country payout eligibility to the shared production database.
-- [ ] Fix the single visible-app heartbeat without login/profile dependencies or competing listeners.
-- [ ] Run heartbeat, security, eligibility and repeat-cycle tests; report deployment and any verification blockers.
+- [x] Audit activity writers, legacy migrations, live economy function, RLS and schedule metadata; production activity table was missing and economy used login timestamps.
+- [x] Apply heartbeat-only activity and once-per-day eligibility to the shared production database; table/function read back successfully.
+- [x] Fix the single visible-app heartbeat without login/profile dependencies or competing listeners; server timestamps and owner-scoped RLS retain compatibility with older published clients.
+- [x] Run 9 heartbeat tests and 9 isolated PostgreSQL security/economy tests, including concurrent cycles and migration reapplication; latest build OK.
+- [ ] Verify authenticated production entry/10-second/tab-return end-to-end — blocked: no account matches the requesting user; explicit account selection or preview sign-in is required. Production activity has 19 rows, but that alone does not verify this user's flow.
+- [ ] Confirm the newly published client version — publishing requested; public homepage returns 200, but authenticated bundle deployment was not confirmed.
+- [ ] Remove synthetic writers from historical 00756/00758/00759 migration files — blocked: migration-history protection rejects edits. The new applied migration removes the initializer and replaces payout qualification; do not replay old migrations individually.
+- [ ] Apply changes directly to main — blocked: the environment uses a managed edit branch and does not permit branch switching; no direct-main claim is made.
 
 ## Current request: missile launch presentation
 - [x] Align missile, exhaust and impact along one responsive flight path; all three endpoints verified at 1280px and 390px without browser errors.
