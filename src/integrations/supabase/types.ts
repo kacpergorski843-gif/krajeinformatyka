@@ -1692,6 +1692,7 @@ export type Database = {
         Args: { p_name: string; p_region_id: string }
         Returns: Json
       }
+      reverse_last_daily_economy: { Args: never; Returns: Json }
       run_bilateral_agreements: { Args: { p_run_date?: string }; Returns: Json }
       run_daily_economy: { Args: { p_run_date?: string }; Returns: Json }
       set_user_role: {
