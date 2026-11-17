@@ -55,7 +55,7 @@ const MISSILES: {
   effect: string;
 }[] = [
   { code: "missile_1", targets: 1, requiredAa: 1, effect: "Niszczy 1 wybrany budynek" },
-  { code: "missile_2", targets: 2, requiredAa: 2, effect: "Niszczy 2 wybrane budynki" },
+  { code: "missile_2", targets: 2, requiredAa: 2, effect: "Niszczy do 2 wybranych budynków" },
   {
     code: "missile_3",
     targets: 0,
