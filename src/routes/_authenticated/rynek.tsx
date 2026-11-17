@@ -45,20 +45,23 @@ const compareUnitPrice = (a: MarketOffer, b: MarketOffer) => {
   const right = big(b.total_price_remaining) * big(a.quantity_remaining);
   return left < right ? -1 : left > right ? 1 : a.created_at.localeCompare(b.created_at);
 };
-const eventLabel = (type: string) => ({
-  OFFER_CREATED: "Wystawiono ofertę",
-  OFFER_PRICE_CHANGED: "Zmieniono cenę oferty",
-  OFFER_CANCELLED: "Anulowano ofertę",
-  OFFER_EXPIRED: "Oferta wygasła",
-  OFFER_COMPLETED: "Oferta została wyprzedana",
-  NEGOTIATION_CREATED: "Rozpoczęto negocjację",
-  NEGOTIATION_COUNTEROFFER: "Wysłano kontrofertę",
-  NEGOTIATION_ACCEPTED: "Zaakceptowano negocjację",
-  NEGOTIATION_REJECTED: "Odrzucono negocjację",
-  NEGOTIATION_CANCELLED: "Anulowano negocjację",
-  NEGOTIATION_EXPIRED: "Negocjacja wygasła",
-  MARKET_TRADE: "Zrealizowano transakcję",
-}[type] ?? "Zdarzenie rynku");
+const eventLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    OFFER_CREATED: "Wystawiono ofertę",
+    OFFER_PRICE_CHANGED: "Zmieniono cenę oferty",
+    OFFER_CANCELLED: "Anulowano ofertę",
+    OFFER_EXPIRED: "Oferta wygasła",
+    OFFER_COMPLETED: "Oferta została wyprzedana",
+    NEGOTIATION_CREATED: "Rozpoczęto negocjację",
+    NEGOTIATION_COUNTEROFFER: "Wysłano kontrofertę",
+    NEGOTIATION_ACCEPTED: "Zaakceptowano negocjację",
+    NEGOTIATION_REJECTED: "Odrzucono negocjację",
+    NEGOTIATION_CANCELLED: "Anulowano negocjację",
+    NEGOTIATION_EXPIRED: "Negocjacja wygasła",
+    MARKET_TRADE: "Zrealizowano transakcję",
+  };
+  return labels[type] ?? "Zdarzenie rynku";
+};
 
 
 function MarketPage() {
