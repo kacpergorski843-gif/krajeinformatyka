@@ -71,7 +71,7 @@ create index if not exists market_audit_events_actor_created_idx on public.marke
 create index if not exists market_audit_events_counterparty_created_idx on public.market_audit_events(counterparty_country_id,created_at desc);
 
 alter table public.market_audit_events enable row level security;
-revoke all on public.market_audit_events from public, anon;
+revoke all on public.market_audit_events from public, anon, authenticated;
 grant select on public.market_audit_events to authenticated;
 drop policy if exists market_audit_events_participants_read on public.market_audit_events;
 create policy market_audit_events_participants_read on public.market_audit_events
@@ -126,8 +126,13 @@ begin
     v_event:='NEGOTIATION_COUNTEROFFER';
   else return new;
   end if;
-  v_actor:=coalesce(public.my_country_id(),new.buyer_country_id);
-  v_other:=case when v_actor=new.buyer_country_id then v_offer.seller_country_id else new.buyer_country_id end;
+  v_actor:=case
+    when public.my_country_id() in (new.buyer_country_id,v_offer.seller_country_id)
+      then public.my_country_id()
+    else new.buyer_country_id
+  end;
+  v_other:=case when v_actor=new.buyer_country_id
+    then v_offer.seller_country_id else new.buyer_country_id end;
   insert into public.market_audit_events(offer_id,negotiation_id,event_type,actor_country_id,counterparty_country_id,resource,quantity,total_price,details)
   values(new.offer_id,new.id,v_event,v_actor,v_other,v_offer.resource,new.quantity,new.total_price,
     jsonb_build_object('last_offer_by',new.last_offer_by,'status',new.status));
