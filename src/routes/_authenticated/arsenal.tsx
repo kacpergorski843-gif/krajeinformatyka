@@ -24,7 +24,7 @@ import {
   strikesQuery,
 } from "@/lib/api";
 import type { RegionWithSlots } from "@/lib/api";
-import { BUILDING_LABELS, MISSILE_LABELS, dateTime, units } from "@/lib/format";
+import { BUILDING_LABELS, MISSILE_LABELS, big, dateTime, units } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/arsenal")({
   head: () => ({
@@ -112,7 +112,9 @@ function Arsenal() {
   const region = (allRegions ?? []).find((r) => r.id === regionId) ?? null;
   const enemyCountries = (countries ?? []).filter((c) => c.country_id !== me?.countryId);
   const enemyRegions = (allRegions ?? []).filter((r) => r.country_id === targetCountry);
-  const stock = missile && country ? Number(country[missile]) : 0;
+  const stock = missile && country ? big(country[missile]) : 0n;
+  const hasMixedResult = (result?.impacts ?? 0) > 0 && (result?.intercepted ?? 0) > 0;
+  const isPartialSalvo = (result?.launched ?? count) < count;
   const targetCountryName =
     countries?.find((c) => c.country_id === targetCountry)?.name ?? "";
 
@@ -144,6 +146,7 @@ function Arsenal() {
       window.setTimeout(() => setPhase("result"), missile === "missile_3" ? 5600 : 4200);
       void queryClient.invalidateQueries({ queryKey: ["country_stats"] });
       void queryClient.invalidateQueries({ queryKey: ["regions"] });
+      void queryClient.invalidateQueries({ queryKey: ["all_regions"] });
       void queryClient.invalidateQueries({ queryKey: ["strikes"] });
     },
     onError: (e: Error) => {
@@ -164,7 +167,7 @@ function Arsenal() {
 
   const canGoNext =
     step === 1
-      ? !!missile && stock >= count
+      ? !!missile && stock >= BigInt(count)
       : step === 2
         ? !!targetCountry
         : step === 3
@@ -248,7 +251,7 @@ function Arsenal() {
                     <p className="text-info mt-2 text-xs">Przechwycenie od {m.requiredAa} OPL</p>
                     <p
                       className={`num mt-2 text-xs ${
-                        Number(country?.[m.code] ?? 0) === 0 ? "text-inactive" : "text-primary"
+                        big(country?.[m.code] ?? 0) === 0n ? "text-inactive" : "text-primary"
                       }`}
                     >
                       W arsenale: {units(country?.[m.code] ?? 0)}
@@ -378,7 +381,7 @@ function Arsenal() {
             ) : (
               <div className="divide-border divide-y">
                 <p className="text-muted-foreground pb-2 text-xs">
-                  Wybierz {spec.targets === 1 ? "1 budynek" : `${spec.targets} budynki`} (
+                  Wybierz {spec.targets === 1 ? "1 budynek" : `maksymalnie ${spec.targets} budynki`} (
                   {slotIds.length}/{spec.targets})
                 </p>
                 {region.slots.map((s) => {
@@ -571,7 +574,7 @@ function Arsenal() {
                     (result.impacts ?? 0) > 0 ? "text-destructive" : "text-info"
                   }`}
                 >
-                  {(result.impacts ?? 0) > 0 ? "Cel zniszczony" : "Rakieta przechwycona"}
+                  {isPartialSalvo ? "Salwa niepełna" : hasMixedResult ? "Salwa częściowo skuteczna" : (result.impacts ?? 0) > 0 ? "Cel zniszczony" : "Rakiety przechwycone"}
                 </DialogTitle>
                 <DialogDescription>
                   {region?.name} — {targetCountryName}
@@ -581,7 +584,7 @@ function Arsenal() {
                 {(result.impacts ?? 0) > 0 ? <CheckCircle2 /> : <XCircle />}
                 <div>
                   <p className="label-hud">RAPORT SYSTEMU</p>
-                  <strong>{(result.impacts ?? 0) > 0 ? "CEL TRAFIONY" : "RAKIETA PRZECHWYCONA"}</strong>
+                  <strong>{isPartialSalvo ? "SALWA NIEPEŁNA" : hasMixedResult ? "CZĘŚCIOWY SUKCES" : (result.impacts ?? 0) > 0 ? "CEL TRAFIONY" : "RAKIETY PRZECHWYCONO"}</strong>
                 </div>
               </div>
               <div className="launch-summary space-y-3 text-sm">
