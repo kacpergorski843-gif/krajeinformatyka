@@ -5,7 +5,7 @@ revoke all on function public.market_expire_offers() from public, anon, authenti
 grant execute on function public.market_expire_offers() to service_role;
 
 create or replace function public.market_respond_negotiation_total(p_negotiation_id uuid,p_action text,p_quantity numeric default null,p_total_price numeric default null)
-returns jsonb language plpgsql security definer set search_path=public as $
+returns jsonb language plpgsql security definer set search_path=public as $$
 declare n public.market_negotiations; o public.market_offers; v_offer_id uuid; v_actor uuid:=public.my_country_id(); v_total numeric; v_offer_share numeric;
 begin
  if auth.uid() is null or v_actor is null then raise exception 'Brak przypisanego państwa'; end if;
