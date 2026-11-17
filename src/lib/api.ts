@@ -974,6 +974,27 @@ export async function marketRpc<T = unknown>(name: string, args: Record<string, 
   return await unwrap((supabase.rpc as any)(name,args)) as T;
 }
 
+export type MarketAuditEvent = {
+  id: number;
+  offer_id: string | null;
+  negotiation_id: string | null;
+  event_type: string;
+  actor_country_id: string | null;
+  counterparty_country_id: string | null;
+  resource: MarketResource | null;
+  quantity: string | null;
+  total_price: string | null;
+  details: Record<string, unknown>;
+  created_at: string;
+};
+export const marketAuditEventsQuery = queryOptions({
+  queryKey: ["market", "audit-events"],
+  queryFn: async (): Promise<MarketAuditEvent[]> =>
+    (await unwrap((supabase as any).from("market_audit_events")
+      .select("id,offer_id,negotiation_id,event_type,actor_country_id,counterparty_country_id,resource,quantity,total_price,details,created_at")
+      .order("created_at", { ascending: false }).limit(200))) as unknown as MarketAuditEvent[],
+});
+
 export type MarketPricePoint = { resource: MarketResource; created_at: string; unit_price: string; quantity: string; total_price: string };
 export const marketPriceHistoryQuery = queryOptions({
   queryKey: ["market","price-history"],
