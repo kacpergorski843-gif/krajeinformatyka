@@ -602,6 +602,48 @@ export type Database = {
           },
         ]
       }
+      market_audit_events: {
+        Row: {
+          actor_country_id: string | null
+          counterparty_country_id: string | null
+          created_at: string
+          details: Json
+          event_type: string
+          id: number
+          negotiation_id: string | null
+          offer_id: string | null
+          quantity: number | null
+          resource: string | null
+          total_price: number | null
+        }
+        Insert: {
+          actor_country_id?: string | null
+          counterparty_country_id?: string | null
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: never
+          negotiation_id?: string | null
+          offer_id?: string | null
+          quantity?: number | null
+          resource?: string | null
+          total_price?: number | null
+        }
+        Update: {
+          actor_country_id?: string | null
+          counterparty_country_id?: string | null
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: never
+          negotiation_id?: string | null
+          offer_id?: string | null
+          quantity?: number | null
+          resource?: string | null
+          total_price?: number | null
+        }
+        Relationships: []
+      }
       market_negotiations: {
         Row: {
           buyer_country_id: string
