@@ -72,7 +72,7 @@ function slotBlockReason(region: RegionWithSlots, item: ShopItem): string | null
       return "Limit 3 wytwórni tego surowca w regionie";
     }
   }
-  if (b.startsWith("fort_") && region.slots.some((s) => s.building.startsWith("fort_"))) {
+  if (b === "fort_1" && region.slots.some((s) => s.building.startsWith("fort_"))) {
     return "W regionie może stać tylko jedna fortyfikacja";
   }
   return null;
