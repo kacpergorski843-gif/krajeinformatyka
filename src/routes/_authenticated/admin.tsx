@@ -364,331 +364,204 @@ async function openApplicationExportPdf(data: ApplicationExport) {
 }
 
 function Update4Tools() {
-  const [activeOperation, setActiveOperation] = useState<"building" | "bonus" | "occupation">("building");
-  const { data: countries } = useQuery(countriesQuery);
-  const activeBonuses = useQuery({
-    ...activeIncomeBonusesQuery,
-    enabled: activeOperation === "bonus",
-  });
-  const activeOccupations = useQuery({
-    ...adminActiveRegionOccupationsQuery(),
-    enabled: activeOperation === "occupation",
-  });
+  const { data: countries, isLoading: countriesLoading } = useQuery(countriesQuery);
+  const { data: regions, isLoading: regionsLoading } = useQuery(allRegionOptionsQuery);
+  const activeOccupations = useQuery(adminActiveRegionOccupationsQuery());
   const queryClient = useQueryClient();
-  const { data: regions } = useQuery({
-    ...allRegionOptionsQuery,
-    enabled: activeOperation === "building" || activeOperation === "occupation",
-  });
-  const [country, setCountry] = useState("");
-  const [region, setRegion] = useState("");
   const [occupationCountry, setOccupationCountry] = useState("");
   const [occupationRegion, setOccupationRegion] = useState("");
   const [occupationTargetCountry, setOccupationTargetCountry] = useState("");
-  const [building, setBuilding] = useState("factory_1");
-  const [slot, setSlot] = useState("1");
-  const [qty, setQty] = useState("1");
-  const [percent, setPercent] = useState("25");
-  const [bonusScope, setBonusScope] = useState<"global" | "country">("global");
-  const [bonusCountry, setBonusCountry] = useState("");
-  const [selectedBonus, setSelectedBonus] = useState<NonNullable<typeof activeBonuses.data>[number] | null>(null);
-  const [hours, setHours] = useState("24");
-  const [confirm, setConfirm] = useState<"building" | "bonus" | "occupation" | null>(null);
-  const [, startOperationTransition] = useTransition();
+  const [confirm, setConfirm] = useState(false);
+  const [pendingRevert, setPendingRevert] = useState<string | null>(null);
 
-  const run = async (fn: string, args: Record<string, unknown>, label: string) => {
+  const refreshOccupationData = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["admin_actions"] }),
+      queryClient.invalidateQueries({ queryKey: ["admin_active_region_occupations"] }),
+      queryClient.invalidateQueries({ queryKey: ["regions"] }),
+      queryClient.invalidateQueries({ queryKey: ["region_occupations"] }),
+      queryClient.invalidateQueries({ queryKey: ["occupied_regions"] }),
+      queryClient.invalidateQueries({ queryKey: ["country_stats"] }),
+      queryClient.invalidateQueries({ queryKey: ["public_countries"] }),
+      queryClient.invalidateQueries({ queryKey: ["public_country"] }),
+      queryClient.invalidateQueries({ queryKey: ["public_ranking"] }),
+      queryClient.invalidateQueries({ queryKey: ["region_aa"] }),
+      queryClient.invalidateQueries({ queryKey: ["transfer_regions"] }),
+      queryClient.invalidateQueries({ queryKey: ["all_region_options"] }),
+      queryClient.invalidateQueries({ queryKey: ["all_regions"] }),
+    ]);
+  };
+
+  const occupationRegions = (regions ?? []).filter((item) => item.country_id === occupationCountry);
+  const selectedOccupationCountry = (countries ?? []).find((item) => item.country_id === occupationCountry);
+  const selectedOccupationRegion = occupationRegions.find((item) => item.id === occupationRegion);
+  const selectedOccupationTarget = (countries ?? []).find((item) => item.country_id === occupationTargetCountry);
+  const canOccupy = !!occupationCountry && !!occupationRegion && !!occupationTargetCountry &&
+    occupationCountry !== occupationTargetCountry && !!selectedOccupationRegion;
+
+  const occupyRegion = async () => {
+    if (!canOccupy) return;
     try {
-      await rpc(fn, args);
-      toast.success(label);
-      setConfirm(null);
-      if (fn === "admin_occupy_region") {
-        await queryClient.invalidateQueries({ queryKey: ["admin_actions"] });
-        await queryClient.invalidateQueries({ queryKey: ["admin_active_region_occupations"] });
-        await queryClient.invalidateQueries({ queryKey: ["regions"] });
-        await queryClient.invalidateQueries({ queryKey: ["region_occupations"] });
-        await queryClient.invalidateQueries({ queryKey: ["occupied_regions"] });
-        await queryClient.invalidateQueries({ queryKey: ["country_stats"] });
-        await queryClient.invalidateQueries({ queryKey: ["public_countries"] });
-        await queryClient.invalidateQueries({ queryKey: ["public_country"] });
-        await queryClient.invalidateQueries({ queryKey: ["public_ranking"] });
-        await queryClient.invalidateQueries({ queryKey: ["region_aa"] });
-        await queryClient.invalidateQueries({ queryKey: ["transfer_regions"] });
-        await queryClient.invalidateQueries({ queryKey: ["all_region_options"] });
-        await queryClient.invalidateQueries({ queryKey: ["all_regions"] });
-      }
+      await rpc("admin_occupy_region", {
+        p_region_id: occupationRegion,
+        p_new_country_id: occupationTargetCountry,
+      });
+      toast.success("Region przejęty");
+      setConfirm(false);
+      setOccupationRegion("");
+      setOccupationTargetCountry("");
+      await refreshOccupationData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Operacja nie powiodła się");
+      toast.error(error instanceof Error ? error.message : "Nie udało się przejąć regionu");
     }
   };
 
-  const selectedRegions = (regions ?? []).filter((item) => item.country_id === country);
-  const selectedCountry = (countries ?? []).find((item) => item.country_id === country);
-  const selectedRegion = (regions ?? []).find((item) => item.id === region);
-  const occupationRegions = (regions ?? []).filter((item) => item.country_id === occupationCountry);
-  const selectedOccupationCountry = (countries ?? []).find((item) => item.country_id === occupationCountry);
-  const selectedOccupationRegion = (regions ?? []).find((item) => item.id === occupationRegion);
-  const selectedOccupationTarget = (countries ?? []).find((item) => item.country_id === occupationTargetCountry);
-  const occupationIsSameCountry = occupationCountry !== "" && occupationCountry === occupationTargetCountry;
-
-  const countryOptions = useMemo(
-    () => (countries ?? []).map((item) => (
-      <SelectItem key={item.country_id} value={item.country_id}>
-        <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />
-        {item.name}
-      </SelectItem>
-    )),
-    [countries],
-  );
-  const selectedRegionOptions = useMemo(
-    () => selectedRegions.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>),
-    [selectedRegions],
-  );
-  const occupationRegionOptions = useMemo(
-    () => occupationRegions.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>),
-    [occupationRegions],
-  );
-
   const revertOccupation = async (regionId: string) => {
+    setPendingRevert(regionId);
     try {
       await rpc("admin_revert_region_occupation", { p_region_id: regionId });
       toast.success("Okupacja została cofnięta");
-      await queryClient.invalidateQueries({ queryKey: ["admin_actions"] });
-      await queryClient.invalidateQueries({ queryKey: ["admin_active_region_occupations"] });
-      await queryClient.invalidateQueries({ queryKey: ["regions"] });
-      await queryClient.invalidateQueries({ queryKey: ["region_occupations"] });
-      await queryClient.invalidateQueries({ queryKey: ["occupied_regions"] });
-      await queryClient.invalidateQueries({ queryKey: ["country_stats"] });
-      await queryClient.invalidateQueries({ queryKey: ["public_countries"] });
-      await queryClient.invalidateQueries({ queryKey: ["public_country"] });
-      await queryClient.invalidateQueries({ queryKey: ["public_ranking"] });
-      await queryClient.invalidateQueries({ queryKey: ["region_aa"] });
-      await queryClient.invalidateQueries({ queryKey: ["transfer_regions"] });
-      await queryClient.invalidateQueries({ queryKey: ["all_region_options"] });
-      await queryClient.invalidateQueries({ queryKey: ["all_regions"] });
+      await refreshOccupationData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udało się cofnąć okupacji");
+    } finally {
+      setPendingRevert(null);
     }
   };
 
   return (
-    <div className="min-w-0 space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {([
-          ["building", "Budynek", Building2],
-          ["bonus", "Bonus", CircleDollarSign],
-          ["occupation", "Region", Boxes],
-        ] as const).map(([value, label, Icon]) => (
-          <Button
-            key={value}
-            type="button"
-            size="sm"
-            variant={activeOperation === value ? "secondary" : "ghost"}
-            className={activeOperation === value ? "text-primary" : "text-muted-foreground"}
-            aria-pressed={activeOperation === value}
-            onClick={() => startOperationTransition(() => setActiveOperation(value))}
-          >
-            <Icon className="mr-1.5 size-4" />
-            {label}
-          </Button>
-        ))}
-      </div>
+    <div className="min-w-0 space-y-5">
+      <Panel className="space-y-4 rounded-xl border-border/80 p-4 sm:p-5">
+        <div>
+          <SectionTitle>Przejmowanie regionu</SectionTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Wybierz region aktualnie kontrolowany przez jedno państwo i wskaż nowego kontrolera.
+          </p>
+        </div>
 
-      {activeOperation === "building" ? (
-        <Panel className="space-y-4 rounded-xl border-border/80 p-4 sm:p-5">
-          <SectionTitle>Dodaj budynek</SectionTitle>
+        {countriesLoading || regionsLoading ? <LoadingRows /> : (
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Państwo">
-              <Select value={country} onValueChange={(value) => { setCountry(value); setRegion(""); }}>
+            <Field label="Państwo aktualnie kontrolujące">
+              <Select value={occupationCountry} onValueChange={(value) => {
+                setOccupationCountry(value);
+                setOccupationRegion("");
+                setOccupationTargetCountry("");
+              }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                <SelectContent>{countryOptions}</SelectContent>
-              </Select>
-            </Field>
-            <Field label="Region">
-              <Select value={region} onValueChange={setRegion} disabled={!country}>
-                <SelectTrigger><SelectValue placeholder={country ? "Wybierz region" : "Najpierw wybierz państwo"} /></SelectTrigger>
-                <SelectContent>{selectedRegionOptions}</SelectContent>
-              </Select>
-            </Field>
-            <Field label="Budynek">
-              <Select value={building} onValueChange={setBuilding}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{["factory_1","factory_2","factory_3","factory_4","factory_5","factory_6","fort_1","fort_2","fort_3"].map((item) => <SelectItem key={item} value={item}>{BUILDING_LABELS[item] ?? item}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Slot"><Input type="number" min="1" max="9" value={slot} onChange={(event) => setSlot(event.target.value)} /></Field>
-              <Field label="Ilość"><Input type="number" min="1" max="9" value={qty} onChange={(event) => setQty(event.target.value)} /></Field>
-            </div>
-          </div>
-          <div className="rounded-lg bg-secondary/40 px-3 py-2 text-sm">
-            <span className="text-muted-foreground">Cel: </span>
-            <span className="font-medium">{selectedCountry?.name ?? "—"} · {selectedRegion?.name ?? "—"}</span>
-            <span className="text-muted-foreground"> · {BUILDING_LABELS[building] ?? building} · slot {slot} · ×{qty}</span>
-          </div>
-          <div className="flex justify-end">
-            <Button disabled={!country || !region || !building || Number(slot) < 1 || Number(slot) > 9 || Number(qty) < 1 || Number(qty) > 9} onClick={() => setConfirm("building")}>Dodaj budynek</Button>
-          </div>
-        </Panel>
-      ) : null}
-
-      {activeOperation === "bonus" ? (
-        <Panel className="space-y-4 rounded-xl border-border/80 p-4 sm:p-5">
-          <SectionTitle>Bonus dochodu</SectionTitle>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Zakres bonusu">
-              <Select value={bonusScope} onValueChange={(value) => { setBonusScope(value as "global" | "country"); if (value === "global") setBonusCountry(""); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="global">Wszystkie państwa</SelectItem>
-                  <SelectItem value="country">Wybrane państwo</SelectItem>
+                  {(countries ?? []).map((item) => (
+                    <SelectItem key={item.country_id} value={item.country_id}>
+                      <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />
+                      {item.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>
-            {bonusScope === "country" ? (
-              <Field label="Państwo">
-                <Select value={bonusCountry} onValueChange={setBonusCountry}>
-                  <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                  <SelectContent>{countryOptions}</SelectContent>
-                </Select>
-              </Field>
-            ) : null}
-            <Field label="Bonus procentowy"><div className="relative"><Input type="number" min="1" max="1000" value={percent} onChange={(event) => setPercent(event.target.value)} className="pr-8" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span></div></Field>
-            <Field label="Czas trwania"><div className="relative"><Input type="number" min="1" max="720" value={hours} onChange={(event) => setHours(event.target.value)} className="pr-8" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">h</span></div></Field>
-          </div>
-          <div className="rounded-lg bg-secondary/40 px-3 py-2 text-sm">
-            <span className="font-semibold text-primary">+{percent || "0"}%</span>
-            <span className="text-muted-foreground"> dochodu · {bonusScope === "global" ? "wszystkie państwa" : (countries ?? []).find((item) => item.country_id === bonusCountry)?.name ?? "wybierz państwo"} · {hours || "0"} h</span>
-          </div>
-          <div className="flex justify-end">
-            <Button disabled={Number(percent) < 1 || Number(percent) > 1000 || Number(hours) < 1 || Number(hours) > 720 || (bonusScope === "country" && !bonusCountry)} onClick={() => setConfirm("bonus")}>Uruchom bonus</Button>
-          </div>
-          <div className="space-y-2 border-t border-border pt-4">
-            <SectionTitle>Aktywne bonusy</SectionTitle>
-            {activeBonuses.isLoading ? <LoadingRows /> : activeBonuses.data?.length ? (
-              <div className="divide-y divide-border">
-                {activeBonuses.data.map((bonus) => (
-                  <div key={bonus.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                    <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setSelectedBonus(bonus)}>
-                      <p className="truncate text-sm font-medium">+{bonus.percent}% dochodu · {bonus.country_name ?? "Wszystkie państwa"}</p>
-                      <p className="text-xs text-muted-foreground">Aktywny do {dateTime(bonus.ends_at)}</p>
-                    </button>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="border-success/30 text-success">Aktywny</Badge>
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={async () => {
-                        try {
-                          await rpc("admin_remove_income_bonus", { p_bonus_id: bonus.id });
-                          toast.success("Bonus został usunięty");
-                          void queryClient.invalidateQueries({ queryKey: ["active_income_bonuses"] });
-                        } catch (error) {
-                          toast.error(error instanceof Error ? error.message : "Nie udało się usunąć bonusu");
-                        }
-                      }}>Usuń</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : <p className="text-sm text-muted-foreground">Brak aktywnych bonusów.</p>}
-          </div>
 
-          <Dialog open={selectedBonus !== null} onOpenChange={(open) => !open && setSelectedBonus(null)}>
-            <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-md sm:w-[calc(100%-2rem)]">
-              <DialogHeader>
-                <DialogTitle>Szczegóły bonusu</DialogTitle>
-                <DialogDescription>Informacje o aktywnym bonusie.</DialogDescription>
-              </DialogHeader>
-              {selectedBonus ? (
-                <div className="divide-y divide-border rounded-lg border border-border px-3">
-                  {[
-                    ["Zakres", selectedBonus.country_name ?? "Wszystkie państwa"],
-                    ["Bonus dochodu", `+${selectedBonus.percent}%`],
-                    ["Aktywny od", dateTime(selectedBonus.starts_at)],
-                    ["Aktywny do", dateTime(selectedBonus.ends_at)],
-                    ["Utworzono", dateTime(selectedBonus.created_at)],
-                  ].map(([label, value]) => <div key={label} className="flex justify-between gap-3 py-2 text-sm"><span className="text-muted-foreground">{label}</span><span className="text-right font-medium">{value}</span></div>)}
-                </div>
-              ) : null}
-            </DialogContent>
-          </Dialog>
-        </Panel>
-      ) : null}
-
-      {activeOperation === "occupation" ? (
-        <Panel className="space-y-4 rounded-xl border-border/80 p-4 sm:p-5">
-          <SectionTitle>Przekaż region</SectionTitle>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Obecny kontroler">
-              <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); setOccupationTargetCountry(""); }}>
-                <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
-                <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
-            <Field label="Region">
-              <Select value={occupationRegion} onValueChange={setOccupationRegion} disabled={!occupationCountry}>
+            <Field label="Region do przejęcia">
+              <Select value={occupationRegion} onValueChange={(value) => {
+                setOccupationRegion(value);
+                setOccupationTargetCountry("");
+              }} disabled={!occupationCountry}>
                 <SelectTrigger><SelectValue placeholder={occupationCountry ? "Wybierz region" : "Najpierw wybierz państwo"} /></SelectTrigger>
-                <SelectContent>{occupationRegionOptions}</SelectContent>
+                <SelectContent>
+                  {occupationRegions.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
+              {occupationCountry && occupationRegions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">To państwo nie ma regionów do przejęcia.</p>
+              ) : null}
             </Field>
-            <Field label="Państwo przejmujące">
-              <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
-                <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz nowe państwo" : "Najpierw wybierz region"} /></SelectTrigger>
-                <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
-          </div>
-          <div className="rounded-lg bg-secondary/40 px-3 py-2 text-sm">
-            <span className="font-medium">{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</span>
-            {occupationIsSameCountry ? <p className="mt-1 text-xs text-destructive">Nowy kontroler musi być innym państwem.</p> : null}
-          </div>
-          <div className="flex justify-end">
-            <Button variant="destructive" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przejmij region</Button>
-          </div>
-          <div className="space-y-2 border-t border-border pt-4">
-            <SectionTitle>Aktywne okupacje</SectionTitle>
-            {activeOccupations.isLoading ? <LoadingRows /> : activeOccupations.error ? (
-              <p className="text-sm text-destructive">Nie udało się pobrać aktywnych okupacji: {activeOccupations.error.message}</p>
-            ) : activeOccupations.data?.length ? (
-              <div className="divide-y divide-border">
-                {activeOccupations.data.map((occupation) => (
-                  <div key={occupation.region_id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{occupation.region_name}</p>
-                      <p className="text-xs text-muted-foreground"><span className="text-foreground">{occupation.occupier_country_name}</span> · właściciel: {occupation.previous_country_name}</p>
-                    </div>
-                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => void revertOccupation(occupation.region_id)}>Cofnij</Button>
-                  </div>
-                ))}
-              </div>
-            ) : <p className="text-sm text-muted-foreground">Brak aktywnych okupacji.</p>}
-          </div>
-        </Panel>
-      ) : null}
 
-      <Dialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
-        <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-lg sm:w-[calc(100%-2rem)]">
-          <DialogHeader>
-            <DialogTitle>{confirm === "building" ? "Potwierdź dodanie budynku" : confirm === "bonus" ? "Potwierdź bonus dochodu" : "Potwierdź przejęcie regionu"}</DialogTitle>
-            <DialogDescription>
-              {confirm === "building" ? `Dodasz ${BUILDING_LABELS[building] ?? building} do ${selectedCountry?.name ?? "wybranego państwa"}, region ${selectedRegion?.name ?? "—"}, slot ${slot}, ilość ×${qty}.` :
-               confirm === "bonus" ? "Uruchomisz bonus +" + percent + "% dochodu na " + hours + " godzin " + (bonusScope === "global" ? "dla wszystkich państw" : "dla państwa " + ((countries ?? []).find((item) => item.country_id === bonusCountry)?.name ?? "—")) + ". Bonus wygaśnie automatycznie." :
-               `Region ${selectedOccupationRegion?.name ?? "—"} z państwa ${selectedOccupationCountry?.name ?? "—"} zostanie przejęty przez państwo ${selectedOccupationTarget?.name ?? "—"}.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Button variant="outline" onClick={() => setConfirm(null)}>Anuluj</Button>
-            <Button
-              variant={confirm === "occupation" ? "destructive" : "default"}
-              onClick={() => {
-                if (confirm === "building") void run("admin_grant_building", { p_country_id: country, p_region_id: region, p_slot_index: Number(slot), p_building: building, p_quantity: Number(qty) }, "Budynek dodany");
-                if (confirm === "bonus") void run("admin_start_income_bonus", { p_percent: Number(percent), p_hours: Number(hours), p_country_id: bonusScope === "country" ? bonusCountry : null }, "Bonus dochodu uruchomiony");
-                if (confirm === "occupation") void run("admin_occupy_region", { p_region_id: occupationRegion, p_new_country_id: occupationTargetCountry }, "Region przejęty");
-              }}
-            >Potwierdź operację</Button>
+            <Field label="Nowy kontroler">
+              <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
+                <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz państwo" : "Najpierw wybierz region"} /></SelectTrigger>
+                <SelectContent>
+                  {(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => (
+                    <SelectItem key={item.country_id} value={item.country_id}>
+                      <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+
+        <div className="rounded-lg border border-border bg-secondary/30 px-3 py-3 text-sm">
+          <p className="text-xs text-muted-foreground">Podsumowanie przejęcia</p>
+          <p className="mt-1 font-medium">
+            {selectedOccupationRegion
+              ? `${selectedOccupationRegion.name} · ${selectedOccupationCountry?.name ?? "—"} → ${selectedOccupationTarget?.name ?? "wybierz nowego kontrolera"}`
+              : "Wybierz państwo i region, aby zobaczyć podsumowanie."}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Przejęcie zmienia kontrolera regionu. Nie zmienia właściciela prawnego ani zasad działania regionu.
+          </p>
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="destructive" disabled={!canOccupy} onClick={() => setConfirm(true)}>
+            Przejmij region
+          </Button>
+        </div>
+      </Panel>
+
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <SectionTitle>Aktywne okupacje</SectionTitle>
+            <p className="mt-1 text-xs text-muted-foreground">Regiony, których kontroler został zmieniony i okupacja nadal trwa.</p>
+          </div>
+          <Badge variant="outline">{activeOccupations.data?.length ?? 0}</Badge>
+        </div>
+
+        {activeOccupations.isLoading ? <LoadingRows /> : activeOccupations.error ? (
+          <Panel className="p-4">
+            <p className="text-sm text-destructive">Nie udało się pobrać aktywnych okupacji: {activeOccupations.error.message}</p>
+          </Panel>
+        ) : activeOccupations.data?.length ? (
+          <Panel className="divide-y divide-border p-0">
+            {activeOccupations.data.map((occupation) => (
+              <div key={occupation.region_id} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{occupation.region_name} <span className="text-muted-foreground">(okupowany)</span></p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {occupation.previous_country_name} <span aria-hidden="true">→</span> {occupation.occupier_country_name}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">Od {dateTime(occupation.occupied_at)}</p>
+                </div>
+                <Button size="sm" variant="outline" className="w-full text-destructive hover:text-destructive sm:w-auto"
+                  disabled={pendingRevert !== null}
+                  onClick={() => void revertOccupation(occupation.region_id)}>
+                  {pendingRevert === occupation.region_id ? "Cofanie…" : "Cofnij okupację"}
+                </Button>
+              </div>
+            ))}
+          </Panel>
+        ) : (
+          <Panel className="p-6 text-center">
+            <p className="text-sm text-muted-foreground">Brak aktywnych okupacji.</p>
+          </Panel>
+        )}
+      </section>
+
+      <ConfirmDialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title="Potwierdzić przejęcie regionu?"
+        description={`Region ${selectedOccupationRegion?.name ?? "—"} zostanie przejęty przez ${selectedOccupationTarget?.name ?? "—"}. Dotychczasowy kontroler: ${selectedOccupationCountry?.name ?? "—"}.`}
+        confirmLabel="Potwierdź przejęcie"
+        destructive
+        onConfirm={() => void occupyRegion()}
+      />
     </div>
   );
 }
-
 
 type UpdateLogEntry = {
   id: string;
@@ -963,7 +836,7 @@ function AdminPanel() {
                 <SelectItem value="economy">Cykl dobowy</SelectItem>
                 <SelectItem value="history">Historia / Audyt</SelectItem>
                 <SelectItem value="updateLog">Update</SelectItem>
-                <SelectItem value="update4">Operacje</SelectItem>
+                <SelectItem value="update4">Przejęcie regionów</SelectItem>
                 {me?.isMainAdmin ? <SelectItem value="testEnvironment">Środowisko testowe</SelectItem> : null}
                 {me?.isMainAdmin ? <SelectItem value="maintenance">Tryb konserwacji</SelectItem> : null}
               </SelectContent>
@@ -979,7 +852,7 @@ function AdminPanel() {
                 <AdminTab value="economy" icon={<CalendarClock />}>Cykl dobowy</AdminTab>
                 <AdminTab value="history" icon={<History />}>Historia / Audyt</AdminTab>
                 <AdminTab value="updateLog" icon={<ClipboardList />}>Update</AdminTab>
-                <AdminTab value="update4" icon={<PackagePlus />}>Operacje</AdminTab>
+                <AdminTab value="update4" icon={<Boxes />}>Przejęcie regionów</AdminTab>
                 {me?.isMainAdmin ? <AdminTab value="testEnvironment" icon={<FlaskConical />}>Środowisko testowe</AdminTab> : null}
                 {me?.isMainAdmin ? <AdminTab value="maintenance" icon={<Construction />}>Konserwacja</AdminTab> : null}
               </TabsList>
