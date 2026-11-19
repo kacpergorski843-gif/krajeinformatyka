@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { countriesQuery, controlledOccupiedRegionIdsQuery, meQuery, occupiedRegionsQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
+import { adminActiveRegionOccupationsQuery, countriesQuery, meQuery, occupiedRegionsQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
 import type { RegionWithSlots, ShopItem } from "@/lib/api";
 import { BUILDING_LABELS, RESOURCE_LABELS, fmtKR, units } from "@/lib/format";
 
@@ -87,7 +87,7 @@ function Regions() {
   const countryId = selected ?? me?.countryId ?? null;
   const { data: regions } = useQuery(regionsQuery(countryId));
   const { data: occupiedRegions } = useQuery(occupiedRegionsQuery(me?.countryId));
-  const { data: controlledOccupiedRegionIds } = useQuery(controlledOccupiedRegionIdsQuery(countryId));
+  const { data: activeOccupations } = useQuery(adminActiveRegionOccupationsQuery());
   const country = countries?.find((c) => c.country_id === countryId);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [buildFor, setBuildFor] = useState<RegionWithSlots | null>(null);
@@ -259,7 +259,7 @@ function Regions() {
                 className="grid h-auto w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left hover:bg-secondary/35 hover:text-foreground"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{r.name}{controlledOccupiedRegionIds?.includes(r.id) ? " (okupowany)" : ""}</p>
+                  <p className="truncate text-sm font-semibold">{r.name}{activeOccupations?.some((occupation) => occupation.region_id === r.id) ? " (okupowany)" : ""}</p>
                   <p className="text-inactive text-[11px] tracking-[0.12em] uppercase">
                     {free === 0 ? "brak wolnych slotów" : `${free} wolnych slotów`}
                   </p>
