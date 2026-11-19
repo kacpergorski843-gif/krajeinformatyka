@@ -23,7 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { countriesQuery, meQuery, occupiedRegionsQuery, regionsQuery, rpc, shopQuery } from "@/lib/api";
+import {
+  adminActiveRegionOccupationsQuery,
+  countriesQuery,
+  meQuery,
+  occupiedRegionsQuery,
+  regionsQuery,
+  rpc,
+  shopQuery,
+} from "@/lib/api";
 import type { RegionWithSlots, ShopItem } from "@/lib/api";
 import { BUILDING_LABELS, RESOURCE_LABELS, fmtKR, units } from "@/lib/format";
 
@@ -87,6 +95,7 @@ function Regions() {
   const countryId = selected ?? me?.countryId ?? null;
   const { data: regions } = useQuery(regionsQuery(countryId));
   const { data: occupiedRegions } = useQuery(occupiedRegionsQuery(me?.countryId));
+  const { data: activeOccupations } = useQuery(adminActiveRegionOccupationsQuery());
   const country = countries?.find((c) => c.country_id === countryId);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [buildFor, setBuildFor] = useState<RegionWithSlots | null>(null);
@@ -228,7 +237,7 @@ function Regions() {
             return (
               <Panel key={r.id} className="border-destructive/40 bg-destructive/5 p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div><p className="text-sm font-semibold">{r.name}</p><p className="text-xs text-muted-foreground">OKUPOWANY przez {r.occupier_country_name} · od {new Date(r.occupied_at).toLocaleString("pl-PL")}</p></div>
+                  <div><p className="text-sm font-semibold">{r.name} (okupowany)</p><p className="text-xs text-muted-foreground">OKUPOWANY przez {r.occupier_country_name} · od {new Date(r.occupied_at).toLocaleString("pl-PL")}</p></div>
                   <span className="text-xs font-semibold text-destructive">NIE JEST POD TWOJĄ KONTROLĄ</span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -248,52 +257,55 @@ function Regions() {
           const free = 9 - r.slots.length;
           return (
             <Panel key={r.id} className="p-0">
-              <div
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-2 sm:p-3"
-              >
-              <Button
-                variant="ghost"
-                aria-expanded={open}
-                onClick={() => setExpanded(open ? null : r.id)}
-                className="grid h-auto w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left hover:bg-secondary/35 hover:text-foreground"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{r.name}</p>
-                  <p className="text-inactive text-[11px] tracking-[0.12em] uppercase">
-                    {free === 0 ? "brak wolnych slotów" : `${free} wolnych slotów`}
-                  </p>
-                </div>
-                <span className="shrink-0 text-right">
-                  <span
-                    className={`num block text-sm ${r.slots.length === 0 ? "text-inactive" : "text-primary"}`}
-                  >
-                    SLOTY {r.slots.length}/9
-                  </span>
-                  <span
-                    className={`num block text-[11px] ${r.aa_defense === "0" ? "text-inactive" : "text-info"}`}
-                  >
-                    {units(r.aa_defense)} OPL
-                  </span>
-                </span>
-                <ChevronDown
-                  className={`text-muted-foreground size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-                  strokeWidth={1.5}
-                />
-              </Button>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-2 sm:p-3">
                 <Button
-                  type="button"
                   variant="ghost"
-                  size="icon"
-                  className="size-8 shrink-0"
-                  aria-label="Zmień nazwę regionu"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setRenameFor(r);
-                    setRegionName(r.name);
-                  }}
+                  aria-expanded={open}
+                  onClick={() => setExpanded(open ? null : r.id)}
+                  className="grid h-auto w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left hover:bg-secondary/35 hover:text-foreground"
                 >
-                  <Pencil className="size-4" strokeWidth={1.5} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
+                      {r.name}
+                      {activeOccupations?.some((occupation) => occupation.region_id === r.id)
+                        ? " (okupowany)"
+                        : ""}
+                    </p>
+                    <p className="text-inactive text-[11px] tracking-[0.12em] uppercase">
+                      {free === 0 ? "brak wolnych slotów" : `${free} wolnych slotów`}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-right">
+                    <span
+                      className={`num block text-sm ${r.slots.length === 0 ? "text-inactive" : "text-primary"}`}
+                    >
+                      SLOTY {r.slots.length}/9
+                    </span>
+                    <span
+                      className={`num block text-[11px] ${r.aa_defense === "0" ? "text-inactive" : "text-info"}`}
+                    >
+                      {units(r.aa_defense)} OPL
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className={`text-muted-foreground size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+                    strokeWidth={1.5}
+                  />
                 </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    aria-label="Zmień nazwę regionu"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setRenameFor(r);
+                      setRegionName(r.name);
+                    }}
+                  >
+                    <Pencil className="size-4" strokeWidth={1.5} />
+                  </Button>
               </div>
 
               {open ? (
