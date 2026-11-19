@@ -221,8 +221,9 @@ function MyCountry() {
             <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.gross_income)}</p>
             <p className="mt-2 text-xs text-muted-foreground">Przychód na dobę</p>
           </Panel>
-          <Panel className="mt-3 rounded-xl border-border/80 p-4 shadow-sm">
-            <p className="num text-2xl font-semibold tracking-tight">{units(country.coal_upkeep)}</p>
+          <Panel className="mt-3 rounded-xl border-border/80 p-6 shadow-sm sm:p-8">
+            <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{units(country.coal_upkeep)}</p>
+            <p className="mt-2 text-xs text-muted-foreground">Zużycie węgla</p>
           </Panel>
           <div className="mt-2 flex items-center gap-2 px-1 text-xs text-muted-foreground">
             <Timer className="size-3.5" strokeWidth={1.5} />
