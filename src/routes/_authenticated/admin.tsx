@@ -392,15 +392,11 @@ function Update4Tools() {
     ]);
   };
 
-  const occupationRegions = (regions ?? []).filter(
-    (item) => item.country_id === occupationCountry,
-  );
+  const occupationRegions = (regions ?? []).filter((item) => item.country_id === occupationCountry);
   const selectedOccupationCountry = (countries ?? []).find(
     (item) => item.country_id === occupationCountry,
   );
-  const selectedOccupationRegion = occupationRegions.find(
-    (item) => item.id === occupationRegion,
-  );
+  const selectedOccupationRegion = occupationRegions.find((item) => item.id === occupationRegion);
   const selectedOccupationTarget = (countries ?? []).find(
     (item) => item.country_id === occupationTargetCountry,
   );
@@ -493,9 +489,7 @@ function Update4Tools() {
               >
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={
-                      occupationCountry ? "Wybierz region" : "Najpierw wybierz państwo"
-                    }
+                    placeholder={occupationCountry ? "Wybierz region" : "Najpierw wybierz państwo"}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -521,9 +515,7 @@ function Update4Tools() {
               >
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={
-                      occupationRegion ? "Wybierz państwo" : "Najpierw wybierz region"
-                    }
+                    placeholder={occupationRegion ? "Wybierz państwo" : "Najpierw wybierz region"}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -553,8 +545,8 @@ function Update4Tools() {
               : "Wybierz państwo i region, aby zobaczyć podsumowanie."}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Przejęcie zmienia kontrolera regionu. Nie zmienia właściciela prawnego ani zasad działania
-            regionu.
+            Przejęcie zmienia kontrolera regionu. Nie zmienia właściciela prawnego ani zasad
+            działania regionu.
           </p>
         </div>
 
