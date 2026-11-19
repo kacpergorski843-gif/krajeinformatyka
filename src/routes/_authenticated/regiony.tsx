@@ -228,7 +228,7 @@ function Regions() {
             return (
               <Panel key={r.id} className="border-destructive/40 bg-destructive/5 p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div><p className="text-sm font-semibold">{r.name}</p><p className="text-xs text-muted-foreground">OKUPOWANY przez {r.occupier_country_name} · od {new Date(r.occupied_at).toLocaleString("pl-PL")}</p></div>
+                  <div><p className="text-sm font-semibold">{r.name}{occupiedRegions?.some((occupiedRegion) => occupiedRegion.id === r.id) ? " (okupowany)" : ""}</p><p className="text-xs text-muted-foreground">OKUPOWANY przez {r.occupier_country_name} · od {new Date(r.occupied_at).toLocaleString("pl-PL")}</p></div>
                   <span className="text-xs font-semibold text-destructive">NIE JEST POD TWOJĄ KONTROLĄ</span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
