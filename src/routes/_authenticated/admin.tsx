@@ -392,12 +392,24 @@ function Update4Tools() {
     ]);
   };
 
-  const occupationRegions = (regions ?? []).filter((item) => item.country_id === occupationCountry);
-  const selectedOccupationCountry = (countries ?? []).find((item) => item.country_id === occupationCountry);
-  const selectedOccupationRegion = occupationRegions.find((item) => item.id === occupationRegion);
-  const selectedOccupationTarget = (countries ?? []).find((item) => item.country_id === occupationTargetCountry);
-  const canOccupy = !!occupationCountry && !!occupationRegion && !!occupationTargetCountry &&
-    occupationCountry !== occupationTargetCountry && !!selectedOccupationRegion;
+  const occupationRegions = (regions ?? []).filter(
+    (item) => item.country_id === occupationCountry,
+  );
+  const selectedOccupationCountry = (countries ?? []).find(
+    (item) => item.country_id === occupationCountry,
+  );
+  const selectedOccupationRegion = occupationRegions.find(
+    (item) => item.id === occupationRegion,
+  );
+  const selectedOccupationTarget = (countries ?? []).find(
+    (item) => item.country_id === occupationTargetCountry,
+  );
+  const canOccupy =
+    !!occupationCountry &&
+    !!occupationRegion &&
+    !!occupationTargetCountry &&
+    occupationCountry !== occupationTargetCountry &&
+    !!selectedOccupationRegion;
 
   const occupyRegion = async () => {
     if (!canOccupy) return;
@@ -439,19 +451,30 @@ function Update4Tools() {
           </p>
         </div>
 
-        {countriesLoading || regionsLoading ? <LoadingRows /> : (
+        {countriesLoading || regionsLoading ? (
+          <LoadingRows />
+        ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Państwo aktualnie kontrolujące">
-              <Select value={occupationCountry} onValueChange={(value) => {
-                setOccupationCountry(value);
-                setOccupationRegion("");
-                setOccupationTargetCountry("");
-              }}>
-                <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
+              <Select
+                value={occupationCountry}
+                onValueChange={(value) => {
+                  setOccupationCountry(value);
+                  setOccupationRegion("");
+                  setOccupationTargetCountry("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wybierz państwo" />
+                </SelectTrigger>
                 <SelectContent>
                   {(countries ?? []).map((item) => (
                     <SelectItem key={item.country_id} value={item.country_id}>
-                      <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />
+                      <CountryFlag
+                        flag={item.flag}
+                        alt=""
+                        className="mr-2 inline-block h-4 w-6 rounded-sm align-middle"
+                      />
                       {item.name}
                     </SelectItem>
                   ))}
@@ -460,32 +483,62 @@ function Update4Tools() {
             </Field>
 
             <Field label="Region do przejęcia">
-              <Select value={occupationRegion} onValueChange={(value) => {
-                setOccupationRegion(value);
-                setOccupationTargetCountry("");
-              }} disabled={!occupationCountry}>
-                <SelectTrigger><SelectValue placeholder={occupationCountry ? "Wybierz region" : "Najpierw wybierz państwo"} /></SelectTrigger>
+              <Select
+                value={occupationRegion}
+                onValueChange={(value) => {
+                  setOccupationRegion(value);
+                  setOccupationTargetCountry("");
+                }}
+                disabled={!occupationCountry}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      occupationCountry ? "Wybierz region" : "Najpierw wybierz państwo"
+                    }
+                  />
+                </SelectTrigger>
                 <SelectContent>
                   {occupationRegions.map((item) => (
-                    <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {occupationCountry && occupationRegions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">To państwo nie ma regionów do przejęcia.</p>
+                <p className="text-xs text-muted-foreground">
+                  To państwo nie ma regionów do przejęcia.
+                </p>
               ) : null}
             </Field>
 
             <Field label="Nowy kontroler">
-              <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
-                <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz państwo" : "Najpierw wybierz region"} /></SelectTrigger>
+              <Select
+                value={occupationTargetCountry}
+                onValueChange={setOccupationTargetCountry}
+                disabled={!occupationRegion}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      occupationRegion ? "Wybierz państwo" : "Najpierw wybierz region"
+                    }
+                  />
+                </SelectTrigger>
                 <SelectContent>
-                  {(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => (
-                    <SelectItem key={item.country_id} value={item.country_id}>
-                      <CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />
-                      {item.name}
-                    </SelectItem>
-                  ))}
+                  {(countries ?? [])
+                    .filter((item) => item.country_id !== occupationCountry)
+                    .map((item) => (
+                      <SelectItem key={item.country_id} value={item.country_id}>
+                        <CountryFlag
+                          flag={item.flag}
+                          alt=""
+                          className="mr-2 inline-block h-4 w-6 rounded-sm align-middle"
+                        />
+                        {item.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </Field>
@@ -500,7 +553,8 @@ function Update4Tools() {
               : "Wybierz państwo i region, aby zobaczyć podsumowanie."}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Przejęcie zmienia kontrolera regionu. Nie zmienia właściciela prawnego ani zasad działania regionu.
+            Przejęcie zmienia kontrolera regionu. Nie zmienia właściciela prawnego ani zasad działania
+            regionu.
           </p>
         </div>
 
@@ -515,29 +569,48 @@ function Update4Tools() {
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <SectionTitle>Aktywne okupacje</SectionTitle>
-            <p className="mt-1 text-xs text-muted-foreground">Regiony, których kontroler został zmieniony i okupacja nadal trwa.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Regiony, których kontroler został zmieniony i okupacja nadal trwa.
+            </p>
           </div>
           <Badge variant="outline">{activeOccupations.data?.length ?? 0}</Badge>
         </div>
 
-        {activeOccupations.isLoading ? <LoadingRows /> : activeOccupations.error ? (
+        {activeOccupations.isLoading ? (
+          <LoadingRows />
+        ) : activeOccupations.error ? (
           <Panel className="p-4">
-            <p className="text-sm text-destructive">Nie udało się pobrać aktywnych okupacji: {activeOccupations.error.message}</p>
+            <p className="text-sm text-destructive">
+              Nie udało się pobrać aktywnych okupacji: {activeOccupations.error.message}
+            </p>
           </Panel>
         ) : activeOccupations.data?.length ? (
           <Panel className="divide-y divide-border p-0">
             {activeOccupations.data.map((occupation) => (
-              <div key={occupation.region_id} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div
+                key={occupation.region_id}
+                className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4"
+              >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">{occupation.region_name} <span className="text-muted-foreground">(okupowany)</span></p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {occupation.previous_country_name} <span aria-hidden="true">→</span> {occupation.occupier_country_name}
+                  <p className="text-sm font-medium">
+                    {occupation.region_name}{" "}
+                    <span className="text-muted-foreground">(okupowany)</span>
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">Od {dateTime(occupation.occupied_at)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {occupation.previous_country_name} <span aria-hidden="true">→</span>{" "}
+                    {occupation.occupier_country_name}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Od {dateTime(occupation.occupied_at)}
+                  </p>
                 </div>
-                <Button size="sm" variant="outline" className="w-full text-destructive hover:text-destructive sm:w-auto"
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-destructive hover:text-destructive sm:w-auto"
                   disabled={pendingRevert !== null}
-                  onClick={() => void revertOccupation(occupation.region_id)}>
+                  onClick={() => void revertOccupation(occupation.region_id)}
+                >
                   {pendingRevert === occupation.region_id ? "Cofanie…" : "Cofnij okupację"}
                 </Button>
               </div>
