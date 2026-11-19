@@ -2,7 +2,7 @@ import { big } from "@/lib/format";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Timer } from "lucide-react";
+import { Flame, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { rulerUploadCountryFlag } from "@/lib/admin.functions";
@@ -221,6 +221,21 @@ function MyCountry() {
           <Panel className="rounded-xl border-border/80 p-6 shadow-sm sm:p-8">
             <p className="num text-4xl font-semibold tracking-tight text-primary sm:text-5xl">{kr(country.gross_income)}</p>
             <p className="mt-2 text-xs text-muted-foreground">Przychód na dobę</p>
+          </Panel>
+          <Panel className={`mt-3 overflow-hidden rounded-xl border p-4 shadow-sm sm:p-5 ${shortage ? "border-destructive/40 bg-destructive/5" : "border-border/80 bg-card"}`}>
+            <div className="flex items-center gap-3">
+              <div className={`grid size-10 shrink-0 place-items-center rounded-lg ${shortage ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-600"}`}>
+                <Flame className="size-5" strokeWidth={1.8} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-muted-foreground">Aktualne zużycie węgla</p>
+                <p className="num mt-0.5 text-2xl font-semibold tracking-tight">{units(country.coal_upkeep)} <span className="text-xs font-medium text-muted-foreground">/ doba</span></p>
+              </div>
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${shortage ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
+                {shortage ? "Niedobór" : "Pokryte"}
+              </span>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">Produkcja: +{units(country.coal_prod)} / doba · Stan magazynu: {units(country.coal)}</p>
           </Panel>
           <div className="mt-2 flex items-center gap-2 px-1 text-xs text-muted-foreground">
             <Timer className="size-3.5" strokeWidth={1.5} />
