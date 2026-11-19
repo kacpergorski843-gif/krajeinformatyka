@@ -517,23 +517,6 @@ export function adminActiveRegionOccupationsQuery() {
     },
   });
 }
-export function controlledOccupiedRegionIdsQuery(countryId: string | null | undefined) {
-  return queryOptions({
-    queryKey: ["controlled_occupied_region_ids", countryId],
-    enabled: !!countryId,
-    queryFn: async (): Promise<string[]> => {
-      const rows = await unwrap(
-        (supabase as any)
-          .from("region_control_state")
-          .select("region_id")
-          .eq("controller_country_id", countryId!)
-          .eq("is_occupied", true),
-      ) as Array<{ region_id: string }>;
-      return rows.map((row) => row.region_id);
-    },
-  });
-}
-
 export function occupiedRegionsQuery(countryId: string | null | undefined) {
   return queryOptions({
     queryKey: ["occupied_regions", countryId],
