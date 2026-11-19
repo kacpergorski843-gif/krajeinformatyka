@@ -470,96 +470,71 @@ function Update4Tools() {
   };
 
   return (
-    <div className="admin-v4-tools">
-      <div className="admin-v4-intro">
-        <div>
-          <p className="label-hud">UPRAWNIENIA ADMINISTRATORA</p>
-          <h2>Operacje specjalne</h2>
-          <p>Narzędzia administracyjne do zarządzania budynkami, ekonomią i granicami. Każda operacja jest zapisywana w audycie.</p>
-        </div>
-        <div className="admin-v4-intro-badge"><Shield /> ADMIN ONLY</div>
-      </div>
-
-      <div className="admin-operation-picker" role="tablist" aria-label="Wybierz operację">
+    <div className="min-w-0 space-y-4">
+      <div className="flex flex-wrap gap-2">
         {([
           ["building", "Budynek", Building2],
           ["bonus", "Bonus", CircleDollarSign],
           ["occupation", "Region", Boxes],
         ] as const).map(([value, label, Icon]) => (
-          <button
+          <Button
             key={value}
             type="button"
-            role="tab"
-            aria-selected={activeOperation === value}
-            className={activeOperation === value ? "is-active" : ""}
+            size="sm"
+            variant={activeOperation === value ? "secondary" : "ghost"}
+            className={activeOperation === value ? "text-primary" : "text-muted-foreground"}
+            aria-pressed={activeOperation === value}
             onClick={() => startOperationTransition(() => setActiveOperation(value))}
           >
-            <Icon />
-            <span>{label}</span>
-          </button>
+            <Icon className="mr-1.5 size-4" />
+            {label}
+          </Button>
         ))}
       </div>
-      <div className="admin-v4-grid">
-        <section className={`admin-v4-card admin-v4-operation-building ${activeOperation === "building" ? "admin-v4-mobile-active" : ""}`}>
-          <div className="admin-v4-card-top">
-            <span className="admin-v4-icon"><Building2 /></span>
-            <span className="admin-v4-step">01 / BUILD</span>
-          </div>
-          <div className="admin-v4-card-copy">
-            <h3>Dodaj budynek</h3>
-            <p>Wstaw budynek bez normalnych wymagań ekonomicznych i poziomowych. Zajętego slotu system nie nadpisze.</p>
-          </div>
-          <div className="admin-v4-fields">
-            <div className="admin-v4-field">
-              <Label>Państwo</Label>
+
+      {activeOperation === "building" ? (
+        <Panel className="space-y-4 rounded-xl border-border/80 p-4 sm:p-5">
+          <SectionTitle>Dodaj budynek</SectionTitle>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Państwo">
               <Select value={country} onValueChange={(value) => { setCountry(value); setRegion(""); }}>
                 <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
                 <SelectContent>{countryOptions}</SelectContent>
               </Select>
-            </div>
-            <div className="admin-v4-field">
-              <Label>Region</Label>
+            </Field>
+            <Field label="Region">
               <Select value={region} onValueChange={setRegion} disabled={!country}>
-                <SelectTrigger><SelectValue placeholder={country ? "Wybierz region" : "Najpierw państwo"} /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={country ? "Wybierz region" : "Najpierw wybierz państwo"} /></SelectTrigger>
                 <SelectContent>{selectedRegionOptions}</SelectContent>
               </Select>
-            </div>
-            <div className="admin-v4-field">
-              <Label>Budynek</Label>
+            </Field>
+            <Field label="Budynek">
               <Select value={building} onValueChange={setBuilding}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{["factory_1","factory_2","factory_3","factory_4","factory_5","factory_6","fort_1","fort_2","fort_3"].map((item) => <SelectItem key={item} value={item}>{BUILDING_LABELS[item] ?? item}</SelectItem>)}</SelectContent>
               </Select>
-            </div>
-            <div className="admin-v4-inline">
-              <div className="admin-v4-field"><Label>Slot</Label><Input type="number" min="1" max="9" value={slot} onChange={(event) => setSlot(event.target.value)} /></div>
-              <div className="admin-v4-field"><Label>Ilość</Label><Input type="number" min="1" max="9" value={qty} onChange={(event) => setQty(event.target.value)} /></div>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Slot"><Input type="number" min="1" max="9" value={slot} onChange={(event) => setSlot(event.target.value)} /></Field>
+              <Field label="Ilość"><Input type="number" min="1" max="9" value={qty} onChange={(event) => setQty(event.target.value)} /></Field>
             </div>
           </div>
-          <div className="admin-v4-summary">
-            <span>CEL</span><strong>{selectedCountry?.name ?? "—"} · {selectedRegion?.name ?? "—"}</strong>
-            <small>{BUILDING_LABELS[building] ?? building} · slot {slot} · ×{qty}</small>
+          <div className="rounded-lg bg-secondary/40 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">Cel: </span>
+            <span className="font-medium">{selectedCountry?.name ?? "—"} · {selectedRegion?.name ?? "—"}</span>
+            <span className="text-muted-foreground"> · {BUILDING_LABELS[building] ?? building} · slot {slot} · ×{qty}</span>
           </div>
-          <Button className="admin-v4-submit" disabled={!country || !region || !building || Number(slot) < 1 || Number(slot) > 9 || Number(qty) < 1 || Number(qty) > 9} onClick={() => setConfirm("building")}>Dodaj budynek <ChevronRight /></Button>
-        </section>
+          <div className="flex justify-end">
+            <Button disabled={!country || !region || !building || Number(slot) < 1 || Number(slot) > 9 || Number(qty) < 1 || Number(qty) > 9} onClick={() => setConfirm("building")}>Dodaj budynek</Button>
+          </div>
+        </Panel>
+      ) : null}
 
-        <section className={`admin-v4-card admin-v4-operation-bonus ${activeOperation === "bonus" ? "admin-v4-mobile-active" : ""}`}>
-          <div className="admin-v4-card-top">
-            <span className="admin-v4-icon"><CircleDollarSign /></span>
-            <span className="admin-v4-step">02 / ECONOMY</span>
-          </div>
-          <div className="admin-v4-card-copy">
-            <h3>Bonus dochodu</h3>
-            <p>Uruchom czasowy bonus do przychodu wszystkich państw albo tylko wskazanego kraju. Po upływie czasu bonus wygasa automatycznie.</p>
-          </div>
-          <div className="admin-v4-bonus-display">
-            <span>AKTYWACJA</span>
-            <strong>+{percent || "0"}%</strong>
-            <small>przez {hours || "0"} godzin</small>
-          </div>
-          <div className="admin-v4-fields">
-            <div className="admin-v4-field">
-              <Label>Zakres bonusu</Label>
+      {activeOperation === "bonus" ? (
+        <Panel className="space-y-4 rounded-xl border-border/80 p-4 sm:p-5">
+          <SectionTitle>Bonus dochodu</SectionTitle>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Zakres bonusu">
               <Select value={bonusScope} onValueChange={(value) => { setBonusScope(value as "global" | "country"); if (value === "global") setBonusCountry(""); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -567,164 +542,128 @@ function Update4Tools() {
                   <SelectItem value="country">Wybrane państwo</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </Field>
             {bonusScope === "country" ? (
-              <div className="admin-v4-field">
-                <Label>Państwo</Label>
+              <Field label="Państwo">
                 <Select value={bonusCountry} onValueChange={setBonusCountry}>
                   <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
                   <SelectContent>{countryOptions}</SelectContent>
                 </Select>
-              </div>
+              </Field>
             ) : null}
-            <div className="admin-v4-field"><Label>Bonus procentowy</Label><div className="admin-v4-input-suffix"><Input type="number" min="1" max="1000" value={percent} onChange={(event) => setPercent(event.target.value)} /><span>%</span></div></div>
-            <div className="admin-v4-field"><Label>Czas trwania</Label><div className="admin-v4-input-suffix"><Input type="number" min="1" max="720" value={hours} onChange={(event) => setHours(event.target.value)} /><span>h</span></div></div>
+            <Field label="Bonus procentowy"><div className="relative"><Input type="number" min="1" max="1000" value={percent} onChange={(event) => setPercent(event.target.value)} className="pr-8" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span></div></Field>
+            <Field label="Czas trwania"><div className="relative"><Input type="number" min="1" max="720" value={hours} onChange={(event) => setHours(event.target.value)} className="pr-8" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">h</span></div></Field>
           </div>
-          <div className="admin-v4-summary admin-v4-summary-accent">
-            <span>EFEKT</span><strong>Dochód +{percent || "0"}% · {bonusScope === "global" ? "wszystkie państwa" : (countries ?? []).find((item) => item.country_id === bonusCountry)?.name ?? "wybierz państwo"}</strong><small>Automatyczne wygaśnięcie po {hours || "0"} h</small>
+          <div className="rounded-lg bg-secondary/40 px-3 py-2 text-sm">
+            <span className="font-semibold text-primary">+{percent || "0"}%</span>
+            <span className="text-muted-foreground"> dochodu · {bonusScope === "global" ? "wszystkie państwa" : (countries ?? []).find((item) => item.country_id === bonusCountry)?.name ?? "wybierz państwo"} · {hours || "0"} h</span>
           </div>
-          <Button className="admin-v4-submit" disabled={Number(percent) < 1 || Number(percent) > 1000 || Number(hours) < 1 || Number(hours) > 720 || (bonusScope === "country" && !bonusCountry)} onClick={() => setConfirm("bonus")}>Uruchom bonus <ChevronRight /></Button>
-          <div className="mt-4 border-t border-border pt-4">
-            <p className="label-hud mb-2">AKTYWNE BONUSY</p>
+          <div className="flex justify-end">
+            <Button disabled={Number(percent) < 1 || Number(percent) > 1000 || Number(hours) < 1 || Number(hours) > 720 || (bonusScope === "country" && !bonusCountry)} onClick={() => setConfirm("bonus")}>Uruchom bonus</Button>
+          </div>
+          <div className="space-y-2 border-t border-border pt-4">
+            <SectionTitle>Aktywne bonusy</SectionTitle>
             {activeBonuses.isLoading ? <LoadingRows /> : activeBonuses.data?.length ? (
-              <div className="space-y-2">
+              <div className="divide-y divide-border">
                 {activeBonuses.data.map((bonus) => (
-                  <div
-                    key={bonus.id}
-                    className="grid cursor-pointer gap-2 border border-border bg-secondary/30 p-3 transition-colors hover:border-primary/40 hover:bg-secondary/50 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedBonus(bonus)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        setSelectedBonus(bonus);
-                      }
-                    }}
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">+{bonus.percent}% dochodu · {bonus.country_name ?? "Wszystkie państwa"}</p>
+                  <div key={bonus.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                    <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setSelectedBonus(bonus)}>
+                      <p className="truncate text-sm font-medium">+{bonus.percent}% dochodu · {bonus.country_name ?? "Wszystkie państwa"}</p>
                       <p className="text-xs text-muted-foreground">Aktywny do {dateTime(bonus.ends_at)}</p>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="border-success/30 text-success">Aktywny</Badge>
+                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={async () => {
+                        try {
+                          await rpc("admin_remove_income_bonus", { p_bonus_id: bonus.id });
+                          toast.success("Bonus został usunięty");
+                          void queryClient.invalidateQueries({ queryKey: ["active_income_bonuses"] });
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "Nie udało się usunąć bonusu");
+                        }
+                      }}>Usuń</Button>
                     </div>
-                    <Badge variant="outline" className="w-fit border-success/30 text-success">AKTYWNY</Badge>
-                    <Button size="sm" variant="destructive" onClick={async (event) => {
-                      event.stopPropagation();
-                      try {
-                        await rpc("admin_remove_income_bonus", { p_bonus_id: bonus.id });
-                        toast.success("Bonus został usunięty");
-                        void queryClient.invalidateQueries({ queryKey: ["active_income_bonuses"] });
-                      } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Nie udało się usunąć bonusu");
-                      }
-                    }}>Usuń bonus</Button>
                   </div>
                 ))}
               </div>
-            ) : <p className="text-xs text-muted-foreground">Brak aktywnych bonusów.</p>}
+            ) : <p className="text-sm text-muted-foreground">Brak aktywnych bonusów.</p>}
           </div>
 
           <Dialog open={selectedBonus !== null} onOpenChange={(open) => !open && setSelectedBonus(null)}>
             <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-md sm:w-[calc(100%-2rem)]">
               <DialogHeader>
                 <DialogTitle>Szczegóły bonusu</DialogTitle>
-                <DialogDescription>Sprawdź dokładnie, którego państwa dotyczy bonus, zanim go usuniesz.</DialogDescription>
+                <DialogDescription>Informacje o aktywnym bonusie.</DialogDescription>
               </DialogHeader>
               {selectedBonus ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
-                    <span className="text-sm text-muted-foreground">Zakres</span>
-                    <span className="text-right text-sm font-semibold">{selectedBonus.country_name ?? "Wszystkie państwa"}</span>
-                  </div>
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
-                    <span className="text-sm text-muted-foreground">Bonus dochodu</span>
-                    <span className="num text-sm font-semibold text-success">+{selectedBonus.percent}%</span>
-                  </div>
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
-                    <span className="text-sm text-muted-foreground">Aktywny od</span>
-                    <span className="text-right text-sm">{dateTime(selectedBonus.starts_at)}</span>
-                  </div>
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
-                    <span className="text-sm text-muted-foreground">Aktywny do</span>
-                    <span className="text-right text-sm">{dateTime(selectedBonus.ends_at)}</span>
-                  </div>
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border bg-secondary/30 p-3">
-                    <span className="text-sm text-muted-foreground">Utworzono</span>
-                    <span className="text-right text-sm">{dateTime(selectedBonus.created_at)}</span>
-                  </div>
-                  <p className="pt-2 text-xs text-muted-foreground">
-                    {selectedBonus.country_name
-                      ? "Ten bonus działa tylko na wybrane państwo."
-                      : "Ten bonus działa na wszystkie państwa."}
-                  </p>
+                <div className="divide-y divide-border rounded-lg border border-border px-3">
+                  {[
+                    ["Zakres", selectedBonus.country_name ?? "Wszystkie państwa"],
+                    ["Bonus dochodu", `+${selectedBonus.percent}%`],
+                    ["Aktywny od", dateTime(selectedBonus.starts_at)],
+                    ["Aktywny do", dateTime(selectedBonus.ends_at)],
+                    ["Utworzono", dateTime(selectedBonus.created_at)],
+                  ].map(([label, value]) => <div key={label} className="flex justify-between gap-3 py-2 text-sm"><span className="text-muted-foreground">{label}</span><span className="text-right font-medium">{value}</span></div>)}
                 </div>
               ) : null}
             </DialogContent>
           </Dialog>
-        </section>
+        </Panel>
+      ) : null}
 
-        <section className={`admin-v4-card admin-v4-operation-occupation ${activeOperation === "occupation" ? "admin-v4-mobile-active" : ""}`}>
-          <div className="admin-v4-card-top">
-            <span className="admin-v4-icon admin-v4-icon-danger"><Radar /></span>
-            <span className="admin-v4-step">03 / TERRITORY</span>
-          </div>
-          <div className="admin-v4-card-copy">
-            <h3>Przekaż region</h3>
-            <p>Zmień kontrolę nad regionem na wybrane państwo. Poprzedni właściciel pozostaje zapisany w historii operacji.</p>
-          </div>
-          <div className="admin-v4-fields">
-            <div className="admin-v4-field">
-              <Label>Obecny kontroler</Label>
+      {activeOperation === "occupation" ? (
+        <Panel className="space-y-4 rounded-xl border-border/80 p-4 sm:p-5">
+          <SectionTitle>Przekaż region</SectionTitle>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Obecny kontroler">
               <Select value={occupationCountry} onValueChange={(value) => { setOccupationCountry(value); setOccupationRegion(""); setOccupationTargetCountry(""); }}>
-                <SelectTrigger><SelectValue placeholder="Wybierz kraj" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Wybierz państwo" /></SelectTrigger>
                 <SelectContent>{(countries ?? []).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
               </Select>
-            </div>
-            <div className="admin-v4-field">
-              <Label>Region</Label>
+            </Field>
+            <Field label="Region">
               <Select value={occupationRegion} onValueChange={setOccupationRegion} disabled={!occupationCountry}>
-                <SelectTrigger><SelectValue placeholder={occupationCountry ? "Wybierz region" : "Najpierw wybierz kraj"} /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={occupationCountry ? "Wybierz region" : "Najpierw wybierz państwo"} /></SelectTrigger>
                 <SelectContent>{occupationRegionOptions}</SelectContent>
               </Select>
-            </div>
+            </Field>
+            <Field label="Państwo przejmujące">
+              <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
+                <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz nowe państwo" : "Najpierw wybierz region"} /></SelectTrigger>
+                <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
           </div>
-          <div className="admin-v4-field">
-            <Label>Państwo przejmujące</Label>
-            <Select value={occupationTargetCountry} onValueChange={setOccupationTargetCountry} disabled={!occupationRegion}>
-              <SelectTrigger><SelectValue placeholder={occupationRegion ? "Wybierz nowe państwo" : "Najpierw wybierz region"} /></SelectTrigger>
-              <SelectContent>{(countries ?? []).filter((item) => item.country_id !== occupationCountry).map((item) => <SelectItem key={item.country_id} value={item.country_id}><CountryFlag flag={item.flag} alt="" className="mr-2 inline-block h-4 w-6 rounded-sm align-middle" />{item.name}</SelectItem>)}</SelectContent>
-            </Select>
+          <div className="rounded-lg bg-secondary/40 px-3 py-2 text-sm">
+            <span className="font-medium">{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</span>
+            {occupationIsSameCountry ? <p className="mt-1 text-xs text-destructive">Nowy kontroler musi być innym państwem.</p> : null}
           </div>
-          <div className="admin-v4-summary admin-v4-summary-danger">
-            <span>PRZEJĘCIE REGIONU</span><strong>{selectedOccupationCountry?.name ?? "—"} · {selectedOccupationRegion?.name ?? "—"} → {selectedOccupationTarget?.name ?? "—"}</strong><small>{occupationIsSameCountry ? "Nowy właściciel musi być innym państwem." : "Zmieni się aktualny kontroler regionu. Właściciel prawny i infrastruktura pozostaną zapisani."}</small>
+          <div className="flex justify-end">
+            <Button variant="destructive" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przejmij region</Button>
           </div>
-          <Button variant="destructive" className="admin-v4-submit" disabled={!occupationRegion || !occupationCountry || !occupationTargetCountry || occupationIsSameCountry} onClick={() => setConfirm("occupation")}>Przejmij region <ChevronRight /></Button>
-          <div className="mt-5 border-t border-border pt-4">
-            <p className="label-hud mb-2">AKTYWNE OKUPACJE</p>
+          <div className="space-y-2 border-t border-border pt-4">
+            <SectionTitle>Aktywne okupacje</SectionTitle>
             {activeOccupations.isLoading ? <LoadingRows /> : activeOccupations.error ? (
-              <p className="text-xs text-destructive">Nie udało się pobrać aktywnych okupacji: {activeOccupations.error.message}</p>
+              <p className="text-sm text-destructive">Nie udało się pobrać aktywnych okupacji: {activeOccupations.error.message}</p>
             ) : activeOccupations.data?.length ? (
-              <div className="space-y-2">
+              <div className="divide-y divide-border">
                 {activeOccupations.data.map((occupation) => (
-                  <div key={occupation.region_id} className="grid gap-3 border border-destructive/30 bg-destructive/5 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                    <div>
-                      <p className="text-sm font-semibold">{occupation.region_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">{occupation.occupier_country_name}</span> kontroluje region · właściciel prawny: {occupation.previous_country_name}
-                      </p>
+                  <div key={occupation.region_id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{occupation.region_name}</p>
+                      <p className="text-xs text-muted-foreground"><span className="text-foreground">{occupation.occupier_country_name}</span> · właściciel: {occupation.previous_country_name}</p>
                     </div>
-                    <Button size="sm" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => void revertOccupation(occupation.region_id)}>
-                      Cofnij okupację
-                    </Button>
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => void revertOccupation(occupation.region_id)}>Cofnij</Button>
                   </div>
                 ))}
               </div>
-            ) : <p className="text-xs text-muted-foreground">Brak aktywnych okupacji.</p>}
+            ) : <p className="text-sm text-muted-foreground">Brak aktywnych okupacji.</p>}
           </div>
-        </section>
-      </div>
+        </Panel>
+      ) : null}
 
       <Dialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
-        <DialogContent className="admin-v4-confirm">
+        <DialogContent className="admin-dialog w-[calc(100%-1rem)] max-w-lg sm:w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle>{confirm === "building" ? "Potwierdź dodanie budynku" : confirm === "bonus" ? "Potwierdź bonus dochodu" : "Potwierdź przejęcie regionu"}</DialogTitle>
             <DialogDescription>
@@ -733,7 +672,7 @@ function Update4Tools() {
                `Region ${selectedOccupationRegion?.name ?? "—"} z państwa ${selectedOccupationCountry?.name ?? "—"} zostanie przejęty przez państwo ${selectedOccupationTarget?.name ?? "—"}.`}
             </DialogDescription>
           </DialogHeader>
-          <div className="admin-v4-confirm-actions">
+          <div className="grid gap-2 sm:grid-cols-2">
             <Button variant="outline" onClick={() => setConfirm(null)}>Anuluj</Button>
             <Button
               variant={confirm === "occupation" ? "destructive" : "default"}
@@ -748,6 +687,7 @@ function Update4Tools() {
       </Dialog>
     </div>
   );
+}
 }
 
 
