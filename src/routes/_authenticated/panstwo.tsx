@@ -222,8 +222,7 @@ function MyCountry() {
             <p className="mt-2 text-xs text-muted-foreground">Przychód na dobę</p>
           </Panel>
           <Panel className="mt-3 rounded-xl border-border/80 p-4 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">Zużycie węgla</p>
-            <p className="num mt-1 text-2xl font-semibold tracking-tight">{units(country.coal_upkeep)} <span className="text-xs font-medium text-muted-foreground">/ doba</span></p>
+            <p className="num text-2xl font-semibold tracking-tight">{units(country.coal_upkeep)}</p>
           </Panel>
           <div className="mt-2 flex items-center gap-2 px-1 text-xs text-muted-foreground">
             <Timer className="size-3.5" strokeWidth={1.5} />
