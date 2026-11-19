@@ -688,7 +688,6 @@ function Update4Tools() {
     </div>
   );
 }
-}
 
 
 type UpdateLogEntry = {
