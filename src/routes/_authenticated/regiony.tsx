@@ -228,7 +228,7 @@ function Regions() {
             return (
               <Panel key={r.id} className="border-destructive/40 bg-destructive/5 p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div><p className="text-sm font-semibold">{r.name}{occupiedRegions?.some((occupiedRegion) => occupiedRegion.id === r.id) ? " (okupowany)" : ""}</p><p className="text-xs text-muted-foreground">OKUPOWANY przez {r.occupier_country_name} · od {new Date(r.occupied_at).toLocaleString("pl-PL")}</p></div>
+                  <div><p className="text-sm font-semibold">{r.name} (okupowany)</p><p className="text-xs text-muted-foreground">OKUPOWANY przez {r.occupier_country_name} · od {new Date(r.occupied_at).toLocaleString("pl-PL")}</p></div>
                   <span className="text-xs font-semibold text-destructive">NIE JEST POD TWOJĄ KONTROLĄ</span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -258,7 +258,7 @@ function Regions() {
                 className="grid h-auto w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-3 text-left hover:bg-secondary/35 hover:text-foreground"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{r.name}</p>
+                  <p className="truncate text-sm font-semibold">{r.name}{occupiedRegions?.some((occupiedRegion) => occupiedRegion.id === r.id) ? " (okupowany)" : ""}</p>
                   <p className="text-inactive text-[11px] tracking-[0.12em] uppercase">
                     {free === 0 ? "brak wolnych slotów" : `${free} wolnych slotów`}
                   </p>
