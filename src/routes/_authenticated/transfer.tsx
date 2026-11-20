@@ -104,7 +104,7 @@ function Transfers() {
     ) : null}
 
     {!isPending && !isError ? <div className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
-      <Panel className="hud-frame">
+      <Panel className="hud-frame overflow-hidden">
         <div className="mb-6 flex items-center gap-3"><div className="brand-mark"><ArrowRightLeft className="size-5"/></div><div><p className="font-display text-lg font-semibold">Nowy transfer</p><p className="text-sm text-muted-foreground">Wybierz odbiorcę, zasób i kwotę.</p></div></div>
         <div className="space-y-5">
           <div><p className="label-hud mb-2">1. Wybierz państwo</p>
@@ -126,7 +126,7 @@ function Transfers() {
         </div>
       </Panel>
 
-      <Panel className="h-fit">
+      <Panel className="h-fit overflow-hidden">
         <SectionTitle>Podsumowanie</SectionTitle>
         <div className="rounded-xl border border-border bg-secondary/30 p-4" aria-live="polite">
           <div className="flex items-center gap-3"><Icon className="size-5 text-primary"/><div><p className="text-xs text-muted-foreground uppercase">Wysyłasz</p><p className="num text-xl font-semibold">{fmtNum(amountBigInt.toString())} {resources.find(x=>x[0]===resource)?.[1]}</p></div></div>
