@@ -1372,6 +1372,45 @@
 }
 
 
+/* Global card clipping: prevent child backgrounds from bleeding through rounded corners. */
+:where(
+  .panel,
+  .stat-card,
+  .stat-card-command,
+  .command-kpi,
+  .command-hero,
+  .command-overview,
+  .command-alert,
+  .command-hero-cycle,
+  .command-overview-metrics,
+  .shop-card,
+  .shop-hero,
+  .shop-balance,
+  .region-overview,
+  .region-overview-count,
+  .transfer-hero,
+  .resource-command,
+  .daily-income-card,
+  .country-card,
+  .admin-v4-card,
+  .admin-data-row,
+  .command-region-row,
+  .profile-strip,
+  .auth-card,
+  .landing-shell,
+  .missile-select-card,
+  .launch-console,
+  .missile-flight
+) {
+  overflow: clip;
+}
+
+.hud-frame::before,
+.hud-frame::after {
+  display: none !important;
+  content: none !important;
+}
+
 /* Premium, roomier action notifications with native-feeling right-swipe dismissal. */
 .premium-toaster {
   width: min(460px, calc(100vw - 24px)) !important;
