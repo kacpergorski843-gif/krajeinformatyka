@@ -55,6 +55,14 @@ export function fmtNum(v: string | number | bigint | null | undefined): string {
       return sign + billions.toString() + NBSP + "mld";
     }
 
+    if (abs >= 1_000_000n) {
+      const tenths = abs * 10n / 1_000_000n;
+      return sign + (tenths / 10n).toString() + (tenths % 10n ? "," + (tenths % 10n).toString() : "") + "M";
+    }
+    if (abs >= 1_000n) {
+      const tenths = abs * 10n / 1_000n;
+      return sign + (tenths / 10n).toString() + (tenths % 10n ? "," + (tenths % 10n).toString() : "") + "k";
+    }
     return groupDigits(value.toString());
   }
 
@@ -72,6 +80,12 @@ export function fmtNum(v: string | number | bigint | null | undefined): string {
     return sign + x + NBSP + "mld";
   }
 
+  if (abs >= 1e6 || abs >= 1e3) {
+    const divisor = abs >= 1e6 ? 1e6 : 1e3;
+    const suffix = abs >= 1e6 ? "M" : "k";
+    const scaled = Math.floor((abs / divisor) * 10) / 10;
+    return sign + scaled.toFixed(1).replace(/,?0$/, "").replace(".", ",") + suffix;
+  }
   return groupDigits(n);
 }
 
@@ -87,7 +101,7 @@ export function krShort(v: string | number | null | undefined): string {
 }
 
 export function units(v: string | number | null | undefined): string {
-  return groupDigits(v);
+  return fmtNum(v);
 }
 
 export const BUILDING_LABELS: Record<string, string> = {
