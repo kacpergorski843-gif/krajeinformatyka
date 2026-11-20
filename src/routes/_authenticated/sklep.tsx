@@ -207,7 +207,7 @@ function Shop() {
     if (level <= 1) return null;
     const required = `factory_${level - 1}`;
     if (!ownedByBuilding.has(required)) {
-      return `Poziom ${level} — ZABLOKOWANY · WYMAGANY: Fabryka poziom ${level - 1}`;
+      return `Wymagany poziom ${level - 1}`;
     }
     return null;
   }
@@ -302,7 +302,7 @@ function Shop() {
           <p className="text-lg font-semibold">{i.name}</p>
           <p className="num text-primary text-xl">{fmtKR(i.cost_kr)}</p>
         </div>
-        {levelLock(i) ? <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-destructive">{levelLock(i)}</p> : null}
+        {levelLock(i) ? <p className="mt-3 text-xs font-semibold text-destructive">{levelLock(i)}</p> : null}
         <div className="mt-5 flex-1 space-y-2 border-t border-border pt-4 text-sm">
           {RESOURCES.filter((r) => unitCost(i, r) > 0).map((r) => (
             <p key={r} className="text-muted-foreground uppercase">
