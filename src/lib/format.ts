@@ -84,7 +84,7 @@ export function fmtNum(v: string | number | bigint | null | undefined): string {
     const divisor = abs >= 1e6 ? 1e6 : 1e3;
     const suffix = abs >= 1e6 ? "M" : "k";
     const scaled = Math.floor((abs / divisor) * 10) / 10;
-    return sign + scaled.toFixed(1).replace(/,?0$/, "").replace(".", ",") + suffix;
+    return sign + scaled.toFixed(1).replace(/\.0$/, "").replace(".", ",") + suffix;
   }
   return groupDigits(n);
 }
