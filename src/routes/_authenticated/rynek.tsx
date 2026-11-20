@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Handshake, Package, Plus, Search, X, ChartNoAxesCombined } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { fmtNum } from "@/lib/format";
 import { Panel, SectionTitle } from "@/components/stat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +36,7 @@ const big = (value: string | number | bigint | null | undefined): bigint => {
   if (m) { const frac = m[3] ?? ""; const exp = Number(m[4]); const digits = (m[2] + frac).padEnd(m[2].length + exp, "0").slice(0, m[2].length + exp); return BigInt((m[1] || "") + (digits || "0")); }
   const n = Number(raw); return Number.isFinite(n) ? BigInt(Math.trunc(n)) : 0n;
 };
-const fmt = (value: string | number | bigint) => big(value).toLocaleString("pl-PL");
+const fmt = (value: string | number | bigint) => fmtNum(big(value));
 const total = (a: string, b: string) => (big(a) * big(b)).toString();
 const proportionalTotal = (fullTotal: string, quantity: string, fullQuantity: string) => (big(fullQuantity) === 0n ? 0n : big(fullTotal) * big(quantity) / big(fullQuantity)).toString();
 const validInt = (value: string) => /^[1-9]\d*$/.test(value);
