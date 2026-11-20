@@ -35,7 +35,7 @@ end $$;
 
 -- Negotiations and counteroffers must also cover the complete remaining lot.
 create or replace function public.market_propose_total(p_offer_id uuid,p_quantity numeric,p_total_price numeric)
-returns uuid language plpgsql security definer set search_path=public as $
+returns uuid language plpgsql security definer set search_path=public as $$
 declare v_offer public.market_offers; v_buyer uuid:=public.my_country_id(); v_id uuid;
 begin
  if v_buyer is null or auth.uid() is null then raise exception 'Brak przypisanego państwa'; end if;
@@ -47,10 +47,10 @@ begin
  insert into public.market_negotiations(offer_id,buyer_country_id,quantity,unit_price,total_price,last_offer_by,expires_at)
  values(p_offer_id,v_buyer,p_quantity,greatest(1,ceil(p_total_price/p_quantity)),p_total_price,'BUYER',least(now()+interval '7 days',v_offer.expires_at)) returning id into v_id;
  return v_id;
-end $;
+end $$;
 
 create or replace function public.market_respond_negotiation_total(p_negotiation_id uuid,p_action text,p_quantity numeric default null,p_total_price numeric default null)
-returns jsonb language plpgsql security definer set search_path=public as $
+returns jsonb language plpgsql security definer set search_path=public as $$
 declare n public.market_negotiations; o public.market_offers; v_offer_id uuid; v_actor uuid:=public.my_country_id(); v_total numeric; v_offer_share numeric;
 begin
  if auth.uid() is null or v_actor is null then raise exception 'Brak przypisanego państwa'; end if;
@@ -95,35 +95,6 @@ begin
  (o.seller_country_id,'MARKET_SELL','Sprzedaż po negocjacji: '||o.resource,v_total,auth.uid(),jsonb_build_object('offer_id',o.id,'quantity',n.quantity,'total_price',v_total,'buyer_country_id',n.buyer_country_id));
  update public.market_negotiations set status='ACCEPTED',updated_at=now() where id=n.id;
  return jsonb_build_object('ok',true,'quantity',n.quantity,'total',v_total);
-end $;
-
-create table if not exists public.market_audit_events (
-  id bigint generated always as identity primary key,
-  offer_id uuid,
-  negotiation_id uuid,
-  event_type text not null,
-  actor_country_id uuid,
-  counterparty_country_id uuid,
-  resource text,
-  quantity numeric,
-  total_price numeric,
-  details jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now()
-);
-
-create index if not exists market_audit_events_offer_created_idx on public.market_audit_events(offer_id,created_at desc);
-create index if not exists market_audit_events_actor_created_idx on public.market_audit_events(actor_country_id,created_at desc);
-create index if not exists market_audit_events_counterparty_created_idx on public.market_audit_events(counterparty_country_id,created_at desc);
-
-alter table public.market_audit_events enable row level security;
-revoke all on public.market_audit_events from public, anon, authenticated;
-grant select on public.market_audit_events to authenticated;
-drop policy if exists market_audit_events_participants_read on public.market_audit_events;
-create policy market_audit_events_participants_read on public.market_audit_events
-for select to authenticated using (
-  public.is_admin(auth.uid())
-  or actor_country_id=public.my_country_id()
-  or counterparty_country_id=public.my_country_id()
-);
+end $$;
 
 notify pgrst,'reload schema';
