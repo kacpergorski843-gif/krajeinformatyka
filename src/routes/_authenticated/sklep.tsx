@@ -103,6 +103,8 @@ function Shop() {
 
   const isBuilding = !!item?.building;
   const isFactory = !!item?.building?.startsWith("factory_");
+  const isMine = !!item?.building?.startsWith("mine_");
+  const isBulkPlacement = isFactory || isMine;
   const region = (regions ?? []).find((r) => r.id === regionId) ?? null;
 
   function openItem(i: ShopItem) {
@@ -121,6 +123,13 @@ function Shop() {
       if (v.item.building?.startsWith("factory_")) {
         if (!v.targets.length) throw new Error("Wybierz przynajmniej jedno miejsce");
         return rpc("build_factories_batch", {
+          p_item_code: v.item.code,
+          p_targets: v.targets,
+        });
+      }
+      if (v.item.building?.startsWith("mine_")) {
+        if (!v.targets.length) throw new Error("Wybierz przynajmniej jedno miejsce");
+        return rpc("build_mines_batch", {
           p_item_code: v.item.code,
           p_targets: v.targets,
         });
@@ -190,7 +199,7 @@ function Shop() {
   }
 
   // Braki dla aktualnie wybranego produktu i ilości
-  const effectiveQty = isFactory ? factoryTargets.length : isBuilding ? 1 : qty;
+  const effectiveQty = isBulkPlacement ? factoryTargets.length : isBuilding ? 1 : qty;
   const needKr = item ? Number(item.cost_kr) * effectiveQty : 0;
   const haveKr = Number(country?.balance ?? 0);
   const krShort = item ? haveKr < needKr : false;
@@ -238,7 +247,7 @@ function Shop() {
       : null;
 
   const blockReason =
-    item?.building && region && !isFactory
+    item?.building && region && !isBulkPlacement
       ? upgradeTarget
         ? null
         : buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
@@ -248,8 +257,8 @@ function Shop() {
     krShort ||
     resourceRows.some((x) => x.missing) ||
     !!blockReason ||
-    (isBuilding && !isFactory && !region) ||
-    (isFactory && factoryTargets.length === 0) ||
+    (isBuilding && !isBulkPlacement && !region) ||
+    (isBulkPlacement && factoryTargets.length === 0) ||
     (item?.code === "aa" && !regionId);
 
   function levelLockForRegion(selectedRegion: RegionWithSlots, building: string): string | null {
@@ -293,7 +302,7 @@ function Shop() {
     return false;
   }
 
-  function ItemCard({ i, owned }: { i: ShopItem; owned?: number }) {
+  function ItemCard({ i }: { i: ShopItem }) {
     const cannotBuyItem = itemCannotBuy(i);
 
     return (
@@ -320,9 +329,6 @@ function Shop() {
             <p className="text-success">
               +{units(i.produces_amount)} {RESOURCE_LABELS[i.produces] ?? i.produces} / doba
             </p>
-          ) : null}
-          {owned !== undefined ? (
-            <p className="text-info">Posiadasz: {units(owned)}</p>
           ) : null}
         </div>
         <Button
@@ -370,14 +376,14 @@ function Shop() {
       <SectionTitle>Fabryki</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {factories.map((i) => (
-          <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
+          <ItemCard key={i.code} i={i} />
         ))}
       </div>
 
       <SectionTitle>Wytwórnie surowców</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {mines.map((i) => (
-          <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
+          <ItemCard key={i.code} i={i} />
         ))}
       </div>
 
@@ -399,7 +405,7 @@ function Shop() {
       </SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {forts.map((i) => (
-          <ItemCard key={i.code} i={i} owned={ownedByBuilding.get(i.building!) ?? 0} />
+          <ItemCard key={i.code} i={i} />
         ))}
       </div>
 
@@ -486,7 +492,7 @@ function Shop() {
                         : !buildBlockReason(r, "aa");
                       const selectedRegion = regionId === r.id;
 
-                      if (isFactory) {
+                      if (isBulkPlacement) {
                         const factoryRequired = level > 1 ? `factory_${level - 1}` : null;
                         const factoryRegionBlocked =
                           buildBlockReason(r, building) ?? levelLockForRegion(r, building);
@@ -640,7 +646,7 @@ function Shop() {
                     })}
                   </div>
 
-                  {isFactory ? (
+                  {isBulkPlacement ? (
                     <p className="text-xs text-muted-foreground">
                       Wybrano: {factoryTargets.length} slotów
                     </p>
@@ -695,7 +701,7 @@ function Shop() {
                   disabled={buy.isPending || cannotBuy}
                   onClick={() => buy.mutate({ item, qty, targets: factoryTargets })}
                 >
-                  {buy.isPending ? "Realizuję…" : isFactory ? (isFactoryUpgrade ? `Ulepsz ${factoryTargets.length}` : `Kup ${factoryTargets.length} fabryk`) : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
+                  {buy.isPending ? "Realizuję…" : isBulkPlacement ? `Kup ${factoryTargets.length} ${isFactory ? "fabryk" : "wytwórni"}` : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
                 </Button>
               </div>
             </div>
