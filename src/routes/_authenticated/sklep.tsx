@@ -541,9 +541,6 @@ function Shop() {
                                     ].join(" ")}
                                   >
                                     <span className="flex h-full min-h-12 flex-col items-center justify-center gap-1 px-1 py-1.5">
-                                      <span className="text-[9px] uppercase tracking-wider opacity-70">
-                                        S{slotIndex}
-                                      </span>
                                       <span className="line-clamp-2 text-[10px] leading-tight">
                                         {slot
                                           ? BUILDING_LABELS[slot.building] ?? slot.building
