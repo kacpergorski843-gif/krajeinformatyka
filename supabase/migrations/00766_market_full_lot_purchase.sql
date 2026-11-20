@@ -1,5 +1,12 @@
 -- 00766: market purchases must buy the complete remaining offer.
 -- The RPC enforces this server-side so partial purchases cannot bypass the UI.
+-- Close older pending partial-quantity negotiations, which are no longer valid.
+update public.market_negotiations n
+set status='CANCELLED', updated_at=now()
+from public.market_offers o
+where o.id=n.offer_id and n.status='PENDING' and o.status='ACTIVE'
+  and n.quantity<>o.quantity_remaining;
+
 create or replace function public.market_buy_total(p_offer_id uuid,p_quantity numeric)
 returns jsonb language plpgsql security definer set search_path=public as $$
 declare v_offer public.market_offers; v_buyer uuid:=public.my_country_id(); v_total numeric; v_remaining_total numeric; v_remaining_qty numeric;
