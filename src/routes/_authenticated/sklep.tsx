@@ -247,7 +247,7 @@ function Shop() {
       : null;
 
   const blockReason =
-    item?.building && region && !isFactory
+    item?.building && region && !isBulkPlacement
       ? upgradeTarget
         ? null
         : buildBlockReason(region, item.building) ?? levelLockForRegion(region, item.building)
@@ -257,8 +257,8 @@ function Shop() {
     krShort ||
     resourceRows.some((x) => x.missing) ||
     !!blockReason ||
-    (isBuilding && !isFactory && !region) ||
-    (isFactory && factoryTargets.length === 0) ||
+    (isBuilding && !isBulkPlacement && !region) ||
+    (isBulkPlacement && factoryTargets.length === 0) ||
     (item?.code === "aa" && !regionId);
 
   function levelLockForRegion(selectedRegion: RegionWithSlots, building: string): string | null {
@@ -302,7 +302,7 @@ function Shop() {
     return false;
   }
 
-  function ItemCard({ i, owned }: { i: ShopItem; owned?: number }) {
+  function ItemCard({ i }: { i: ShopItem }) {
     const cannotBuyItem = itemCannotBuy(i);
 
     return (
@@ -701,7 +701,7 @@ function Shop() {
                   disabled={buy.isPending || cannotBuy}
                   onClick={() => buy.mutate({ item, qty, targets: factoryTargets })}
                 >
-                  {buy.isPending ? "Realizuję…" : isFactory ? (isFactoryUpgrade ? `Ulepsz ${factoryTargets.length}` : `Kup ${factoryTargets.length} fabryk`) : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
+                  {buy.isPending ? "Realizuję…" : isBulkPlacement ? `Kup ${factoryTargets.length} ${isFactory ? "fabryk" : "wytwórni"}` : isFactoryUpgrade ? "Potwierdź ulepszenie" : "Potwierdź zakup"}
                 </Button>
               </div>
             </div>
