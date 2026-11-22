@@ -59,6 +59,16 @@ const RESOURCES = ["coal", "oil", "copper", "iron", "uranium"] as const;
 
 function slotBlockReason(region: RegionWithSlots, item: ShopItem): string | null {
   const b = item.building!;
+  const level = Number(b.split("_")[1]);
+  const requiredUpgrade =
+    b.startsWith("factory_") && level > 1
+      ? `factory_${level - 1}`
+      : b === "fort_2"
+        ? "fort_1"
+        : b === "fort_3"
+          ? "fort_2"
+          : null;
+  const isUpgrade = !!requiredUpgrade && region.slots.some((slot) => slot.building === requiredUpgrade);
   if (b.startsWith("factory_")) {
     const level = Number(b.split("_")[1]);
     if (level > 1 && !region.slots.some((slot) => slot.building === `factory_${level - 1}`)) {
@@ -83,6 +93,7 @@ function slotBlockReason(region: RegionWithSlots, item: ShopItem): string | null
   if (b === "fort_1" && region.slots.some((s) => s.building.startsWith("fort_"))) {
     return "W regionie może stać tylko jedna fortyfikacja";
   }
+  if (region.slots.length >= 9 && !isUpgrade) return "Brak wolnych slotów";
   return null;
 }
 
@@ -334,11 +345,10 @@ function Regions() {
                   </div>
                   <Button
                     className="mt-3 w-full"
-                    disabled={free === 0}
                     onClick={() => setBuildFor(r)}
                   >
                     <Plus className="mr-1.5 size-4" strokeWidth={1.5} />
-                    {free === 0 ? "Brak wolnych slotów" : "Zbuduj obiekt"}
+                    {free === 0 ? "Ulepsz obiekt" : "Zbuduj / ulepsz obiekt"}
                   </Button>
                 </div>
               ) : null}
@@ -373,7 +383,20 @@ function Regions() {
                   disabled={blocked || build.isPending}
                   onClick={() => {
                     if (!buildFor) return;
-                    const index = firstFreeSlot(buildFor);
+                    const building = item.building ?? "";
+                    const level = Number(building.split("_")[1]);
+                    const required =
+                      building.startsWith("factory_") && level > 1
+                        ? `factory_${level - 1}`
+                        : building === "fort_2"
+                          ? "fort_1"
+                          : building === "fort_3"
+                            ? "fort_2"
+                            : null;
+                    const upgradeSlot = required
+                      ? buildFor.slots.find((slot) => slot.building === required)
+                      : null;
+                    const index = upgradeSlot?.slot_index ?? firstFreeSlot(buildFor);
                     if (!index) {
                       toast.error("Region nie ma wolnych slotów");
                       return;
